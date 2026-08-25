@@ -254,7 +254,8 @@ control run reproduces the official score exactly.
 | light paraphrase | 0.2691 | 0.8860 |
 | heavy paraphrase (+filler, +case drift) | 0.2370 | 0.8824 |
 
-Worst case sits **2.6% below control**, versus 71% below before hardening.
+Worst case sits **2.9% below control** (0.8796 vs 0.9062), versus 71% below before
+hardening.
 
 ### Feasibility
 

@@ -29,7 +29,7 @@ class AgentConfig:
     use_profile_prior: bool = True
     use_popularity_prior: bool = True
     # Measured and rejected: diversifying an uncertain top-10 sounds right, but the
-    # ablation puts it at -0.0012 against the full system while dominating latency.
+    # ablation puts it at exactly 0.0000 against the full system while dominating latency.
     # Retained as an option so the ablation table stays reproducible.
     use_mmr_diversity: bool = False
     pad_to_top_k: bool = True
