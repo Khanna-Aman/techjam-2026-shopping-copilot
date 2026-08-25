@@ -191,7 +191,7 @@ gh release download participant-kit \
 sha256sum -c SHA256SUMS --ignore-missing     # verify before trusting it
 gzip -dkc catalog.jsonl.gz > data/catalog.jsonl
 
-# 2. official score  (~15 s warm, ~35 s including a cold index build)
+# 2. official score  (~85 s first run incl. index build, ~15 s afterwards)
 python -m evaluator.local_evaluator
 
 # 3. everything else
@@ -201,7 +201,7 @@ python -m tools.sweep --mode ablation
 python -m tools.robustness
 ```
 
-The first run builds an index and caches it under `artifacts/` (~17 s, one time). Caching
+The first run builds an index and caches it under `artifacts/` (~52 s, one time). Caching
 is best-effort and wrapped in `try/except`: a read-only judging environment simply rebuilds
 each run, which is slower but never a failure.
 
@@ -265,12 +265,14 @@ Worst case sits **2.6% below control**, versus 71% below before hardening.
 | Network access | **none required** — fully offline |
 | Monetary cost | **$0** |
 | Dependencies | Python standard library only |
-| Index build | ~17 s cold, 335 ms warm |
-| Per-turn latency | **8.7 ms median**, 15.3 ms p95, 45 ms max |
-| Memory | ~600 MB resident for the 50k index |
-| Full 200-session evaluation | ~15 s |
+| Index build | ~52 s cold (one time), ~0.9 s warm from cache |
+| Per-turn latency | **37 ms median**, 67 ms p95, 93 ms max |
+| Memory | ~225 MB resident with the 50k index loaded |
+| Full 200-session evaluation | ~15 s warm, ~85 s including a cold index build |
 
-Measured on an Intel i5-1340P laptop, CPU only, no GPU.
+Measured on an Intel i5-1340P laptop, CPU only, no GPU. Latency is over 600 turns with
+constraints accumulating, not just cheap opening turns: cost rises with the number of
+confirmed constraints, because each is tested against every candidate in the pool.
 
 ---
 

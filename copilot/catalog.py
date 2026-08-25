@@ -55,7 +55,7 @@ FIELD_WEIGHTS: dict[str, int] = {
 BM25_K1 = 1.4
 BM25_B = 0.72
 
-CACHE_VERSION = 5
+CACHE_VERSION = 6
 
 _MATERIAL_BIT = {name: 1 << i for i, name in enumerate(MATERIALS)}
 _COLOR_BIT = {name: 1 << i for i, name in enumerate(COLORS)}
@@ -154,9 +154,12 @@ class CatalogIndex:
                     total += tf
                 doc_len.append(total)
 
-                text_blob = normalise(searchable_text(product))
-                # Stored flattened: phrase matching compares against this directly.
-                blob.append(match_text(text_blob))
+                # One regex pass, not two: match_text already collapses whitespace
+                # along with every other non-alphanumeric run, so a separate normalise()
+                # over the same 58 MB of text was pure duplicated work. Word boundaries
+                # survive the flattening, so the material/colour regexes still apply.
+                text_blob = match_text(searchable_text(product))
+                blob.append(text_blob)
                 categories.append(
                     coarse_category([str(v) for v in (product.get("categories") or [])])
                 )
