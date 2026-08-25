@@ -97,6 +97,12 @@ class ConversationState:
     boundary_seen: bool = False
     override_applied: bool = False
 
+    #: Content tokens seen in *any* customer message, whether or not they were
+    #: successfully parsed into a typed constraint. This is the parse-failure safety
+    #: net: under paraphrase the structured extraction may miss, but the payload words
+    #: still arrive, and discarding them entirely is what makes template parsing brittle.
+    observed: set[str] = field(default_factory=set)
+
     # ------------------------------------------------------------------ accumulation
     def _seen(self) -> set[str]:
         return {normalise(item.text) for item in self.constraints}
@@ -158,35 +164,52 @@ class ConversationState:
             return []
         return [str(tag).lower() for tag in tags if isinstance(tag, (str, int, float))]
 
+    def observe_text(self, message: str, chrome: frozenset[str]) -> None:
+        """Record content tokens from a raw customer message."""
+        for token in terms(message):
+            if token not in chrome:
+                self.observed.add(token)
+
     def query_terms(
         self,
         *,
         constraint_boost: float,
         category_boost: float,
         decoy_penalty: float,
+        observed_boost: float = 0.0,
     ) -> tuple[list[str], dict[str, float]]:
         """Build the weighted bag of query terms for the current belief state.
 
-        Retracted values receive a *negative* weight rather than being dropped, which is
-        what makes override erasure actually move the ranking.
+        Precedence runs category and observed text first, then confirmed constraints,
+        then retraction penalties. Retracted values get a *negative* weight rather than
+        being dropped -- a decoy was mined verbatim from the target product, so mere
+        neutrality leaves it scoring well on exactly the wrong items.
         """
         tokens: list[str] = []
         weights: dict[str, float] = {}
+        protected: set[str] = set()
 
         if self.category:
             for token in terms(self.category):
                 tokens.append(token)
                 weights[token] = max(weights.get(token, 0.0), category_boost)
+                protected.add(token)
+
+        if observed_boost > 0.0:
+            for token in self.observed:
+                tokens.append(token)
+                weights[token] = max(weights.get(token, 0.0), observed_boost)
 
         for item in self.active_constraints:
             for token in item.tokens:
                 tokens.append(token)
                 weights[token] = max(weights.get(token, 0.0), constraint_boost)
+                protected.add(token)
 
         for item in self.retracted:
             for token in item.tokens:
-                # Never penalise a token that an active constraint also relies on.
-                if weights.get(token, 0.0) > 0.0:
+                # Never penalise a token the category or an active constraint relies on.
+                if token in protected:
                     continue
                 tokens.append(token)
                 weights[token] = -abs(decoy_penalty)

@@ -30,6 +30,9 @@ class AgentConfig:
     use_popularity_prior: bool = True
     use_mmr_diversity: bool = True
     pad_to_top_k: bool = True
+    # Retain raw message tokens even when structured parsing fails. This is what
+    # keeps the agent standing up under paraphrase.
+    use_observed_fallback: bool = True
     clarify_strategy: str = "hybrid"
 
     # --- ranking weights ---------------------------------------------------------
@@ -47,6 +50,9 @@ class AgentConfig:
     # them beats neutrality, because the decoy is drawn from the target's own text and
     # would otherwise keep scoring well.
     decoy_term_penalty: float = 0.35
+    # Weight for tokens seen in a message but not parsed into a typed constraint.
+    # Deliberately well below a confirmed constraint: useful signal, lower trust.
+    observed_term_boost: float = 0.55
 
     # --- retrieval shape ---------------------------------------------------------
     # When the category lock yields fewer than this many candidates, widen with a

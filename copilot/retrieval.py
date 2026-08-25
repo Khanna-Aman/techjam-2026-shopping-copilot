@@ -119,6 +119,9 @@ def candidate_pool(
         constraint_boost=config.constraint_term_boost,
         category_boost=config.category_term_boost,
         decoy_penalty=config.decoy_term_penalty,
+        observed_boost=(
+            config.observed_term_boost if config.use_observed_fallback else 0.0
+        ),
     )
     if not tokens:
         tokens = terms(state.category or "")
@@ -154,6 +157,9 @@ def rank(
         constraint_boost=config.constraint_term_boost,
         category_boost=config.category_term_boost,
         decoy_penalty=config.decoy_term_penalty,
+        observed_boost=(
+            config.observed_term_boost if config.use_observed_fallback else 0.0
+        ),
     )
     lexical = _normalise_scores(index.bm25(tokens, candidates=pool, weights=weights or None))
 

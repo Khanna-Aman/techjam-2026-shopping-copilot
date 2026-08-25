@@ -21,13 +21,14 @@ from pathlib import Path
 from copilot.catalog import CatalogIndex
 from copilot.config import DEFAULT_CONFIG, AgentConfig
 from copilot.dialogue import (
+    _CHROME_TOKENS,
     ASK_MORE,
     BOUNDARY,
     DISCLOSURE,
-    INTENT_OVERRIDE,
     NO_ADDITIONAL,
     OVERRIDE,
     parse_opening,
+    scan_category,
     parse_reply,
 )
 from copilot.question import choose_attribute, question_text
@@ -80,10 +81,17 @@ class ShoppingCopilot:
         message = user_message if isinstance(user_message, str) else ""
         limit = top_k if isinstance(top_k, int) and top_k > 0 else 10
 
-        if state.category is None and not state.constraints:
+        is_opening = state.category is None and not state.constraints and turn <= 1
+        if is_opening:
             self._observe_opening(state, message)
         else:
             self._observe_reply(state, message)
+
+        # Retain the raw payload regardless of how parsing went. Under paraphrase the
+        # structured extraction can miss entirely, and dropping the message text is what
+        # turns a partial parse failure into a total one.
+        if self.config.use_observed_fallback:
+            state.observe_text(message, _CHROME_TOKENS)
 
         pool = candidate_pool(self.index, state, self.config)
         ranked = rank(self.index, state, self.config, limit=limit)
@@ -111,16 +119,28 @@ class ShoppingCopilot:
         state.category = opening.category
         state.scenario = opening.scenario
         if self.config.use_state_tracking:
+            # Opening constraints are always retractable. In an Intent Override session
+            # the opening value is a decoy that gets withdrawn; in a Buying session no
+            # retraction ever arrives, so the flag is inert. Marking unconditionally
+            # avoids having to tell the two openings apart under paraphrase, where that
+            # distinction is exactly what stops being reliable.
             state.add_constraints(
                 opening.constraints,
                 turn=state.turn,
-                # An Intent Override opener discloses a value that will be retracted.
-                provisional=opening.provisional and self.config.use_override_erasure,
+                provisional=self.config.use_override_erasure,
             )
 
     def _observe_reply(self, state: ConversationState, message: str) -> None:
         if not self.config.use_state_tracking:
             return
+
+        # A category missed at turn 1 (a heavily reworded opener) is still recoverable:
+        # the customer keeps naming the product type as the conversation goes on.
+        if state.category is None and self.config.use_category_lock:
+            found, _ = scan_category(message, self.index.bucket_lookup)
+            if found:
+                state.category = found
+
         reply = parse_reply(message)
 
         if reply.kind == OVERRIDE:
