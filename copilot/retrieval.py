@@ -88,7 +88,7 @@ def constraint_score(
     total = 0.0
     weight_sum = 0.0
     for item in constraints:
-        weight = 1.0 + min(2.0, len(item.tokens) / 6.0)
+        weight = (1.0 + min(2.0, len(item.tokens) / 6.0)) * item.weight
         total += weight * satisfies(index, doc_id, item)
         weight_sum += weight
     return total / weight_sum if weight_sum else 0.0
@@ -164,7 +164,11 @@ def rank(
     lexical = _normalise_scores(index.bm25(tokens, candidates=pool, weights=weights or None))
 
     constraints = state.active_constraints if config.use_constraint_scoring else []
-    tags = state.profile_tags() if config.use_profile_prior else []
+    tags: list[str] = []
+    if config.use_profile_prior and not (
+        config.profile_cold_start_only and state.has_hard_signal()
+    ):
+        tags = state.profile_tags()
 
     combined: dict[int, float] = {}
     for doc_id in pool:
@@ -187,8 +191,8 @@ def rank(
     return _mmr(index, ordered[: limit * 6], limit, config.mmr_lambda)
 
 
-def _title_tokens(index: CatalogIndex, doc_id: int) -> set[str]:
-    return set(terms(index.titles[doc_id]))
+def _title_tokens(index: CatalogIndex, doc_id: int) -> frozenset[str]:
+    return index.title_tokens(doc_id)
 
 
 def _mmr(

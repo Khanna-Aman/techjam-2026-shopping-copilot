@@ -145,7 +145,7 @@ class ShoppingCopilot:
 
         if reply.kind == OVERRIDE:
             if self.config.use_override_erasure:
-                state.retract_provisional()
+                state.supersede_provisional(self.config.override_decay)
             state.override_applied = True
             state.add_constraints(reply.constraints, turn=state.turn)
             return

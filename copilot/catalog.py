@@ -192,6 +192,7 @@ class CatalogIndex:
                 except (TypeError, ValueError):
                     rating_counts.append(0)
 
+        self._title_token_cache: dict[int, frozenset[str]] = {}
         self.ids = ids
         self.id_to_doc = {value: index for index, value in enumerate(ids)}
         self.blob = blob
@@ -257,6 +258,7 @@ class CatalogIndex:
             raise ValueError("cache version mismatch")
         for name in self._CACHE_ATTRS:
             setattr(self, name, payload[name])
+        self._title_token_cache = {}
         self.id_to_doc = {value: index for index, value in enumerate(self.ids)}
 
     # --------------------------------------------------------------------- querying
@@ -308,3 +310,16 @@ class CatalogIndex:
 
     def bucket(self, category: str) -> array:
         return self.buckets.get(category, array("i"))
+
+    def title_tokens(self, doc_id: int) -> frozenset[str]:
+        """Memoised title token set, used by the diversification pass.
+
+        MMR compares every candidate against every already-selected item, so without
+        memoisation the same titles get re-tokenised thousands of times per session.
+        """
+        cache = self._title_token_cache
+        cached = cache.get(doc_id)
+        if cached is None:
+            cached = frozenset(terms(self.titles[doc_id]))
+            cache[doc_id] = cached
+        return cached

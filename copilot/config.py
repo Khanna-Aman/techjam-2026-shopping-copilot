@@ -28,7 +28,10 @@ class AgentConfig:
     use_override_erasure: bool = True
     use_profile_prior: bool = True
     use_popularity_prior: bool = True
-    use_mmr_diversity: bool = True
+    # Measured and rejected: diversifying an uncertain top-10 sounds right, but the
+    # ablation puts it at -0.0012 against the full system while dominating latency.
+    # Retained as an option so the ablation table stays reproducible.
+    use_mmr_diversity: bool = False
     pad_to_top_k: bool = True
     # Retain raw message tokens even when structured parsing fails. This is what
     # keeps the agent standing up under paraphrase.
@@ -38,8 +41,13 @@ class AgentConfig:
     # --- ranking weights ---------------------------------------------------------
     w_bm25: float = 1.00
     w_constraint: float = 2.60
-    w_popularity: float = 0.18
-    w_profile: float = 0.12
+    w_popularity: float = 0.55
+    w_profile: float = 1.00
+    # Apply the profile prior only before any constraint is known. The anonymised
+    # preference tags are generic words (fit, comfort, durability) that match most of
+    # the catalog, so as a global term they add noise -- but at cold start, when
+    # nothing else is known, they are the only personal signal available.
+    profile_cold_start_only: bool = True
 
     # Weight applied to query terms coming from a confirmed constraint versus the
     # category label. Constraints are mined verbatim from the target product, so they
@@ -50,6 +58,9 @@ class AgentConfig:
     # them beats neutrality, because the decoy is drawn from the target's own text and
     # would otherwise keep scoring well.
     decoy_term_penalty: float = 0.35
+    # Trust retained by an Intent Override value after the customer retracts it.
+    # 0.0 erases it, 1.0 ignores the retraction. Tuned empirically -- see README.
+    override_decay: float = 0.5
     # Weight for tokens seen in a message but not parsed into a typed constraint.
     # Deliberately well below a confirmed constraint: useful signal, lower trust.
     observed_term_boost: float = 0.55

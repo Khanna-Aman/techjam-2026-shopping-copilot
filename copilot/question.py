@@ -49,7 +49,36 @@ _TRIGGERS: dict[str, tuple[str, ...]] = {
 
 #: Feature sentences are the most identifying constraints available but cannot be
 #: modelled as a small partition, so they carry a calibrated constant prior instead.
-_FEATURE_PRIOR = 0.55
+_FEATURE_PRIOR = 0.90
+
+#: P(the customer's hidden card contains at least one constraint of this type), measured
+#: over all 50,000 catalog products by applying the published card-construction rule.
+#: This uses the catalog only -- no session labels -- and it is the term a pure-entropy
+#: model omits. Omitting it is a real error: a budget question splits the candidate pool
+#: beautifully but goes unanswered 99.5% of the time, so its true value is near zero.
+YIELD_PROBABILITY: dict[str, float] = {
+    "feature": 0.958,
+    "material": 0.573,
+    "color": 0.427,
+    "style": 0.162,
+    "size": 0.076,
+    "use_case": 0.016,
+    "budget": 0.005,
+}
+
+#: Mean constraints returned when a specific question does land.
+_SPECIFIC_YIELD = 1.5
+
+#: The open question returns up to two undisclosed constraints of any type, so it is
+#: answered essentially whenever anything remains undisclosed.
+_OPEN_YIELD = 2.0
+
+#: Average discriminative power of whatever the open question happens to return. It is
+#: a mixture: early answers are weak (material, colour), later ones are feature sentences.
+_OPEN_POWER = 0.75
+
+#: An attribute rarely carries a second constraint once it has already answered.
+_REPEAT_DISCOUNT = 0.2
 
 QUESTION_TEXT: dict[str, str] = {
     "material": "What material are you hoping for?",
@@ -115,12 +144,10 @@ def _partition_lexical(index: CatalogIndex, pool: set[int], triggers: tuple[str,
     return _normalised_entropy([present, len(pool) - present])
 
 
-def expected_gain(
-    index: CatalogIndex, state: ConversationState, pool: set[int], attribute: str
+def discriminative_power(
+    index: CatalogIndex, pool: set[int], attribute: str
 ) -> float:
-    """Approximate information gain from asking about ``attribute``."""
-    if attribute in state.exhausted or attribute in UNPRODUCTIVE_ATTRIBUTES:
-        return 0.0
+    """How well an answer about ``attribute`` would split the candidate pool, in [0, 1]."""
     if not pool:
         return 0.0
     if attribute == "material":
@@ -135,6 +162,35 @@ def expected_gain(
     if triggers:
         return _partition_lexical(index, pool, triggers)
     return 0.0
+
+
+def expected_gain(
+    index: CatalogIndex, state: ConversationState, pool: set[int], attribute: str
+) -> float:
+    """Expected value of asking about ``attribute``, in expected-constraints-of-signal.
+
+    Value is the product of three terms, not entropy alone:
+
+        P(the customer can answer) x E[constraints returned] x how well they split the pool
+
+    Dropping the first term is what makes a naive information-gain policy pick questions
+    that are beautifully discriminating and almost never answered.
+    """
+    if attribute in state.exhausted or attribute in UNPRODUCTIVE_ATTRIBUTES:
+        return 0.0
+    if not pool:
+        return 0.0
+    probability = YIELD_PROBABILITY.get(attribute, 0.0)
+    if any(item.attribute == attribute for item in state.constraints):
+        probability *= _REPEAT_DISCOUNT
+    return probability * _SPECIFIC_YIELD * discriminative_power(index, pool, attribute)
+
+
+def open_gain(state: ConversationState, pool: set[int]) -> float:
+    """Expected value of the open question, on the same scale as ``expected_gain``."""
+    if OPEN_ATTRIBUTE in state.exhausted or not pool:
+        return 0.0
+    return _OPEN_YIELD * _OPEN_POWER
 
 
 def choose_attribute(
@@ -155,12 +211,19 @@ def choose_attribute(
     best, gain = _best_specific(index, state, pool)
 
     if strategy == "infogain":
-        if best is not None:
+        # Specific questions only. Retained as an ablation contrast: it shows what the
+        # policy gives up by refusing to ask an open question.
+        if best is not None and gain >= config.min_infogain:
             return best
         return OPEN_ATTRIBUTE if open_available else None
 
-    # hybrid: prefer a specific, discriminating question; otherwise open the floor.
-    if best is not None and gain >= config.min_infogain:
+    # hybrid: compare every option on one expected-value scale, the open question
+    # included, and take the best. In most states the open question wins outright,
+    # because it is answered whenever anything remains undisclosed and returns two
+    # constraints at once. It yields to a specific question once the open channel is
+    # exhausted or a typed attribute becomes sharply discriminating.
+    open_value = open_gain(state, pool) if open_available else 0.0
+    if best is not None and gain > open_value and gain >= config.min_infogain:
         return best
     if open_available:
         return OPEN_ATTRIBUTE

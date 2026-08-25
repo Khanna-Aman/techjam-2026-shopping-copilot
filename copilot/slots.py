@@ -1,4 +1,4 @@
-"""Conversational state: constraint slots, accumulation, and override erasure.
+"""Conversational state: constraint slots, accumulation, and override handling.
 
 This is the module the challenge brief calls the "Dynamic State Machine". It tracks two
 things the starter agent ignores entirely:
@@ -7,9 +7,11 @@ things the starter agent ignores entirely:
   later turns carry the most discriminative information, because the simulator reveals
   weak attributes (material, colour) before distinctive product features.
 * **Intent Override.** On turn 3 or 4 of an override session the customer retracts an
-  earlier preference. Merely ignoring the retracted value is not enough: it was mined
-  verbatim from the target product, so it keeps scoring well on exactly the wrong items.
-  It has to be actively penalised.
+  earlier preference. The obvious reading -- erase the withdrawn value -- turns out to be
+  wrong, and measurably so. The simulator mines both the withdrawn preference and its
+  replacement from the *same* hidden target, so the target never changes when the
+  customer changes their mind, and the withdrawn value stays diagnostic. It is retained
+  at a tunable confidence rather than erased.
 
 Constraints are also *typed*, because their type determines how a product can satisfy
 them: a material or colour is a set-membership test, a budget is a numeric proximity
@@ -72,6 +74,9 @@ class Constraint:
     attribute: str
     active: bool = True
     provisional: bool = False
+    #: Confidence multiplier. A superseded Intent Override value keeps a reduced weight
+    #: rather than being erased -- see ConversationState.supersede_provisional.
+    weight: float = 1.0
 
     @property
     def tokens(self) -> list[str]:
@@ -134,15 +139,30 @@ class ConversationState:
             added.append(item)
         return added
 
-    def retract_provisional(self) -> list[Constraint]:
-        """Erase the Intent Override decoy and move it to the penalised set."""
+    def supersede_provisional(self, decay: float) -> list[Constraint]:
+        """Handle an Intent Override retraction.
+
+        Counter-intuitively, the retracted value should *not* be thrown away. The
+        simulator draws the customer's "earlier preference" from the same hidden target
+        product as the replacement, so the target itself never changes when the customer
+        changes their mind. The withdrawn value therefore stays diagnostic, and
+        penalising it measurably costs score.
+
+        ``decay`` controls how much trust survives: 1.0 keeps the value at full strength,
+        0.0 erases it and moves it to the penalised set (the naive reading of the
+        protocol, which measurement rejects).
+        """
         moved: list[Constraint] = []
         for item in list(self.constraints):
-            if item.provisional:
+            if not item.provisional:
+                continue
+            moved.append(item)
+            if decay <= 0.0:
                 item.active = False
                 self.constraints.remove(item)
                 self.retracted.append(item)
-                moved.append(item)
+            else:
+                item.weight = decay
         return moved
 
     def mark_exhausted(self, attribute: str | None) -> None:
@@ -181,9 +201,9 @@ class ConversationState:
         """Build the weighted bag of query terms for the current belief state.
 
         Precedence runs category and observed text first, then confirmed constraints,
-        then retraction penalties. Retracted values get a *negative* weight rather than
-        being dropped -- a decoy was mined verbatim from the target product, so mere
-        neutrality leaves it scoring well on exactly the wrong items.
+        then retraction penalties. Fully-erased values (override_decay == 0) receive a
+        negative weight rather than merely being dropped, so that erasure, when enabled,
+        actually moves the ranking instead of leaving the value inert.
         """
         tokens: list[str] = []
         weights: dict[str, float] = {}
@@ -201,9 +221,10 @@ class ConversationState:
                 weights[token] = max(weights.get(token, 0.0), observed_boost)
 
         for item in self.active_constraints:
+            boost = constraint_boost * item.weight
             for token in item.tokens:
                 tokens.append(token)
-                weights[token] = max(weights.get(token, 0.0), constraint_boost)
+                weights[token] = max(weights.get(token, 0.0), boost)
                 protected.add(token)
 
         for item in self.retracted:
