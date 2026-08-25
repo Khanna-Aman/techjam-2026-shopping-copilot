@@ -16,3 +16,13 @@ docs/participant_release_checklist.md
 tests/test_5core_builder.py
 tests/test_organizer_pipeline.py
 *.log
+
+# --- Participant additions ---
+# Organizer problem statement (Early Bird exclusive) - local reference only, never publish.
+content.txt
+# Local scoring artifacts and ablation runs.
+runs/
+*.results.json
+# Derived artifacts: rebuilt from the frozen catalog, never committed.
+artifacts/*
+!artifacts/.gitkeep

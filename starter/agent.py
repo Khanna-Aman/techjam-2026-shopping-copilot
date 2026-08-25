@@ -1,102 +1,60 @@
+"""Submission entry point for the official evaluator.
+
+The harness imports ``Agent`` from this module and constructs it with the catalog path,
+so this file stays a thin adapter over :mod:`copilot.agent`.
+
+Behaviour can be overridden through the ``COPILOT_CONFIG`` environment variable, which
+accepts a JSON object of :class:`copilot.config.AgentConfig` fields. That exists so the
+ablation harness can vary the agent *without editing the evaluator*, which the submission
+rules forbid. With the variable unset the agent runs its full default configuration.
+
+The organiser's original weak baseline is preserved verbatim in
+``starter/baseline_agent.py`` as the ablation zero point.
+"""
+
 from __future__ import annotations
 
 import json
-import re
-import sqlite3
+import os
+import sys
+from dataclasses import replace
 from pathlib import Path
 
+# Allow ``python -m evaluator.local_evaluator`` from the repository root to import the
+# copilot package regardless of how the harness sets up sys.path.
+_ROOT = Path(__file__).resolve().parent.parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
 
-TOKEN_RE = re.compile(r"[a-z0-9]+", re.IGNORECASE)
-STOPWORDS = {
-    "a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "from",
-    "i", "in", "is", "it", "me", "my", "of", "on", "or", "please", "some",
-    "that", "the", "this", "to", "want", "with", "would", "you", "looking",
-}
+from copilot.agent import ShoppingCopilot  # noqa: E402
+from copilot.config import DEFAULT_CONFIG, AgentConfig  # noqa: E402
 
-
-def _text(value: object) -> str:
-    if value is None:
-        return ""
-    if isinstance(value, dict):
-        return " ".join(f"{key} {item}" for key, item in value.items())
-    if isinstance(value, list):
-        return " ".join(str(item) for item in value)
-    return str(value)
+_ENV_KEY = "COPILOT_CONFIG"
 
 
-def _terms(text: str) -> list[str]:
-    return [
-        token.lower()
-        for token in TOKEN_RE.findall(text)
-        if len(token) > 1 and token.lower() not in STOPWORDS
-    ]
+def _load_config() -> AgentConfig:
+    raw = os.environ.get(_ENV_KEY)
+    if not raw:
+        return DEFAULT_CONFIG
+    try:
+        overrides = json.loads(raw)
+    except (TypeError, ValueError):
+        return DEFAULT_CONFIG
+    if not isinstance(overrides, dict):
+        return DEFAULT_CONFIG
+    allowed = set(AgentConfig.__dataclass_fields__)
+    clean = {key: value for key, value in overrides.items() if key in allowed}
+    try:
+        return replace(DEFAULT_CONFIG, **clean)
+    except (TypeError, ValueError):
+        return DEFAULT_CONFIG
 
 
-class Agent:
-    """Editable weak baseline: stateless BM25 retrieval with no LLM dependency."""
+class Agent(ShoppingCopilot):
+    """Thin adapter matching the harness constructor signature ``Agent(catalog_path)``."""
 
     def __init__(self, catalog_path: str | Path = "data/catalog.jsonl") -> None:
-        self.catalog_path = Path(catalog_path)
-        self.connection = sqlite3.connect(":memory:")
-        self._sessions: set[str] = set()
-        self._build_index()
+        super().__init__(catalog_path, config=_load_config())
 
-    def _build_index(self) -> None:
-        cursor = self.connection.cursor()
-        cursor.execute(
-            "CREATE VIRTUAL TABLE products USING fts5("
-            "parent_asin UNINDEXED, title, categories, features, details, store, description, "
-            "tokenize='unicode61 remove_diacritics 2')"
-        )
-        batch: list[tuple[str, str, str, str, str, str, str]] = []
-        with self.catalog_path.open(encoding="utf-8") as handle:
-            for line in handle:
-                product = json.loads(line)
-                batch.append(
-                    (
-                        str(product["parent_asin"]),
-                        _text(product.get("title")),
-                        _text(product.get("categories")),
-                        _text(product.get("features")),
-                        _text(product.get("details")),
-                        _text(product.get("store")),
-                        _text(product.get("description")),
-                    )
-                )
-                if len(batch) >= 1000:
-                    cursor.executemany("INSERT INTO products VALUES (?, ?, ?, ?, ?, ?, ?)", batch)
-                    batch.clear()
-        if batch:
-            cursor.executemany("INSERT INTO products VALUES (?, ?, ?, ?, ?, ?, ?)", batch)
-        self.connection.commit()
 
-    def reset(self, session_id: str, user_profile: dict) -> None:
-        # The profile is anonymized and may be used for personalization.
-        self._sessions.add(session_id)
-
-    def respond(
-        self,
-        session_id: str,
-        user_message: str,
-        turn: int,
-        top_k: int,
-    ) -> dict:
-        if session_id not in self._sessions:
-            raise RuntimeError("reset must be called before respond")
-        unique_terms = list(dict.fromkeys(_terms(user_message)))[:40]
-        expression = " OR ".join(f'"{term}"' for term in unique_terms)
-        if not expression:
-            recommendations: list[dict] = []
-        else:
-            rows = self.connection.execute(
-                "SELECT parent_asin FROM products WHERE products MATCH ? "
-                "ORDER BY bm25(products, 0.0, 6.0, 4.0, 2.5, 2.5, 1.5, 1.0) LIMIT ?",
-                (expression, top_k),
-            ).fetchall()
-            recommendations = [{"parent_asin": str(row[0])} for row in rows]
-        return {
-            "message": "Here are the closest matches I found.",
-            "ask_attribute": None,
-            "recommendations": recommendations,
-            "usage": {"prompt_tokens": 0, "completion_tokens": 0},
-        }
+__all__ = ["Agent"]
