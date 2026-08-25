@@ -1,0 +1,109 @@
+{
+  "profile off": {
+    "overrides": {
+      "use_profile_prior": false
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.694571,
+    "mttc": 1.77,
+    "efficiency": 0.923,
+    "technical_score": 0.890471,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "cold-start w=0.6": {
+    "overrides": {
+      "w_profile": 0.6,
+      "profile_cold_start_only": true
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.741962,
+    "mttc": 1.895,
+    "efficiency": 0.9105,
+    "technical_score": 0.902189,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "cold-start w=1.0": {
+    "overrides": {
+      "w_profile": 1.0,
+      "profile_cold_start_only": true
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.753319,
+    "mttc": 1.925,
+    "efficiency": 0.9075,
+    "technical_score": 0.904996,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "cold-start w=1.4": {
+    "overrides": {
+      "w_profile": 1.4,
+      "profile_cold_start_only": true
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.752077,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.904523,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "cold-start w=2.0": {
+    "overrides": {
+      "w_profile": 2.0,
+      "profile_cold_start_only": true
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.756702,
+    "mttc": 1.94,
+    "efficiency": 0.906,
+    "technical_score": 0.905711,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "cold-start w=3.0": {
+    "overrides": {
+      "w_profile": 3.0,
+      "profile_cold_start_only": true
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.764577,
+    "mttc": 1.95,
+    "efficiency": 0.905,
+    "technical_score": 0.907873,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  }
+}

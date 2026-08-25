@@ -174,7 +174,7 @@ class ShoppingCopilot:
         if count == 0:
             return (
                 "I could not find a close match yet. "
-                + question_text(attribute or "other")
+                + question_text(attribute or "other", state.turn)
             )
         if attribute is None:
             return "Here are the closest matches I found."
@@ -183,7 +183,7 @@ class ShoppingCopilot:
             if state.active_constraints
             else "Here are some options to start from."
         )
-        return f"{lead} {question_text(attribute)}"
+        return f"{lead} {question_text(attribute, state.turn)}"
 
     def _fallback(self, session_id: str, top_k: int) -> dict:
         """Last-resort response: popular items, still schema-valid, still ten of them."""

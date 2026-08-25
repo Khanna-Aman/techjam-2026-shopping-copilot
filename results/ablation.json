@@ -1,0 +1,187 @@
+{
+  "full system": {
+    "overrides": {},
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.757502,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.906151,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "no clarification": {
+    "overrides": {
+      "clarify_strategy": "none"
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.545,
+    "mrr": 0.380024,
+    "mttc": 5.9,
+    "efficiency": 0.51,
+    "technical_score": 0.488507,
+    "by_scenario": {
+      "boundary": 0.4,
+      "browsing": 0.2,
+      "buying": 0.775,
+      "intent_override": 0.9
+    }
+  },
+  "no category lock": {
+    "overrides": {
+      "use_category_lock": false
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.985,
+    "mrr": 0.754062,
+    "mttc": 2.075,
+    "efficiency": 0.8925,
+    "technical_score": 0.897219,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 0.9875,
+      "buying": 0.9875,
+      "intent_override": 0.966667
+    }
+  },
+  "no constraint scoring": {
+    "overrides": {
+      "use_constraint_scoring": false
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.709012,
+    "mttc": 1.96,
+    "efficiency": 0.904,
+    "technical_score": 0.891004,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "no state tracking": {
+    "overrides": {
+      "use_state_tracking": false
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.67,
+    "mrr": 0.371153,
+    "mttc": 4.985,
+    "efficiency": 0.6015,
+    "technical_score": 0.566646,
+    "by_scenario": {
+      "boundary": 0.9,
+      "browsing": 0.65,
+      "buying": 0.675,
+      "intent_override": 0.633333
+    }
+  },
+  "no override erasure": {
+    "overrides": {
+      "use_override_erasure": false
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.754169,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.905151,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "no observed fallback": {
+    "overrides": {
+      "use_observed_fallback": false
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.755002,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.905401,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "no top-10 padding": {
+    "overrides": {
+      "pad_to_top_k": false
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.757502,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.906151,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "no MMR diversity": {
+    "overrides": {
+      "use_mmr_diversity": false
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.757502,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.906151,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "no popularity prior": {
+    "overrides": {
+      "use_popularity_prior": false
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.98,
+    "mrr": 0.652347,
+    "mttc": 2.31,
+    "efficiency": 0.869,
+    "technical_score": 0.859504,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 0.9875,
+      "buying": 0.975,
+      "intent_override": 0.966667
+    }
+  },
+  "no profile prior": {
+    "overrides": {
+      "use_profile_prior": false
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.695677,
+    "mttc": 1.765,
+    "efficiency": 0.9235,
+    "technical_score": 0.890903,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  }
+}

@@ -1,0 +1,6 @@
+# The agent itself has NO third-party dependencies: Python 3.10+ standard library only.
+# It calls no model, needs no API key, and requires no network access at any point.
+#
+# This file exists only for the test suite and the benchmarking tools.
+# To run the agent or the official evaluator, install nothing.
+pytest>=8.0

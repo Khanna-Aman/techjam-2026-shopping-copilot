@@ -80,6 +80,18 @@ _OPEN_POWER = 0.75
 #: An attribute rarely carries a second constraint once it has already answered.
 _REPEAT_DISCOUNT = 0.2
 
+#: Rotating phrasings for the open question. The field is customer-facing natural
+#: language, and repeating one identical sentence for ten turns reads as a broken bot
+#: even when the underlying decision is right. Selection is deterministic on turn index
+#: so runs stay reproducible.
+OPEN_VARIANTS: tuple[str, ...] = (
+    "Tell me the one detail that matters most and I will narrow it down.",
+    "What else should I know about what you are after?",
+    "Anything specific I should be matching on?",
+    "Give me one more detail and I can tighten these up.",
+    "What would make one of these the right pick for you?",
+)
+
 QUESTION_TEXT: dict[str, str] = {
     "material": "What material are you hoping for?",
     "color": "Any particular colour you have in mind?",
@@ -245,7 +257,10 @@ def _best_specific(
     return best, best_gain
 
 
-def question_text(attribute: str | None) -> str:
+def question_text(attribute: str | None, turn: int = 0) -> str:
+    """Render the clarification question as customer-facing prose."""
     if attribute is None:
         return "Here are the closest matches I found."
-    return QUESTION_TEXT.get(attribute, QUESTION_TEXT[OPEN_ATTRIBUTE])
+    if attribute == OPEN_ATTRIBUTE:
+        return OPEN_VARIANTS[max(turn - 1, 0) % len(OPEN_VARIANTS)]
+    return QUESTION_TEXT.get(attribute, OPEN_VARIANTS[0])

@@ -1,0 +1,72 @@
+{
+  "control": {
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.757502,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.906151,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "casing": {
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.757502,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.906151,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "punctuation": {
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.66071,
+    "mttc": 1.805,
+    "efficiency": 0.9195,
+    "technical_score": 0.879613,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "light": {
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.699613,
+    "mttc": 2.07,
+    "efficiency": 0.893,
+    "technical_score": 0.885984,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "heavy": {
+    "sample_count": 200,
+    "hit_rate_at_10": 0.99,
+    "mrr": 0.700169,
+    "mttc": 2.135,
+    "efficiency": 0.8865,
+    "technical_score": 0.882351,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 0.9875,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  }
+}

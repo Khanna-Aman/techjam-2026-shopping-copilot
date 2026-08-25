@@ -1,0 +1,146 @@
+{
+  "w_pop=0.18": {
+    "overrides": {
+      "w_popularity": 0.18,
+      "w_profile": 0.0
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.98,
+    "mrr": 0.670833,
+    "mttc": 2.175,
+    "efficiency": 0.8825,
+    "technical_score": 0.86775,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 0.9875,
+      "buying": 0.975,
+      "intent_override": 0.966667
+    }
+  },
+  "w_pop=0.3": {
+    "overrides": {
+      "w_popularity": 0.3,
+      "w_profile": 0.0
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.985,
+    "mrr": 0.684808,
+    "mttc": 2.0,
+    "efficiency": 0.9,
+    "technical_score": 0.877942,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 0.975,
+      "intent_override": 0.966667
+    }
+  },
+  "w_pop=0.4": {
+    "overrides": {
+      "w_popularity": 0.4,
+      "w_profile": 0.0
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.697458,
+    "mttc": 1.845,
+    "efficiency": 0.9155,
+    "technical_score": 0.889837,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "w_pop=0.55": {
+    "overrides": {
+      "w_popularity": 0.55,
+      "w_profile": 0.0
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.694571,
+    "mttc": 1.77,
+    "efficiency": 0.923,
+    "technical_score": 0.890471,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "w_pop=0.7": {
+    "overrides": {
+      "w_popularity": 0.7,
+      "w_profile": 0.0
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.689919,
+    "mttc": 1.685,
+    "efficiency": 0.9315,
+    "technical_score": 0.890776,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "w_pop=0.9": {
+    "overrides": {
+      "w_popularity": 0.9,
+      "w_profile": 0.0
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.676833,
+    "mttc": 1.64,
+    "efficiency": 0.936,
+    "technical_score": 0.88775,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "w_pop=1.2": {
+    "overrides": {
+      "w_popularity": 1.2,
+      "w_profile": 0.0
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.674667,
+    "mttc": 1.58,
+    "efficiency": 0.942,
+    "technical_score": 0.8908,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 1.0
+    }
+  },
+  "w_pop=1.6": {
+    "overrides": {
+      "w_popularity": 1.6,
+      "w_profile": 0.0
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.661925,
+    "mttc": 1.555,
+    "efficiency": 0.9445,
+    "technical_score": 0.887477,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 1.0
+    }
+  }
+}
