@@ -241,12 +241,20 @@ def pad(index: CatalogIndex, ranked: list[int], pool: set[int], limit: int) -> l
         return ranked[:limit]
     chosen = list(ranked)
     seen = set(chosen)
-    extras = sorted(
-        (doc for doc in pool if doc not in seen),
-        key=lambda doc: -index.popularity(doc),
-    )
-    for doc_id in extras:
-        if len(chosen) >= limit:
-            break
-        chosen.append(doc_id)
+
+    def _take(source) -> None:
+        for doc_id in source:
+            if len(chosen) >= limit:
+                return
+            if doc_id in seen:
+                continue
+            seen.add(doc_id)
+            chosen.append(doc_id)
+
+    _take(sorted((d for d in pool if d not in seen), key=lambda d: -index.popularity(d)))
+    if len(chosen) < limit:
+        # The pool itself was too small to fill ten slots. Reach into the catalog at
+        # large rather than hand back a short list: an empty slot can never hit, so it
+        # is strictly worse than even a weak guess.
+        _take(index.global_popular(limit * 4))
     return chosen

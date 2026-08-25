@@ -311,6 +311,15 @@ class CatalogIndex:
     def bucket(self, category: str) -> array:
         return self.buckets.get(category, array("i"))
 
+    def global_popular(self, limit: int) -> list[int]:
+        """Most-reviewed products catalog-wide, memoised. Last-resort padding only."""
+        cached = getattr(self, "_global_popular", None)
+        if cached is None or len(cached) < limit:
+            size = max(limit, 64)
+            cached = sorted(range(self.count), key=lambda doc: -self.popularity(doc))[:size]
+            self._global_popular = cached
+        return cached[:limit]
+
     def title_tokens(self, doc_id: int) -> frozenset[str]:
         """Memoised title token set, used by the diversification pass.
 

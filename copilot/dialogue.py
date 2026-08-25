@@ -315,7 +315,10 @@ def parse_reply(message: str) -> Reply:
     if _contains(text, _NEGATION_CUES):
         attribute = _find_attribute(text)
         # "please use your judgment" is the Boundary tell; a plain negation is exhaustion.
-        boundary = "judgment" in text or "judgement" in text or "up to you" in text
+        boundary = any(
+            cue in text
+            for cue in ("judgment", "judgement", "up to you", "your call", "your choice")
+        )
         return Reply(
             kind=BOUNDARY if boundary else NO_ADDITIONAL, attribute=attribute, exact=False
         )
