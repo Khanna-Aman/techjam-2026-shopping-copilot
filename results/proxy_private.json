@@ -1,0 +1,95 @@
+{
+  "matched": {
+    "note": "decile-matched; catalog supports at most 110",
+    "sample_count": 110,
+    "hit_rate_at_10": 0.990909,
+    "mrr": 0.708618,
+    "mttc": 2.054545,
+    "technical_score": 0.886949,
+    "ci95_low": 0.86039,
+    "ci95_high": 0.909075,
+    "target_popularity": {
+      "median_rating_number": 6845,
+      "p25_rating_number": 1066,
+      "p75_rating_number": 18333,
+      "priced_fraction": 0.5545
+    },
+    "scenario_metrics": {
+      "boundary": {
+        "sample_count": 5,
+        "hit_rate_at_10": 1.0,
+        "mrr": 0.866667,
+        "mttc": 3.4
+      },
+      "browsing": {
+        "sample_count": 44,
+        "hit_rate_at_10": 1.0,
+        "mrr": 0.687338,
+        "mttc": 1.909091
+      },
+      "buying": {
+        "sample_count": 44,
+        "hit_rate_at_10": 0.977273,
+        "mrr": 0.629663,
+        "mttc": 1.454545
+      },
+      "intent_override": {
+        "sample_count": 17,
+        "hit_rate_at_10": 1.0,
+        "mrr": 0.921569,
+        "mttc": 3.588235
+      }
+    }
+  },
+  "uniform": {
+    "note": "uniform over eligible targets",
+    "sample_count": 1000,
+    "hit_rate_at_10": 0.969,
+    "mrr": 0.697952,
+    "mttc": 2.452,
+    "technical_score": 0.864846,
+    "ci95_low": 0.852763,
+    "ci95_high": 0.876289,
+    "target_popularity": {
+      "median_rating_number": 13,
+      "p25_rating_number": 4,
+      "p75_rating_number": 56,
+      "priced_fraction": 0.21
+    },
+    "scenario_metrics": {
+      "boundary": {
+        "sample_count": 50,
+        "hit_rate_at_10": 0.96,
+        "mrr": 0.685794,
+        "mttc": 3.76
+      },
+      "browsing": {
+        "sample_count": 400,
+        "hit_rate_at_10": 0.96,
+        "mrr": 0.676078,
+        "mttc": 2.45
+      },
+      "buying": {
+        "sample_count": 400,
+        "hit_rate_at_10": 0.9725,
+        "mrr": 0.658849,
+        "mttc": 1.8475
+      },
+      "intent_override": {
+        "sample_count": 150,
+        "hit_rate_at_10": 0.986667,
+        "mrr": 0.864608,
+        "mttc": 3.633333
+      }
+    }
+  },
+  "public_reference": {
+    "note": "the official public-set score, for comparison",
+    "target_popularity": {
+      "median_rating_number": 6614,
+      "p25_rating_number": 986,
+      "p75_rating_number": 18076,
+      "priced_fraction": 0.89
+    }
+  }
+}
