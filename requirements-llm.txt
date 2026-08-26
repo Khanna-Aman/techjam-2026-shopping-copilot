@@ -1,0 +1,16 @@
+# OPTIONAL. Not required to run the agent, reproduce the score, or pass the tests.
+#
+# This installs the dependency for the optional LLM semantic reranking layer in
+# copilot/llm.py, which is disabled by default and gated a second time behind the
+# COPILOT_LLM environment variable.
+#
+# The scored configuration does not use it. Official scoring may run without network
+# access, so the offline path is the one that must work unaided -- see README.
+#
+#   pip install -r requirements-llm.txt
+#   export ANTHROPIC_API_KEY=...        # or: ant auth login
+#   COPILOT_LLM=1 python -m tools.sweep --mode llm
+#
+# Without this file installed, the layer reports itself unavailable and the agent runs
+# its standard-library path unchanged.
+anthropic>=1.0

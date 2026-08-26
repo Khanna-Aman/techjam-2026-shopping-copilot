@@ -27,11 +27,12 @@ _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from evaluator.local_evaluator import catalog_index, load_jsonl  # noqa: E402
+from evaluator.local_evaluator import catalog_index, evaluate, load_jsonl  # noqa: E402
 
 from copilot.agent import ShoppingCopilot  # noqa: E402
 from copilot.catalog import CatalogIndex  # noqa: E402
 from copilot.config import DEFAULT_CONFIG, AgentConfig  # noqa: E402
+from copilot.llm import LLMReranker  # noqa: E402
 from tools.robustness import identity, run  # noqa: E402
 
 #: One mechanism disabled per row. Ordered roughly by expected impact.
@@ -114,6 +115,21 @@ def _override_grid() -> list[tuple[str, dict]]:
     ]
 
 
+def _llm_grid() -> list[tuple[str, dict]]:
+    """Offline default against the optional LLM reranking layer.
+
+    Kept out of ``--mode ablation`` deliberately. Every other mode in this file is free and
+    offline; this one issues roughly 400 live API requests per row and costs real money, so
+    it should be run when there is a decision to make rather than as part of a routine
+    regression sweep.
+    """
+    return [
+        ("offline (default)", {}),
+        ("llm rerank depth=10", {"use_llm_rerank": True, "llm_rerank_depth": 10}),
+        ("llm rerank depth=20", {"use_llm_rerank": True, "llm_rerank_depth": 20}),
+    ]
+
+
 MODES = {
     "ablation": lambda: ABLATIONS,
     "override": _override_grid,
@@ -124,7 +140,37 @@ MODES = {
     "grid": _grid,
     "observed": _observed_grid,
     "prior": _prior_grid,
+    "llm": _llm_grid,
 }
+
+#: Modes that issue live API requests, and therefore need an explicit warning and a
+#: reachable layer before they are worth starting.
+_BILLED_MODES = {"llm"}
+
+
+def _require_reachable_llm(base: AgentConfig, rows: list[tuple[str, dict]], samples: int) -> None:
+    """Refuse to start a billed sweep that would silently measure nothing.
+
+    ``copilot.llm`` degrades quietly by design: without a key or the SDK it returns the
+    offline ordering. That is the right behaviour during scoring and exactly the wrong
+    behaviour here, where it would print several identical rows and invite the conclusion
+    that the LLM layer contributes nothing. Fail loudly instead.
+    """
+    probe = LLMReranker(replace(base, use_llm_rerank=True))
+    if not probe.available():
+        raise SystemExit(
+            "The LLM reranking layer is not reachable, so this sweep would measure the\n"
+            "offline path several times over and report it as an LLM result.\n\n"
+            "  pip install -r requirements-llm.txt\n"
+            "  export ANTHROPIC_API_KEY=...     (or: ant auth login)\n"
+            "  COPILOT_LLM=1 python -m tools.sweep --mode llm\n"
+        )
+    billed_rows = sum(1 for _, overrides in rows if overrides.get("use_llm_rerank"))
+    print(
+        f"This mode issues live API requests: {billed_rows} configuration(s) over "
+        f"{samples} sessions,\nroughly {billed_rows * samples * 2:,} requests in total. "
+        "It costs real money.\n"
+    )
 
 
 def main() -> None:
@@ -150,23 +196,48 @@ def main() -> None:
         base = replace(base, **{k: v for k, v in overrides.items() if k in allowed})
 
     rows = MODES[args.mode]()
+    billed = args.mode in _BILLED_MODES
+    if billed:
+        _require_reachable_llm(base, rows, len(samples))
+
     results: dict[str, dict] = {}
     reference: float | None = None
 
-    print(f"{'configuration':<26}{'score':>9}{'hit@10':>9}{'MRR':>9}{'MTTC':>8}{'delta':>9}")
-    print("-" * 70)
+    tokens_column = f"{'tokens':>12}" if billed else ""
+    print(
+        f"{'configuration':<26}{'score':>9}{'hit@10':>9}{'MRR':>9}"
+        f"{'MTTC':>8}{'delta':>9}{tokens_column}"
+    )
+    print("-" * (70 + (12 if billed else 0)))
     for label, overrides in rows:
         config = replace(base, **overrides)
         agent = ShoppingCopilot(args.catalog, config=config, index=index)
-        outcome = run(agent, samples, catalog_ids, categories, products, identity)
+        if billed:
+            # The official loop, because it is the only one that accumulates the token
+            # usage this mode exists to disclose.
+            official = evaluate(agent, samples, catalog_ids, categories, products)
+            outcome = {
+                "sample_count": official["sample_count"],
+                "hit_rate_at_10": official["hit_rate_at_10"],
+                "mrr": official["mrr"],
+                "mttc": official["mttc"],
+                "efficiency": official["efficiency"],
+                "technical_score": official["recommended_technical_score"],
+                "token_usage": official["reported_token_usage"],
+            }
+        else:
+            outcome = run(agent, samples, catalog_ids, categories, products, identity)
         results[label] = {"overrides": overrides, **outcome}
         score = outcome["technical_score"]
         if reference is None:
             reference = score
         delta = score - reference
+        suffix = ""
+        if billed:
+            suffix = f"{outcome['token_usage']['total_tokens']:>12,}"
         print(
             f"{label:<26}{score:>9.4f}{outcome['hit_rate_at_10']:>9.3f}"
-            f"{outcome['mrr']:>9.4f}{outcome['mttc']:>8.2f}{delta:>+9.4f}"
+            f"{outcome['mrr']:>9.4f}{outcome['mttc']:>8.2f}{delta:>+9.4f}{suffix}"
         )
 
     if args.output:

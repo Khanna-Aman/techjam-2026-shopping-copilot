@@ -37,6 +37,14 @@ class AgentConfig:
     # keeps the agent standing up under paraphrase.
     use_observed_fallback: bool = True
     clarify_strategy: str = "hybrid"
+    # Optional LLM semantic reranking. Off by default and gated a second time by the
+    # COPILOT_LLM environment variable, because official scoring may run without network
+    # access -- so the offline path is the one that must be the default. See copilot/llm.py.
+    use_llm_rerank: bool = False
+    #: How many of the top candidates are sent for reranking. The tail is already ordered
+    #: by the offline ranker and rarely holds the target, so ranking it buys nothing.
+    llm_rerank_depth: int = 20
+    llm_model: str = "claude-opus-5"
 
     # --- ranking weights ---------------------------------------------------------
     w_bm25: float = 1.00

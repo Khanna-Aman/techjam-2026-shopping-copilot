@@ -31,6 +31,7 @@ from copilot.dialogue import (
     scan_category,
     parse_reply,
 )
+from copilot.llm import LLMReranker
 from copilot.question import choose_attribute, question_text
 from copilot.retrieval import candidate_pool, pad, rank
 from copilot.slots import ConversationState
@@ -52,6 +53,10 @@ class ShoppingCopilot:
         self.config.validate()
         self.index = index if index is not None else CatalogIndex(catalog_path)
         self._sessions: dict[str, ConversationState] = {}
+        # Constructed unconditionally, but inert unless explicitly enabled: it imports no
+        # third-party package and opens no connection until the first request it is
+        # allowed to make.
+        self._reranker = LLMReranker(self.config)
 
     # ------------------------------------------------------------------ Agent contract
     def reset(self, session_id: str, user_profile: dict) -> None:
@@ -98,6 +103,11 @@ class ShoppingCopilot:
         if self.config.pad_to_top_k:
             ranked = pad(self.index, ranked, pool, limit)
 
+        # Optional semantic reranking. Disabled by default, and a no-op returning zero
+        # usage unless both the config flag and COPILOT_LLM are set. Any failure inside
+        # returns the offline ordering untouched, so this can never cost a turn.
+        ranked, usage = self._reranker.rerank(state, self.index, ranked)
+
         attribute = choose_attribute(self.index, state, pool, self.config)
         state.pending_attribute = attribute
         if attribute is not None:
@@ -109,9 +119,10 @@ class ShoppingCopilot:
             "recommendations": [
                 {"parent_asin": self.index.ids[doc_id]} for doc_id in ranked[:limit]
             ],
-            # No model is called: the agent is fully offline, so token usage is zero by
-            # construction rather than by estimate.
-            "usage": {"prompt_tokens": 0, "completion_tokens": 0},
+            # Zero by construction on the default offline path -- no model is called. With
+            # the reranking layer enabled these are the counts the API actually charged,
+            # read from its usage field rather than estimated.
+            "usage": usage,
         }
 
     def _observe_opening(self, state: ConversationState, message: str) -> None:
