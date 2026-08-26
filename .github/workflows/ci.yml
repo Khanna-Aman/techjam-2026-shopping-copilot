@@ -1,0 +1,123 @@
+name: CI
+
+# Two questions this answers, both of which the submission rules make consequential:
+#
+#   1. Does it run anywhere other than the machine it was written on? The agent is standard
+#      library only, but "should be portable" and "is portable" are different claims, and
+#      the organiser reserves the right to score under their own CPU, memory, timeout and
+#      network restrictions.
+#   2. Is the committed score real? The reproduce job downloads the frozen catalog from the
+#      organiser's own release, runs the unmodified evaluator, and fails if the result
+#      disagrees with results/official_evaluation.json. The number in the README is
+#      therefore checked by machine on every push, not asserted by its author.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: tests · ${{ matrix.os }} · py${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      # pytest is the only dependency, and only for the tests. The agent itself installs
+      # nothing; if this step ever needs to grow, the feasibility claim has regressed.
+      - name: Install test dependency
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Run test suite
+        run: python -m pytest tests/ -q
+        # Tests needing the 58 MB catalog skip themselves when it is absent, so this job
+        # stays fast and needs no network beyond the checkout.
+
+      - name: Confirm the agent imports with no third-party packages available
+        run: python -c "import copilot.agent, copilot.catalog, copilot.retrieval; print('stdlib-only import OK')"
+
+  reproduce:
+    name: reproduce the official score
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: the final step walks commits back to the participant kit to prove
+          # the evaluator was never touched, which a shallow clone cannot resolve.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache the frozen catalog
+        id: catalog-cache
+        uses: actions/cache@v4
+        with:
+          path: data/catalog.jsonl
+          key: catalog-participant-kit-v1
+
+      - name: Download and verify the catalog
+        if: steps.catalog-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          base=https://github.com/TechJam2026/techjam-conversational-search/releases/download/participant-kit
+          curl -fsSL -o catalog.jsonl.gz "$base/catalog.jsonl.gz"
+          curl -fsSL -o SHA256SUMS "$base/SHA256SUMS"
+          sha256sum -c SHA256SUMS --ignore-missing
+          gzip -dc catalog.jsonl.gz > data/catalog.jsonl
+          wc -l data/catalog.jsonl
+
+      - name: Run the unmodified official evaluator
+        run: python -m evaluator.local_evaluator
+
+      - name: Assert the result matches the committed one
+        run: |
+          python - <<'PY'
+          import json
+
+          committed = json.load(open("results/official_evaluation.json"))
+          produced = json.load(open("results.json"))
+
+          checks = ("hit_rate_at_10", "mrr", "mttc", "recommended_technical_score")
+          failures = [
+              f"  {key}: committed {committed[key]!r} != produced {produced[key]!r}"
+              for key in checks
+              if committed[key] != produced[key]
+          ]
+
+          tokens = produced["reported_token_usage"]["total_tokens"]
+          if tokens != 0:
+              failures.append(f"  token usage: expected 0, got {tokens}")
+
+          if failures:
+              raise SystemExit(
+                  "The evaluator disagrees with the committed result:\n"
+                  + "\n".join(failures)
+                  + "\n\nIf this change was intended, re-run the evaluator and commit "
+                    "results/official_evaluation.json in the same change."
+              )
+
+          print(f"reproduced TechnicalScore {produced['recommended_technical_score']}")
+          print(f"hit@10 {produced['hit_rate_at_10']}  MRR {produced['mrr']}  MTTC {produced['mttc']}")
+          print(f"token usage {tokens}")
+          PY
+
+      - name: Confirm the evaluator was never modified
+        run: |
+          set -euo pipefail
+          if git log --oneline e8ccc21..HEAD -- evaluator/ data/public_set.jsonl | grep .; then
+            echo "::error::A commit touched the evaluator or the public labels."
+            exit 1
+          fi
+          echo "evaluator/ and data/public_set.jsonl untouched since the participant kit"
