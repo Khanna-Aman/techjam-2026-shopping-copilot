@@ -88,9 +88,17 @@ def _prior_grid() -> list[tuple[str, dict]]:
 
 
 def _profile_grid() -> list[tuple[str, dict]]:
+    """Cold-start against always-on, because the sign of the effect depends on the timing.
+
+    Both arms are here deliberately. The finding this grid supports is not "personalization
+    helps" but "the same feature helps at cold start and hurts as a global term", and a grid
+    carrying only the cold-start arm cannot reproduce the half that makes it interesting.
+    """
     rows = [("profile off", {"use_profile_prior": False})]
     for value in (0.6, 1.0, 1.4, 2.0, 3.0):
         rows.append((f"cold-start w={value}", {"w_profile": value, "profile_cold_start_only": True}))
+    for value in (0.35, 0.6, 1.0):
+        rows.append((f"always     w={value}", {"w_profile": value, "profile_cold_start_only": False}))
     return rows
 
 

@@ -159,16 +159,41 @@ value(A) = P(customer can answer A) × E[constraints returned] × how well they 
 
 The policy now **derives** that the open-ended question is optimal rather than having it
 hardcoded, and yields to a specific question once the open channel is exhausted. Worth
-**+0.044**. Two attributes — `category` and `brand` — are excluded outright, because the
-simulator's classifier provably never emits them, so asking can never pay.
+**+0.015** over the entropy-only policy (0.9062 against 0.8911). Two attributes —
+`category` and `brand` — are excluded outright, because the simulator's classifier provably
+never emits them, so asking can never pay.
+
+Reproduce with `python -m tools.sweep --mode strategy`, and note what it also shows: the
+hybrid policy scores **exactly** what always-asking-open scores, to six decimal places. On
+this set the escalation branch never earns anything. It is kept for the same reason as the
+padding and the observed-token fallback — it is insurance for a private set that may
+exhaust the open channel more often — but it is not a public-set win, and reporting it as
+one would be dishonest.
+
+| clarification strategy | score |
+|---|---:|
+| none (the baseline's behaviour) | 0.4885 |
+| entropy-only (`infogain`) | 0.8911 |
+| always open | 0.9062 |
+| **expected value (`hybrid`, default)** | **0.9062** |
 
 ### 4. Personalization is a cold-start signal, not a ranking signal
 
 The anonymised profile offers generic preference tags ("fit", "comfort", "durability")
 that match most of the catalog. As a global ranking term they are **actively harmful**
-(−0.040). Applied *only before any constraint is known* — when they are the sole personal
-signal available — they help (**+0.015**). Same feature, opposite sign, depending entirely
-on when it is applied.
+(−0.039, at the same weight). Applied *only before any constraint is known* — when they are
+the sole personal signal available — they help (**+0.015**). Same feature, opposite sign,
+depending entirely on when it is applied.
+
+| `w_profile` = 1.0 | score | vs profile off |
+|---|---:|---:|
+| profile off | 0.8909 | — |
+| applied always | 0.8521 | **−0.0388** |
+| applied at cold start only | 0.9062 | **+0.0152** |
+
+`python -m tools.sweep --mode profile` carries both arms, because the finding is not
+"personalization helps" but that its sign flips with timing, and a grid holding only the
+cold-start arm cannot show that.
 
 ### 5. Paraphrase resistance was worth more than any ranking tweak
 
@@ -246,8 +271,8 @@ customer revises their intent on turn 3 or 4, so ~3.5 is close to the structural
 | no profile prior (cold start) | 0.8909 | −0.0152 |
 | no constraint scoring | 0.8910 | −0.0151 |
 | no category lock | 0.8971 | −0.0090 |
-| no override handling | 0.9052 | −0.0010 |
-| no observed-token fallback | 0.9054 | −0.0008 |
+| no override erasure | 0.9052 | −0.0010 |
+| no observed fallback | 0.9054 | −0.0008 |
 | no top-10 padding | 0.9062 | 0.0000 |
 | no MMR diversity | 0.9062 | 0.0000 |
 

@@ -4,15 +4,15 @@
       "override_decay": 0.0
     },
     "sample_count": 200,
-    "hit_rate_at_10": 0.98,
-    "mrr": 0.58349,
-    "mttc": 3.315,
-    "efficiency": 0.7685,
-    "technical_score": 0.818747,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.741002,
+    "mttc": 1.94,
+    "efficiency": 0.906,
+    "technical_score": 0.901001,
     "by_scenario": {
       "boundary": 1.0,
-      "browsing": 0.9875,
-      "buying": 0.975,
+      "browsing": 1.0,
+      "buying": 1.0,
       "intent_override": 0.966667
     }
   },
@@ -21,15 +21,15 @@
       "override_decay": 0.25
     },
     "sample_count": 200,
-    "hit_rate_at_10": 0.98,
-    "mrr": 0.591873,
-    "mttc": 3.13,
-    "efficiency": 0.787,
-    "technical_score": 0.824962,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.755002,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.905401,
     "by_scenario": {
       "boundary": 1.0,
-      "browsing": 0.9875,
-      "buying": 0.975,
+      "browsing": 1.0,
+      "buying": 1.0,
       "intent_override": 0.966667
     }
   },
@@ -38,15 +38,15 @@
       "override_decay": 0.5
     },
     "sample_count": 200,
-    "hit_rate_at_10": 0.98,
-    "mrr": 0.595109,
-    "mttc": 3.13,
-    "efficiency": 0.787,
-    "technical_score": 0.825933,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.757502,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.906151,
     "by_scenario": {
       "boundary": 1.0,
-      "browsing": 0.9875,
-      "buying": 0.975,
+      "browsing": 1.0,
+      "buying": 1.0,
       "intent_override": 0.966667
     }
   },
@@ -55,15 +55,15 @@
       "override_decay": 0.75
     },
     "sample_count": 200,
-    "hit_rate_at_10": 0.98,
-    "mrr": 0.59249,
-    "mttc": 3.13,
-    "efficiency": 0.787,
-    "technical_score": 0.825147,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.754169,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.905151,
     "by_scenario": {
       "boundary": 1.0,
-      "browsing": 0.9875,
-      "buying": 0.975,
+      "browsing": 1.0,
+      "buying": 1.0,
       "intent_override": 0.966667
     }
   },
@@ -72,15 +72,15 @@
       "override_decay": 1.0
     },
     "sample_count": 200,
-    "hit_rate_at_10": 0.98,
-    "mrr": 0.593601,
-    "mttc": 3.14,
-    "efficiency": 0.786,
-    "technical_score": 0.82528,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.754169,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.905151,
     "by_scenario": {
       "boundary": 1.0,
-      "browsing": 0.9875,
-      "buying": 0.975,
+      "browsing": 1.0,
+      "buying": 1.0,
       "intent_override": 0.966667
     }
   }
