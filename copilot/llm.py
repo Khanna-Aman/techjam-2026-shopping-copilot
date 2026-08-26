@@ -170,6 +170,9 @@ class LLMReranker:
         )
 
         # A refusal returns HTTP 200 with no usable ordering, so check before reading.
+        # Server-side refusal fallbacks are deliberately not requested here: this call
+        # already has a better fallback than another model, in that the offline ranking is
+        # free, deterministic and the thing being scored anyway.
         if getattr(response, "stop_reason", None) == "refusal":
             raise ValueError("model declined to rank")
 

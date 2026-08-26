@@ -1,5 +1,7 @@
 # Shopping Copilot — TikTok TechJam 2026, Track 4
 
+[![CI](https://github.com/Khanna-Aman/techjam-2026-shopping-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Khanna-Aman/techjam-2026-shopping-copilot/actions/workflows/ci.yml)
+
 A stateful conversational shopping agent for the TechJam Conversational E-Commerce Search
 Challenge. It finds a hidden target product inside a frozen 50,000-item Amazon catalog by
 asking the right questions, remembering the answers, and re-ranking as evidence arrives.
@@ -195,15 +197,24 @@ gzip -dkc catalog.jsonl.gz > data/catalog.jsonl
 python -m evaluator.local_evaluator
 
 # 3. everything else
-python -m pytest tests/ -q                          # 113 tests
+python -m pytest tests/ -q                          # 164 tests
 python -m tools.demo --scenario intent_override --index 1
 python -m tools.sweep --mode ablation
 python -m tools.robustness
+python -m tools.proxy_private                       # held-out generalisation
 ```
 
 The first run builds an index and caches it under `artifacts/` (~52 s, one time). Caching
 is best-effort and wrapped in `try/except`: a read-only judging environment simply rebuilds
 each run, which is slower but never a failure.
+
+You do not have to take the score on trust. [CI](.github/workflows/ci.yml) runs the test
+suite on Linux, macOS and Windows across Python 3.10 and 3.12, then downloads the frozen
+catalog from the organiser's own release, runs the unmodified evaluator, and **fails the
+build if the result disagrees with [`results/official_evaluation.json`](results/official_evaluation.json)**
+on hit rate, MRR, MTTC or the composite score — or if token usage is anything but zero. The
+number below is checked by machine on every push. A separate step walks the history back to
+the participant kit and fails if any commit touched `evaluator/` or `data/public_set.jsonl`.
 
 See [`DEMO_WALKTHROUGH.md`](DEMO_WALKTHROUGH.md) for a scripted three-minute tour.
 
@@ -234,7 +245,7 @@ customer revises their intent on turn 3 or 4, so ~3.5 is close to the structural
 | no popularity prior | 0.8595 | −0.0466 |
 | no profile prior (cold start) | 0.8909 | −0.0152 |
 | no constraint scoring | 0.8910 | −0.0151 |
-| no category lock | 0.8972 | −0.0089 |
+| no category lock | 0.8971 | −0.0090 |
 | no override handling | 0.9052 | −0.0010 |
 | no observed-token fallback | 0.9054 | −0.0008 |
 | no top-10 padding | 0.9062 | 0.0000 |
@@ -257,15 +268,59 @@ control run reproduces the official score exactly.
 Worst case sits **2.9% below control** (0.8796 vs 0.9062), versus 71% below before
 hardening.
 
+### Generalisation — held-out targets the agent was never tuned on
+
+The score above comes from the 200 public sessions. The 800 private ones decide the result,
+and "some overfitting risk is unavoidable" is a weaker thing to say than a number.
+
+The public samples carry **no hidden fields** — only a target `parent_asin`, a scenario
+label and an anonymised profile. The intent card and the customer's behaviour are
+materialised from the catalog product at evaluation time by the organiser's own
+`materialize_hidden_fields`. So a session built from a *different* target product is not an
+approximation of a real one: it is structurally identical, and `tools/proxy_private.py`
+drives it through the **unmodified official `evaluate()` loop**. Only the target differs.
+
+Sampling turned out to be the entire problem. Public targets are nowhere near uniform draws
+from the catalog:
+
+| | public targets | whole catalog |
+|---|---:|---:|
+| median `rating_number` | 6,614 | 12 |
+| has `features` | 100% | 90% |
+| has `details` | 100% | 97% |
+| has a price | 89% | 21% |
+
+Sampling uniformly would have measured a *harder task*, not a generalisation gap. So there
+are two regimes:
+
+| regime | n | score | 95% CI | vs public |
+|---|---:|---:|---|---:|
+| public (official) | 200 | **0.9062** | — | — |
+| matched — popularity decile-matched | 110 | 0.8869 | [0.8604, 0.9091] | −0.019 |
+| uniform — all eligible targets | 1000 | 0.8648 | [0.8528, 0.8763] | −0.041 |
+
+**The public score sits inside the matched interval**, so on held-out targets of comparable
+popularity there is no statistically detectable gap. It sits *outside* the uniform interval,
+and that 0.041 is the price of the popularity regularity — the dataset artefact flagged
+below, which now has a measurement attached rather than a disclaimer.
+
+The matched regime is capped at 110 sessions because the public 200 have already consumed
+most of the catalog's high-review tail, which is why its interval is wide. The match is
+close on popularity (median 6,845 against 6,614) but not exact on everything: matched
+targets carry a price 55% of the time against 89%. Budget is disclosed in roughly 0.5% of
+turns so the residual should be immaterial, but it is a real difference and the tool reports
+it rather than reporting only the axis that matched well.
+
 ### Feasibility
 
 | | |
 |---|---|
-| Model / API | **none** |
+| Model / API | **none** on the scored path |
 | Token usage | **0** — zero by construction, not by estimate |
 | Network access | **none required** — fully offline |
 | Monetary cost | **$0** |
 | Dependencies | Python standard library only |
+| Optional LLM reranking | Implemented, **off by default** — see below |
 | Index build | ~52 s cold (one time), ~0.9 s warm from cache |
 | Per-turn latency | **37 ms median**, 67 ms p95, 93 ms max |
 | Memory | ~225 MB resident with the 50k index loaded |
@@ -274,6 +329,22 @@ hardening.
 Measured on an Intel i5-1340P laptop, CPU only, no GPU. Latency is over 600 turns with
 constraints accumulating, not just cheap opening turns: cost rises with the number of
 confirmed constraints, because each is tested against every candidate in the pool.
+
+**On the optional LLM layer.** [`copilot/llm.py`](copilot/llm.py) implements a semantic
+reranking stage over the top candidates. It is disabled by default and gated a second time
+behind `COPILOT_LLM=1`, so neither switch alone can start a billed run. This is a
+deliberate choice rather than a missing piece: the rules state that official scoring may
+disable network access, which makes an agent that *needs* a key a liability. The offline
+path is the scored one, and the layer exists so that comparison is measured rather than
+assumed — run `python -m tools.sweep --mode llm`.
+
+The dependency is imported lazily *inside* the call, so with the layer off the agent stays
+standard-library only; CI asserts this by importing the agent with nothing installed. Every
+failure mode — missing key, missing package, rate limit, timeout, refusal, malformed
+response — returns the offline ordering unchanged, and a bad response can never shorten the
+recommendation list, because a dropped slot can never hit. Token usage is reported honestly
+in both modes: zero by construction when off, and the counts the API actually charged when
+on.
 
 ---
 
@@ -300,15 +371,19 @@ heavy paraphrase. Both are insurance against the private set, not public-set opt
 
 - **Tuned on 200 public sessions; 800 private sessions decide the result.** Weights were
   chosen from flat regions of their sweeps rather than sharp argmaxes, and every mechanism
-  derives from the *published protocol* rather than from quirks of the public labels — but
-  some overfitting risk is unavoidable, and I would rather state it than hide it.
+  derives from the *published protocol* rather than from quirks of the public labels. This
+  is now measured rather than argued: on popularity-matched held-out targets the score is
+  0.8869, and the public 0.9062 falls inside its 95% interval. Some overfitting risk
+  remains — 110 sessions is a wide interval — but it is bounded.
 - **Hit Rate is effectively saturated at 0.995** on the public set. Remaining headroom is
   almost entirely MRR (0.7575 of a possible 1.0), so further public-set gains are small
   and increasingly likely to be noise.
 - **The popularity prior works partly because of how sessions are sampled.** Targets come
-  from a 5-core split, so they carry ≥5 reviews. The private set shares that sampling, but
-  it is a dataset regularity rather than shopper behaviour, and I would not expect it to
-  transfer to a live catalog.
+  from a 5-core split, so they carry ≥5 reviews — and in practice far more: their median
+  `rating_number` is 6,614 against a catalog median of 12. Abandoning that regularity costs
+  **0.041** (uniform 0.8648 vs public 0.9062). It is a dataset regularity rather than
+  shopper behaviour, and I would not expect it to transfer to a live catalog. The private
+  set shares the sampling, so it should transfer *there*.
 - **The paraphrase harness is my model of paraphrasing, not the organiser's.** It rewords
   chrome while preserving payload. A paraphraser that also rewrites *product attributes*
   would degrade the agent further, and I have not simulated that.
@@ -335,13 +410,15 @@ heavy paraphrase. Both are insurance against the private set, not public-set opt
 | Requirement | Status |
 |---|---|
 | Exports `Agent` with `reset` / `respond` | `starter/agent.py` (and `copilot/agent.py`) |
-| Official evaluator unmodified | Yes — `git log` shows no change under `evaluator/` |
-| Public labels and docs unmodified | Yes |
+| Official evaluator unmodified | Yes — enforced by CI, which fails if any commit touches `evaluator/` |
+| Public labels and docs unmodified | Yes — same CI check covers `data/public_set.jsonl` |
 | Requires network access | **No.** Fully offline; declared explicitly |
 | Offline fallback | Not applicable — offline *is* the primary path |
+| Model choice, cost, token usage, latency disclosed | Yes — see Feasibility. Zero tokens, $0, 37 ms median on the scored path |
+| Optional external service | `copilot/llm.py`, **disabled by default** and gated behind `COPILOT_LLM=1`. Never used for scoring; absent it, the agent is unchanged |
 | Secrets in repo | None. No API keys, no credentials, no `.env` |
-| Python version | 3.10+ (developed on 3.12.6) |
-| Dependencies | Standard library only; `pytest` for tests |
+| Python version | 3.10+ — CI covers 3.10 and 3.12 on Linux, macOS and Windows |
+| Dependencies | Standard library only; `pytest` for tests, `anthropic` only for the optional layer |
 | Catalog redistributed | **No** — `data/catalog.jsonl` is git-ignored, downloaded from the official release and checksum-verified |
 | Reads private or organizer-only data | No. The agent opens only the frozen catalog |
 
