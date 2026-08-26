@@ -305,6 +305,21 @@ class CatalogIndex:
                 scores[doc_id] += factor * (tf * (k1 + 1.0)) / (tf + k1 * norm)
         return scores
 
+    def digest(self) -> str:
+        """SHA-256 prefix of the catalog file, memoised.
+
+        Derived artifacts are bound to this so a set of vectors built from one catalog can
+        never be silently used against another.
+        """
+        cached = getattr(self, "_digest_value", None)
+        if cached is None:
+            try:
+                cached = self._digest()
+            except OSError:
+                cached = ""
+            self._digest_value = cached
+        return cached
+
     def popularity(self, doc_id: int) -> float:
         """Rating-count prior in [0, 1], damped by log and scaled by average rating."""
         count = math.log1p(self.rating_count[doc_id]) / self.log_max_ratings

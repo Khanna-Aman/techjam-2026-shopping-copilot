@@ -227,6 +227,10 @@ python -m tools.demo --scenario intent_override --index 1
 python -m tools.sweep --mode ablation
 python -m tools.robustness
 python -m tools.proxy_private                       # held-out generalisation
+python -m tools.sweep --mode dense                  # the dense-retrieval rejection
+
+# optional: rebuild the dense artifact (needs numpy/scipy; ~35 s, deterministic)
+pip install numpy scipy scikit-learn && python -m tools.build_vectors
 ```
 
 The first run builds an index and caches it under `artifacts/` (~52 s, one time). Caching
@@ -384,14 +388,56 @@ Reporting only what worked would misrepresent how this was built.
 | **Entropy-only** question selection | Chose `budget`, which is answered 0.5% of the time. See finding #3. |
 | **Global** profile personalization | −0.039. Helps only at cold start. See finding #4. |
 | Tuning `w_constraint` from 1.8 → 6.0 | **No effect at all** — constraint satisfaction already dominates ordering, so the weight is inert across that range. Left at its default rather than reported as a tuned win. |
-| Raising `w_profile` from 1.0 → 5.0 | The most interesting rejection here, because it *worked* on every metric I checked first. See below. |
+| Raising `w_profile` from 1.0 → 5.0 | Worked on every metric I checked first, then failed the one I checked last. See below. |
+| **Dense retrieval** — offline latent-space cosine | Built it, measured it, **negative at every weight tested**. The reason is structural and worth reading. See below. |
 
 Two mechanisms are kept despite scoring ≈0 on the public set, deliberately. **Top-10
 padding** never triggers here but prevents a short list, and an empty slot can never hit.
 The **observed-token fallback** costs −0.0008 on clean input while being worth +0.65 under
 heavy paraphrase. Both are insurance against the private set, not public-set optimisations.
 
-### The rejection worth reading: `w_profile` 1.0 → 5.0
+### Dense retrieval makes this task worse, and the reason is the task
+
+The brief asks for vector similarity, so I built it: [`tools/build_vectors.py`](tools/build_vectors.py)
+takes a truncated SVD of the BM25-weighted document-term matrix and ships two fp16 arrays
+(21 MB, `k=128`); [`copilot/dense.py`](copilot/dense.py) reads them back with `struct` and
+`mmap` and scores cosine similarity over the candidate pool. Inference stays **standard
+library only** — numpy and scipy are needed to *build* the artifact, never to use it — and
+it costs about 6.7 ms per turn, because the category lock means scoring ~180 rows rather
+than 50,000.
+
+It does not work. Not marginally: at every weight tested.
+
+| `w_dense` | 0 (off) | 0.15 | 0.30 | 0.60 | 1.00 | 1.80 | 3.00 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| score | **0.9062** | 0.8971 | 0.8917 | 0.8878 | 0.8746 | 0.8606 | 0.8555 |
+
+Applied only at cold start — the trick that rescued the profile prior in finding #4 — it
+reaches 0.9072, **+0.0010**, which is well inside noise on 200 sessions and not a result I
+would ship on.
+
+The reason is a property of the task, not of LSA. Measuring the constraint strings the
+simulator actually discloses:
+
+- **95.6%** of them appear **verbatim** in their own target product's text.
+- **25.9%** are unique to exactly one product in the entire 50,000-item catalog.
+- **32.6%** narrow the catalog to ten products or fewer.
+
+A quarter of the time, one disclosed constraint *is* the answer, by exact string match. This
+is what dense retrieval exists to fix — vocabulary mismatch, where the shopper's words and
+the product's words differ — and by construction this task has almost none. Semantic
+similarity is a *smoothing* operator: it deliberately blurs exact matches to surface related
+items. Smoothing a signal that is already exact can only add noise to the ordering, and the
+table above is what that looks like.
+
+That generalises past LSA. Any bi-encoder faces the same structural mismatch here, however
+good its embeddings, which is why I did not spend a day on a GPU to reproduce the finding
+with better vectors. It also does *not* generalise past this benchmark: a real shopper
+describing a product in their own words is exactly the vocabulary-mismatch case, and there
+dense retrieval would earn its place. The mechanism is kept behind
+`use_dense_rerank` so the numbers above stay reproducible.
+
+### The other rejection worth reading: `w_profile` 1.0 → 5.0
 
 The profile sweep says raise it. The score climbs from 0.9062 to 0.9083 and then sits on a
 flat plateau out to at least w=15, so it is not a fragile argmax. Held-out targets agree:
@@ -441,15 +487,20 @@ when the ranking tweak is one I already talked myself into.
 - **The paraphrase harness is my model of paraphrasing, not the organiser's.** It rewords
   chrome while preserving payload. A paraphraser that also rewrites *product attributes*
   would degrade the agent further, and I have not simulated that.
-- **No semantic retrieval.** Matching is lexical, so a customer describing a product in
-  words that never appear in its metadata is served poorly.
+- **No semantic retrieval in the shipped configuration** — but not for want of trying. It
+  is implemented and measured, and it loses at every weight, because the benchmark's
+  constraints are mined verbatim from the target and leave almost no vocabulary mismatch to
+  close. A customer describing a product in words that never appear in its metadata is
+  still served poorly, and that is a real limitation for a real deployment; it is simply
+  not one this benchmark can reward fixing.
 
 ## What I would do next
 
-1. **Dense retrieval, still offline.** Encode the 50k catalog once on a GPU, ship a ~38 MB
-   fp16 array, and cosine-rerank in memory. Inference stays CPU-only and network-free, so
-   the offline guarantee is preserved. Biggest remaining quality lever, and it addresses
-   the lexical-matching limitation directly.
+1. **Semantic retrieval for a real catalog, not this one.** The offline dense tier is built
+   and measured, and it loses here for a structural reason (see above). The version worth
+   building is one aimed at genuine vocabulary mismatch — a shopper describing a product in
+   words the listing never uses — which this benchmark does not contain and therefore cannot
+   reward. That is a change of task, not of weight.
 2. **An optional LLM reranking layer**, environment-gated and **off by default**, with the
    offline path remaining the scored one — the rules warn that official scoring may disable
    network access, so an agent that *needs* a key is a liability, not a feature.

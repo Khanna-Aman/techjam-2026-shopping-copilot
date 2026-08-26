@@ -40,6 +40,17 @@ class AgentConfig:
     # Optional LLM semantic reranking. Off by default and gated a second time by the
     # COPILOT_LLM environment variable, because official scoring may run without network
     # access -- so the offline path is the one that must be the default. See copilot/llm.py.
+    # Offline dense retrieval: latent-space cosine over the candidate pool, read from a
+    # prebuilt artifact with the standard library alone. Needs no network and no model at
+    # inference, so unlike the LLM layer it is a candidate for the scored default -- but it
+    # ships off until measurement says otherwise. See copilot/dense.py.
+    use_dense_rerank: bool = False
+    #: Apply the latent term only before any constraint is known. Same shape as
+    #: profile_cold_start_only, and tested for the same reason: cold start is the one
+    #: moment when the lexical signal is a bare category and a smoothed one might add
+    #: something rather than blur what is already precise.
+    dense_cold_start_only: bool = False
+    dense_path: str = "artifacts/dense"
     use_llm_rerank: bool = False
     #: How many of the top candidates are sent for reranking. The tail is already ordered
     #: by the offline ranker and rarely holds the target, so ranking it buys nothing.
@@ -49,6 +60,8 @@ class AgentConfig:
     # --- ranking weights ---------------------------------------------------------
     w_bm25: float = 1.00
     w_constraint: float = 2.60
+    #: Weight on the latent-space cosine term. Inert unless use_dense_rerank is on.
+    w_dense: float = 0.60
     w_popularity: float = 0.55
     # Left at 1.0 deliberately. Raising this to 5.0 scores better on clean input (0.9083
     # against 0.9062) and the gain survives held-out targets, but it buys that by making

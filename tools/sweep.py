@@ -123,6 +123,23 @@ def _override_grid() -> list[tuple[str, dict]]:
     ]
 
 
+def _dense_grid() -> list[tuple[str, dict]]:
+    """Offline default against latent-space reranking at a range of weights.
+
+    Free and offline like every other mode here -- the artifact is prebuilt, and inference
+    reads it with the standard library.
+    """
+    rows = [("offline (default)", {})]
+    for value in (0.15, 0.30, 0.60, 1.00, 1.80, 3.00):
+        rows.append((f"dense w={value}", {"use_dense_rerank": True, "w_dense": value}))
+    for value in (0.3, 0.6, 1.2, 2.5):
+        rows.append((
+            f"cold-start dense w={value}",
+            {"use_dense_rerank": True, "dense_cold_start_only": True, "w_dense": value},
+        ))
+    return rows
+
+
 def _llm_grid() -> list[tuple[str, dict]]:
     """Offline default against the optional LLM reranking layer.
 
@@ -149,6 +166,7 @@ MODES = {
     "observed": _observed_grid,
     "prior": _prior_grid,
     "llm": _llm_grid,
+    "dense": _dense_grid,
 }
 
 #: Modes that issue live API requests, and therefore need an explicit warning and a

@@ -20,6 +20,7 @@ from pathlib import Path
 
 from copilot.catalog import CatalogIndex
 from copilot.config import DEFAULT_CONFIG, AgentConfig
+from copilot.dense import DenseVectors
 from copilot.dialogue import (
     _CHROME_TOKENS,
     ASK_MORE,
@@ -57,6 +58,15 @@ class ShoppingCopilot:
         # third-party package and opens no connection until the first request it is
         # allowed to make.
         self._reranker = LLMReranker(self.config)
+        # Loaded only when enabled, because binding the artifact to the catalog means
+        # hashing the catalog file, and that cost should not be paid by a run that will
+        # never use the vectors. Construction never raises; a missing or mismatched
+        # artifact simply leaves it unavailable and the agent ranks as it otherwise would.
+        self.dense = (
+            DenseVectors(self.config.dense_path, catalog_digest=self.index.digest())
+            if self.config.use_dense_rerank
+            else None
+        )
 
     # ------------------------------------------------------------------ Agent contract
     def reset(self, session_id: str, user_profile: dict) -> None:
@@ -99,7 +109,7 @@ class ShoppingCopilot:
             state.observe_text(message, _CHROME_TOKENS)
 
         pool = candidate_pool(self.index, state, self.config)
-        ranked = rank(self.index, state, self.config, limit=limit)
+        ranked = rank(self.index, state, self.config, limit=limit, dense=self.dense)
         if self.config.pad_to_top_k:
             ranked = pad(self.index, ranked, pool, limit)
 

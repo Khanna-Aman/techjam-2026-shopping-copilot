@@ -147,8 +147,14 @@ def rank(
     config: AgentConfig,
     *,
     limit: int = 10,
+    dense=None,
 ) -> list[int]:
-    """Produce the ranked candidate list for this turn."""
+    """Produce the ranked candidate list for this turn.
+
+    ``dense`` is an optional :class:`copilot.dense.DenseVectors`. It is a *ranking* signal
+    rather than a recall one: the category lock already brings Hit@10 to 0.995, so the
+    headroom is in ordering the pool, not in finding more of it.
+    """
     pool = candidate_pool(index, state, config)
     if not pool:
         return []
@@ -170,6 +176,16 @@ def rank(
     ):
         tags = state.profile_tags()
 
+    # Project the same query terms into latent space once per turn, not once per candidate.
+    query_vector = None
+    if (
+        config.use_dense_rerank
+        and dense is not None
+        and dense.available()
+        and not (config.dense_cold_start_only and state.has_hard_signal())
+    ):
+        query_vector = dense.query_vector(tokens, weights or None)
+
     combined: dict[int, float] = {}
     for doc_id in pool:
         score = config.w_bm25 * lexical.get(doc_id, 0.0)
@@ -179,6 +195,8 @@ def rank(
             score += config.w_popularity * index.popularity(doc_id)
         if tags:
             score += config.w_profile * profile_affinity(index, doc_id, tags)
+        if query_vector is not None:
+            score += config.w_dense * dense.similarity(query_vector, doc_id)
         combined[doc_id] = score
 
     ordered = sorted(combined.items(), key=lambda kv: (-kv[1], index.ids[kv[0]]))
