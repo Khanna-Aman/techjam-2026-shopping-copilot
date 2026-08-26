@@ -50,6 +50,12 @@ class AgentConfig:
     w_bm25: float = 1.00
     w_constraint: float = 2.60
     w_popularity: float = 0.55
+    # Left at 1.0 deliberately. Raising this to 5.0 scores better on clean input (0.9083
+    # against 0.9062) and the gain survives held-out targets, but it buys that by making
+    # the agent lean harder on a prior that paraphrase disturbs: under heavy paraphrase it
+    # scores 0.8711 against 1.0's 0.8824, dropping the worst case from 2.9% to 4.1% below
+    # control. A ranking tweak that trades paraphrase resistance for two thousandths is the
+    # wrong trade here -- see the rejected-ideas table in the README.
     w_profile: float = 1.00
     # Apply the profile prior only before any constraint is known. The anonymised
     # preference tags are generic words (fit, comfort, durability) that match most of

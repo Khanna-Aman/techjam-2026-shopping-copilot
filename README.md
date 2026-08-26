@@ -382,13 +382,42 @@ Reporting only what worked would misrepresent how this was built.
 | **MMR diversification** of an uncertain top-10 | Sounded right; measured **0.0000** and dominated latency. Off by default, kept behind a flag so its ablation row stays reproducible. |
 | **Erasing** the retracted override value | The intuitive reading; the **worst** setting tested. See finding #2. |
 | **Entropy-only** question selection | Chose `budget`, which is answered 0.5% of the time. See finding #3. |
-| **Global** profile personalization | −0.040. Helps only at cold start. See finding #4. |
+| **Global** profile personalization | −0.039. Helps only at cold start. See finding #4. |
 | Tuning `w_constraint` from 1.8 → 6.0 | **No effect at all** — constraint satisfaction already dominates ordering, so the weight is inert across that range. Left at its default rather than reported as a tuned win. |
+| Raising `w_profile` from 1.0 → 5.0 | The most interesting rejection here, because it *worked* on every metric I checked first. See below. |
 
 Two mechanisms are kept despite scoring ≈0 on the public set, deliberately. **Top-10
 padding** never triggers here but prevents a short list, and an empty slot can never hit.
 The **observed-token fallback** costs −0.0008 on clean input while being worth +0.65 under
 heavy paraphrase. Both are insurance against the private set, not public-set optimisations.
+
+### The rejection worth reading: `w_profile` 1.0 → 5.0
+
+The profile sweep says raise it. The score climbs from 0.9062 to 0.9083 and then sits on a
+flat plateau out to at least w=15, so it is not a fragile argmax. Held-out targets agree:
++0.0019 on the popularity-matched proxy set and +0.0013 on the uniform one, all three moving
+the same direction. By the standards applied everywhere else in this repository — measured,
+reproduced, validated off the tuning set, taken from a flat region — it is a real
+improvement, and I adopted it.
+
+Then I ran the paraphrase harness.
+
+| `w_profile` | control | punctuation | light | heavy | **worst case** |
+|---|---:|---:|---:|---:|---:|
+| **1.0 (shipped)** | 0.9062 | 0.8796 | 0.8860 | 0.8824 | **0.8796** |
+| 1.4 | 0.9074 | 0.8796 | 0.8873 | 0.8799 | 0.8796 |
+| 5.0 | 0.9083 | 0.8796 | 0.8901 | **0.8711** | 0.8711 |
+
+Raising the weight makes the agent lean harder on a cold-start prior, and that prior is
+exactly what a reworded opener disturbs. The clean score rises by 0.0021; the heavy-paraphrase
+score falls by 0.0113, and the worst case slips from 2.9% to 4.1% below control. Setting
+`P` as the chance the organiser paraphrases, the change pays only while `P < 16%` — and the
+specification says paraphrasing may be added without saying how often, while "heavy" here is
+*my* model of it rather than theirs.
+
+So it is not shipped. This is finding #5 restated as a decision rather than an observation:
+paraphrase resistance was worth more than any ranking tweak, and that has to keep being true
+when the ranking tweak is one I already talked myself into.
 
 ---
 
