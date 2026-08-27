@@ -117,13 +117,77 @@ def _write_fp16(path: Path, matrix, dim: int) -> None:
             handle.write(packer(*[max(-65000.0, min(65000.0, float(v))) for v in row]))
 
 
+def _load_encoder(model_name: str):
+    try:
+        import os  # noqa: PLC0415
+
+        import torch  # noqa: PLC0415
+        from sentence_transformers import SentenceTransformer  # noqa: PLC0415
+    except ImportError as error:  # pragma: no cover - environment dependent
+        raise SystemExit(
+            f"--mode transformer needs sentence-transformers ({error}).\n"
+            "  pip install sentence-transformers\n\n"
+            "Build-time only. The artifact it produces is read by the standard library."
+        ) from error
+    torch.set_num_threads(os.cpu_count() or 4)
+    encoder = SentenceTransformer(model_name)
+    encoder.max_seq_length = 128
+    device = getattr(encoder, "device", "unknown")
+    print(f"encoder    : {model_name} on {device}")
+    if str(device).startswith("cpu") and torch.cuda.is_available():  # pragma: no cover
+        print("             (CUDA is available but unused -- check the runtime)")
+    return encoder
+
+
+def build_transformer(index: CatalogIndex, catalog: str, model_name: str, min_df: int,
+                      np, batch_size: int = 64):
+    """Encode products and vocabulary terms with a sentence bi-encoder.
+
+    The query side is *distilled*: each vocabulary term is encoded on its own, and a query
+    becomes the weighted mean of its terms' vectors. That keeps inference in the standard
+    library, at the cost of being an approximation of what the real encoder would produce
+    for a whole sentence. The approximation is measured rather than assumed -- see the
+    live-encoder comparison in tools/dense_probe.py.
+    """
+    from evaluator.local_evaluator import searchable_text  # noqa: PLC0415
+
+    encoder = _load_encoder(model_name)
+
+    texts: list[str] = []
+    with Path(catalog).open(encoding="utf-8") as handle:
+        for line in handle:
+            if line.strip():
+                texts.append(searchable_text(json.loads(line))[:600])
+    print(f"encoding   : {len(texts):,} products with {model_name}")
+    docs = encoder.encode(
+        texts, batch_size=batch_size, show_progress_bar=True, normalize_embeddings=True
+    )
+
+    terms = sorted(
+        term
+        for term, term_id in index.vocab.items()
+        if len(index.postings[term_id][0]) >= min_df
+    )
+    print(f"encoding   : {len(terms):,} vocabulary terms for the distilled query side")
+    term_vectors = encoder.encode(
+        terms, batch_size=batch_size * 4, show_progress_bar=True, normalize_embeddings=True
+    )
+    return np.asarray(docs), np.asarray(term_vectors), terms
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build the dense retrieval artifact")
     parser.add_argument("--catalog", default="data/catalog.jsonl")
     parser.add_argument("--out", default="artifacts/dense")
+    parser.add_argument("--mode", default="lsa", choices=("lsa", "transformer"))
+    parser.add_argument("--model", default="sentence-transformers/all-MiniLM-L6-v2")
     parser.add_argument("--dim", type=int, default=128)
     parser.add_argument("--min-df", type=int, default=2)
     parser.add_argument("--seed", type=int, default=20260826)
+    parser.add_argument(
+        "--batch-size", type=int, default=64,
+        help="encoder batch size; raise it substantially on a GPU",
+    )
     args = parser.parse_args()
 
     np, sparse, TruncatedSVD = _require_scientific_python()
@@ -132,20 +196,31 @@ def main() -> None:
     index = CatalogIndex(args.catalog)
     print(f"index      : {index.count:,} docs, {len(index.vocab):,} terms")
 
-    matrix, terms = build_matrix(index, args.min_df, np, sparse)
-    print(f"matrix     : {matrix.shape[0]:,} x {matrix.shape[1]:,}, {matrix.nnz:,} nonzero")
+    explained = None
+    if args.mode == "transformer":
+        docs, term_vectors, terms = build_transformer(
+            index, args.catalog, args.model, args.min_df, np, args.batch_size
+        )
+        dim = docs.shape[1]
+    else:
+        matrix, terms = build_matrix(index, args.min_df, np, sparse)
+        print(f"matrix     : {matrix.shape[0]:,} x {matrix.shape[1]:,}, {matrix.nnz:,} nonzero")
 
-    svd = TruncatedSVD(n_components=args.dim, algorithm="randomized", random_state=args.seed)
-    docs = svd.fit_transform(matrix)          # (docs, k) = U S
-    term_vectors = svd.components_.T          # (terms, k) = V
-    explained = float(svd.explained_variance_ratio_.sum())
-    print(f"svd        : k={args.dim}, explains {explained:.1%} of variance")
+        svd = TruncatedSVD(
+            n_components=args.dim, algorithm="randomized", random_state=args.seed
+        )
+        docs = svd.fit_transform(matrix)          # (docs, k) = U S
+        term_vectors = svd.components_.T          # (terms, k) = V
+        explained = float(svd.explained_variance_ratio_.sum())
+        print(f"svd        : k={args.dim}, explains {explained:.1%} of variance")
+        dim = args.dim
 
     # Normalise document rows once, at build time, so cosine similarity becomes a plain dot
     # product at inference and the agent never has to compute a norm.
     norms = np.linalg.norm(docs, axis=1, keepdims=True)
     norms[norms == 0.0] = 1.0
     docs = docs / norms
+    args.dim = dim
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -156,13 +231,14 @@ def main() -> None:
         json.dumps(
             {
                 "version": ARTIFACT_VERSION,
-                "kind": "lsa",
+                "kind": args.mode,
+                "model": args.model if args.mode == "transformer" else None,
                 "dim": args.dim,
                 "docs": index.count,
                 "terms": len(terms),
                 "min_df": args.min_df,
                 "catalog_digest": index._digest(),
-                "explained_variance_ratio": round(explained, 6),
+                "explained_variance_ratio": round(explained, 6) if explained is not None else None,
                 "seed": args.seed,
             },
             indent=2,
