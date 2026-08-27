@@ -1,0 +1,163 @@
+{
+  "source": "official_evaluation.json",
+  "source_technical_score": 0.906151,
+  "rounds": 20000,
+  "seed": 20260901,
+  "note": "Percentile bootstrap over public-set sessions. Covers sampling variation within the public distribution only; distribution shift to the private set is measured by tools/proxy_private.py, not here.",
+  "overall": {
+    "sample_count": 200,
+    "rounds": 20000,
+    "metrics": {
+      "technical_score": {
+        "point": 0.906151,
+        "ci95_low": 0.889139,
+        "ci95_high": 0.921574,
+        "std_error": 0.008244
+      },
+      "hit_rate_at_10": {
+        "point": 0.995,
+        "ci95_low": 0.985,
+        "ci95_high": 1.0,
+        "std_error": 0.004976
+      },
+      "mrr": {
+        "point": 0.757502,
+        "ci95_low": 0.708522,
+        "ci95_high": 0.804621,
+        "std_error": 0.024426
+      },
+      "mttc": {
+        "point": 1.93,
+        "ci95_low": 1.775,
+        "ci95_high": 2.1,
+        "std_error": 0.082752
+      }
+    }
+  },
+  "by_scenario": {
+    "boundary": {
+      "sample_count": 10,
+      "rounds": 20000,
+      "metrics": {
+        "technical_score": {
+          "point": 0.9455,
+          "ci95_low": 0.9005,
+          "ci95_high": 0.98,
+          "std_error": 0.020901
+        },
+        "hit_rate_at_10": {
+          "point": 1.0,
+          "ci95_low": 1.0,
+          "ci95_high": 1.0,
+          "std_error": 0.0
+        },
+        "mrr": {
+          "point": 0.925,
+          "ci95_low": 0.775,
+          "ci95_high": 1.0,
+          "std_error": 0.07092
+        },
+        "mttc": {
+          "point": 2.6,
+          "ci95_low": 1.6,
+          "ci95_high": 3.8,
+          "std_error": 0.553503
+        }
+      },
+      "underpowered": true
+    },
+    "browsing": {
+      "sample_count": 80,
+      "rounds": 20000,
+      "metrics": {
+        "technical_score": {
+          "point": 0.901851,
+          "ci95_low": 0.878565,
+          "ci95_high": 0.92428,
+          "std_error": 0.011625
+        },
+        "hit_rate_at_10": {
+          "point": 1.0,
+          "ci95_low": 1.0,
+          "ci95_high": 1.0,
+          "std_error": 0.0
+        },
+        "mrr": {
+          "point": 0.727837,
+          "ci95_low": 0.6481,
+          "ci95_high": 0.804177,
+          "std_error": 0.039718
+        },
+        "mttc": {
+          "point": 1.825,
+          "ci95_low": 1.725,
+          "ci95_high": 1.925,
+          "std_error": 0.04946
+        }
+      },
+      "underpowered": false
+    },
+    "buying": {
+      "sample_count": 80,
+      "rounds": 20000,
+      "metrics": {
+        "technical_score": {
+          "point": 0.901588,
+          "ci95_low": 0.877545,
+          "ci95_high": 0.925167,
+          "std_error": 0.012208
+        },
+        "hit_rate_at_10": {
+          "point": 1.0,
+          "ci95_low": 1.0,
+          "ci95_high": 1.0,
+          "std_error": 0.0
+        },
+        "mrr": {
+          "point": 0.687793,
+          "ci95_low": 0.608676,
+          "ci95_high": 0.765848,
+          "std_error": 0.040196
+        },
+        "mttc": {
+          "point": 1.2375,
+          "ci95_low": 1.15,
+          "ci95_high": 1.3375,
+          "std_error": 0.050668
+        }
+      },
+      "underpowered": false
+    },
+    "intent_override": {
+      "sample_count": 30,
+      "rounds": 20000,
+      "metrics": {
+        "technical_score": {
+          "point": 0.916667,
+          "ci95_low": 0.851333,
+          "ci95_high": 0.950667,
+          "std_error": 0.031128
+        },
+        "hit_rate_at_10": {
+          "point": 0.966667,
+          "ci95_low": 0.9,
+          "ci95_high": 1.0,
+          "std_error": 0.032746
+        },
+        "mrr": {
+          "point": 0.966667,
+          "ci95_low": 0.9,
+          "ci95_high": 1.0,
+          "std_error": 0.032746
+        },
+        "mttc": {
+          "point": 3.833333,
+          "ci95_low": 3.466667,
+          "ci95_high": 4.433333,
+          "std_error": 0.259454
+        }
+      },
+      "underpowered": false
+    }
+  }
+}

@@ -165,8 +165,13 @@ PERTURBATIONS = {
 
 # ------------------------------------------------------------------------- evaluation
 def run(agent: Agent, samples: list[dict], catalog_ids, categories, products,
-        perturb, seed: int = 20260825) -> dict:
-    """Mirror of the official loop with a perturbation applied to customer messages."""
+        perturb, seed: int = 20260825, keep_sessions: bool = False) -> dict:
+    """Mirror of the official loop with a perturbation applied to customer messages.
+
+    `keep_sessions` adds the per-session records to the result. It is off by default so the
+    committed robustness and ablation JSON stay summaries; `tools/ablation_ci.py` turns it
+    on because a paired comparison needs to line the two runs up session by session.
+    """
     rng = random.Random(seed)
     sessions: list[dict] = []
     for sample in samples:
@@ -220,7 +225,7 @@ def run(agent: Agent, samples: list[dict], catalog_ids, categories, products,
     grouped: dict[str, list[dict]] = defaultdict(list)
     for item in sessions:
         grouped[item["scenario_type"]].append(item)
-    return {
+    result = {
         **overall,
         "efficiency": round(efficiency, 6),
         "technical_score": round(score, 6),
@@ -228,6 +233,9 @@ def run(agent: Agent, samples: list[dict], catalog_ids, categories, products,
             name: metric_summary(grouped[name])["hit_rate_at_10"] for name in sorted(grouped)
         },
     }
+    if keep_sessions:
+        result["sessions"] = sessions
+    return result
 
 
 def main() -> None:

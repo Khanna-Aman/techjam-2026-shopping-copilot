@@ -264,21 +264,62 @@ See [`DEMO_WALKTHROUGH.md`](DEMO_WALKTHROUGH.md) for a scripted three-minute tou
 Intent Override carries the highest MTTC by construction: a hit only counts *after* the
 customer revises their intent on turn 3 or 4, so ~3.5 is close to the structural floor.
 
+### How precise is 0.906151?
+
+Not that precise. Six figures is a fact about floating-point arithmetic; the score is a mean
+over 200 sessions, and a different 200 would land elsewhere. `tools/bootstrap.py` resamples
+the committed per-session records 20,000 times:
+
+| metric | point | 95% CI | std err |
+|---|---:|---|---:|
+| TechnicalScore | 0.9062 | [0.8891, 0.9216] | ±0.0082 |
+| Hit@10 | 0.9950 | [0.9850, 1.0000] | ±0.0050 |
+| MRR | 0.7575 | [0.7085, 0.8046] | ±0.0244 |
+| MTTC | 1.9300 | [1.7750, 2.1000] | ±0.0828 |
+
+So the defensible claim is **≈0.91 ± 0.02**, and MRR — the metric with the most headroom
+left — is also the least certain of the four. Two consequences I try to hold to elsewhere in
+this document: a tuning result below roughly ±0.016 on the composite is not a result, and
+the gap between this and the generalisation numbers below is well inside the interval.
+
+**What this interval does not cover.** A bootstrap describes what happens if you redraw
+sessions *from the same distribution*. The private set may not be that distribution —
+different target popularity, possibly paraphrased turns. That is distribution shift, not
+sampling noise, and it is measured separately by `tools/proxy_private.py` and
+`tools/robustness.py`. Quoting ±0.02 as a bound on private-set performance would be an
+overclaim.
+
 ### Ablation — one mechanism removed at a time
 
-| configuration | score | Δ |
-|---|---:|---:|
-| **full system** | **0.9062** | — |
-| no clarification | 0.4885 | **−0.4176** |
-| no state tracking | 0.5666 | **−0.3395** |
-| no popularity prior | 0.8595 | −0.0466 |
-| no profile prior (cold start) | 0.8909 | −0.0152 |
-| no constraint scoring | 0.8910 | −0.0151 |
-| no category lock | 0.8971 | −0.0090 |
-| no override erasure | 0.9052 | −0.0010 |
-| no observed fallback | 0.9054 | −0.0008 |
-| no top-10 padding | 0.9062 | 0.0000 |
-| no MMR diversity | 0.9062 | 0.0000 |
+The Δ column is a **paired** comparison: both configurations answer the same 200 sessions in
+the same order, so the variance they share cancels in the difference. `tools/ablation_ci.py`
+bootstraps that difference directly, which resolves effects far smaller than the ±0.008
+standard error on the score itself would suggest.
+
+| configuration | score | Δ | 95% CI on Δ |
+|---|---:|---:|---|
+| **full system** | **0.9062** | — | — |
+| no clarification | 0.4885 | **−0.4176** | [−0.4789, −0.3561] |
+| no state tracking | 0.5666 | **−0.3395** | [−0.3955, −0.2838] |
+| no popularity prior | 0.8595 | −0.0466 | [−0.0683, −0.0263] |
+| no profile prior (cold start) | 0.8909 | −0.0152 | [−0.0255, −0.0054] |
+| no constraint scoring | 0.8910 | −0.0151 | [−0.0227, −0.0081] |
+| no category lock | 0.8971 | −0.0090 | [−0.0226, +0.0028] *spans zero* |
+| no override erasure | 0.9052 | −0.0010 | [−0.0030, +0.0000] *spans zero* |
+| no observed fallback | 0.9054 | −0.0008 | [−0.0022, +0.0000] *spans zero* |
+| no top-10 padding | 0.9062 | 0.0000 | [0.0000, 0.0000] *spans zero* |
+| no MMR diversity | 0.9062 | 0.0000 | [0.0000, 0.0000] *spans zero* |
+
+**Five of the ten mechanisms are not distinguishable from sampling noise on the public
+set.** That includes the category lock, which I had assumed was carrying real weight. The
+two zero rows are exactly zero because removing them changes no session's outcome at all.
+
+I am leaving all five in the default configuration, and the reason is not sentiment: an
+interval spanning zero means the effect is *unresolved at n=200*, not that it is absent, and
+four of the five are cheap guards, and the clean public set is the easiest input they will
+ever see. What changes is the claim. I no longer describe the
+category lock as contributing +0.009; the honest statement is that its contribution is
+smaller than this benchmark can measure.
 
 ### Robustness — the same sessions, reworded
 

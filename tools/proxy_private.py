@@ -50,7 +50,6 @@ from __future__ import annotations
 import argparse
 import json
 import random
-import statistics
 import sys
 from dataclasses import replace
 from pathlib import Path
@@ -68,6 +67,8 @@ from evaluator.local_evaluator import (  # noqa: E402
 from copilot.agent import ShoppingCopilot  # noqa: E402
 from copilot.catalog import CatalogIndex  # noqa: E402
 from copilot.config import DEFAULT_CONFIG, AgentConfig  # noqa: E402
+
+from tools.stats import bootstrap_metrics  # noqa: E402
 
 #: The published scenario mix, as it appears in the 200 public sessions.
 SCENARIO_MIX: tuple[tuple[str, float], ...] = (
@@ -208,25 +209,18 @@ def bootstrap_interval(
 
     At the sample sizes the matched regime allows, a point estimate on its own would imply
     a precision the data does not support.
+
+    The resampling itself lives in `tools.stats`, which reports every headline metric; this
+    regime table only has room for the composite, so it takes that pair of columns. See
+    `tools/bootstrap.py` for the full breakdown on the public set.
     """
-    if not sessions:
+    summary = bootstrap_metrics(sessions, rng, rounds=rounds)
+    if not summary:
         return {}
-    scores: list[float] = []
-    size = len(sessions)
-    for _ in range(rounds):
-        draw = [sessions[rng.randrange(size)] for _ in range(size)]
-        hit_rate = sum(int(item["hit"]) for item in draw) / size
-        mrr = statistics.fmean(item["reciprocal_rank"] for item in draw)
-        mttc = statistics.fmean(
-            item["first_hit_turn"] if item["first_hit_turn"] is not None else 11
-            for item in draw
-        )
-        efficiency = max(0.0, min(1.0, (11.0 - mttc) / 10.0))
-        scores.append(0.50 * hit_rate + 0.30 * mrr + 0.20 * efficiency)
-    scores.sort()
+    composite = summary["metrics"]["technical_score"]
     return {
-        "ci95_low": round(scores[int(0.025 * rounds)], 6),
-        "ci95_high": round(scores[int(0.975 * rounds)], 6),
+        "ci95_low": composite["ci95_low"],
+        "ci95_high": composite["ci95_high"],
     }
 
 

@@ -129,6 +129,49 @@ def test_per_scenario_table_matches_the_official_result():
         assert _number(mttc) == pytest.approx(source["mttc"], abs=5e-4), f"{name}: MTTC"
 
 
+#: "[-0.0226, +0.0028] spans zero" -- the emphasis markers are stripped by `_cells`.
+_INTERVAL = re.compile(r"\[\s*([^,\]]+),\s*([^\]]+?)\s*\]")
+
+
+def _interval(text: str) -> tuple[float, float]:
+    match = _INTERVAL.search(text)
+    assert match, f"no interval found in {text!r}"
+    return _number(match.group(1)), _number(match.group(2))
+
+
+def test_precision_table_matches_the_committed_bootstrap():
+    bootstrap = _load("bootstrap.json")
+    rows = _table_rows("### How precise is")
+    assert rows, "precision table not found"
+
+    keys = {
+        "TechnicalScore": "technical_score",
+        "Hit@10": "hit_rate_at_10",
+        "MRR": "mrr",
+        "MTTC": "mttc",
+    }
+    documented = set()
+    for label, point, interval, std_error in ((r[0], r[1], r[2], r[3]) for r in rows):
+        key = keys[label]
+        documented.add(key)
+        stats = bootstrap["overall"]["metrics"][key]
+        assert _number(point) == pytest.approx(stats["point"], abs=5e-5), f"{label}: point"
+        low, high = _interval(interval)
+        assert low == pytest.approx(stats["ci95_low"], abs=5e-5), f"{label}: CI low"
+        assert high == pytest.approx(stats["ci95_high"], abs=5e-5), f"{label}: CI high"
+        stated = _number(std_error.replace("±", ""))
+        assert stated == pytest.approx(stats["std_error"], abs=5e-5), f"{label}: std err"
+
+    assert documented == set(keys.values()), "the precision table omits a metric"
+
+
+def test_the_bootstrap_was_taken_from_the_current_official_result():
+    """A stale bootstrap.json would put a CI around a score nobody reports any more."""
+    bootstrap = _load("bootstrap.json")
+    official = _load("official_evaluation.json")
+    assert bootstrap["source_technical_score"] == official["recommended_technical_score"]
+
+
 def test_ablation_table_matches_the_committed_ablation():
     ablation = _load("ablation.json")
     rows = _table_rows("### Ablation")
