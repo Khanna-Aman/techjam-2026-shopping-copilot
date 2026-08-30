@@ -17,6 +17,13 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Least privilege: nothing here writes to the repository, publishes a package or comments
+# on a pull request, so the workflow token does not need the write scopes it would inherit
+# by default. Declared explicitly rather than relying on the repository-level setting,
+# because that setting is invisible to anyone reading this file.
+permissions:
+  contents: read
+
 jobs:
   tests:
     name: tests · ${{ matrix.os }} · py${{ matrix.python }}

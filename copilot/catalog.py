@@ -73,6 +73,48 @@ def _field_text(value: object) -> str:
     return "" if value is None else str(value)
 
 
+#: Types the index cache is allowed to contain. `pickle.load` on a file an attacker can
+#: write is arbitrary code execution, and the cache lives in `artifacts/`, so the loader is
+#: restricted to the handful of types `_CACHE_ATTRS` actually holds rather than trusting the
+#: file. Everything else raises, and the caller already treats a failed load as a cache miss
+#: and rebuilds -- so the strict thing to do is also the safe thing.
+_ALLOWED_PICKLE_TYPES: frozenset[tuple[str, str]] = frozenset({
+    # `array.array` pickles through `_array_reconstructor` at protocol 3 and above, not
+    # through the class itself. Omitting it does not fail loudly -- the caller treats the
+    # rejection as a cache miss -- it just silently rebuilds the index on every start, so
+    # `tests/test_catalog_cache.py` asserts a real round trip rather than trusting this list.
+    ("array", "_array_reconstructor"),
+    ("array", "array"),
+    ("builtins", "bytearray"),
+    ("builtins", "bytes"),
+    ("builtins", "complex"),
+    ("builtins", "dict"),
+    ("builtins", "float"),
+    ("builtins", "frozenset"),
+    ("builtins", "int"),
+    ("builtins", "list"),
+    ("builtins", "set"),
+    ("builtins", "str"),
+    ("builtins", "tuple"),
+})
+
+
+class _RestrictedUnpickler(pickle.Unpickler):
+    """A pickle loader that refuses to import anything not on the allowlist.
+
+    This does not make an untrusted cache file safe to load in general -- nothing short of
+    abandoning pickle would -- but it removes the mechanism that makes pickle dangerous,
+    which is `find_class` importing and calling arbitrary objects named in the stream.
+    """
+
+    def find_class(self, module: str, name: str):  # noqa: D102 - see class docstring
+        if (module, name) in _ALLOWED_PICKLE_TYPES:
+            return super().find_class(module, name)
+        raise pickle.UnpicklingError(
+            f"refusing to load {module}.{name} from the index cache"
+        )
+
+
 class CatalogIndex:
     """Immutable, in-memory view of the frozen product catalog."""
 
@@ -256,7 +298,7 @@ class CatalogIndex:
 
     def _load_cache(self, cache_file: Path) -> None:
         with cache_file.open("rb") as handle:
-            payload = pickle.load(handle)
+            payload = _RestrictedUnpickler(handle).load()
         if payload.get("__version__") != CACHE_VERSION:
             raise ValueError("cache version mismatch")
         for name in self._CACHE_ATTRS:
