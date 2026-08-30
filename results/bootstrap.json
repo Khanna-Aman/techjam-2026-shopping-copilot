@@ -1,6 +1,6 @@
 {
   "source": "official_evaluation.json",
-  "source_technical_score": 0.954756,
+  "source_technical_score": 0.963323,
   "rounds": 20000,
   "seed": 20260901,
   "note": "Percentile bootstrap over public-set sessions. Covers sampling variation within the public distribution only; distribution shift to the private set is measured by tools/proxy_private.py, not here.",
@@ -9,28 +9,28 @@
     "rounds": 20000,
     "metrics": {
       "technical_score": {
-        "point": 0.954756,
-        "ci95_low": 0.940756,
-        "ci95_high": 0.96565,
-        "std_error": 0.006346
+        "point": 0.963323,
+        "ci95_low": 0.954701,
+        "ci95_high": 0.971064,
+        "std_error": 0.004163
       },
       "hit_rate_at_10": {
-        "point": 0.995,
-        "ci95_low": 0.985,
+        "point": 1.0,
+        "ci95_low": 1.0,
         "ci95_high": 1.0,
-        "std_error": 0.004976
+        "std_error": 0.0
       },
       "mrr": {
-        "point": 0.944187,
-        "ci95_low": 0.916726,
-        "ci95_high": 0.968631,
-        "std_error": 0.013231
+        "point": 0.956742,
+        "ci95_low": 0.932194,
+        "ci95_high": 0.978667,
+        "std_error": 0.011929
       },
       "mttc": {
-        "point": 2.3,
-        "ci95_low": 2.15,
-        "ci95_high": 2.46,
-        "std_error": 0.079372
+        "point": 2.185,
+        "ci95_low": 2.055,
+        "ci95_high": 2.315,
+        "std_error": 0.066195
       }
     }
   },
@@ -40,10 +40,10 @@
       "rounds": 20000,
       "metrics": {
         "technical_score": {
-          "point": 0.964,
-          "ci95_low": 0.94,
+          "point": 0.943333,
+          "ci95_low": 0.878,
           "ci95_high": 0.984,
-          "std_error": 0.010595
+          "std_error": 0.029203
         },
         "hit_rate_at_10": {
           "point": 1.0,
@@ -52,16 +52,16 @@
           "std_error": 0.0
         },
         "mrr": {
-          "point": 1.0,
-          "ci95_low": 1.0,
+          "point": 0.911111,
+          "ci95_low": 0.733333,
           "ci95_high": 1.0,
-          "std_error": 0.0
+          "std_error": 0.084732
         },
         "mttc": {
-          "point": 2.8,
+          "point": 2.5,
           "ci95_low": 1.8,
-          "ci95_high": 4.0,
-          "std_error": 0.529754
+          "ci95_high": 3.1,
+          "std_error": 0.326497
         }
       },
       "underpowered": true
@@ -71,10 +71,10 @@
       "rounds": 20000,
       "metrics": {
         "technical_score": {
-          "point": 0.955348,
-          "ci95_low": 0.940098,
-          "ci95_high": 0.9685,
-          "std_error": 0.007241
+          "point": 0.959598,
+          "ci95_low": 0.944929,
+          "ci95_high": 0.972062,
+          "std_error": 0.006902
         },
         "hit_rate_at_10": {
           "point": 1.0,
@@ -83,16 +83,16 @@
           "std_error": 0.0
         },
         "mrr": {
-          "point": 0.931994,
-          "ci95_low": 0.885863,
-          "ci95_high": 0.970833,
-          "std_error": 0.021817
+          "point": 0.940327,
+          "ci95_low": 0.896577,
+          "ci95_high": 0.976786,
+          "std_error": 0.020587
         },
         "mttc": {
-          "point": 2.2125,
-          "ci95_low": 2.0875,
-          "ci95_high": 2.325,
-          "std_error": 0.060669
+          "point": 2.125,
+          "ci95_low": 2.0,
+          "ci95_high": 2.25,
+          "std_error": 0.062369
         }
       },
       "underpowered": false
@@ -102,10 +102,10 @@
       "rounds": 20000,
       "metrics": {
         "technical_score": {
-          "point": 0.967292,
-          "ci95_low": 0.951625,
-          "ci95_high": 0.980667,
-          "std_error": 0.007462
+          "point": 0.979375,
+          "ci95_low": 0.968,
+          "ci95_high": 0.988375,
+          "std_error": 0.005281
         },
         "hit_rate_at_10": {
           "point": 1.0,
@@ -114,16 +114,16 @@
           "std_error": 0.0
         },
         "mrr": {
-          "point": 0.940972,
-          "ci95_low": 0.895833,
-          "ci95_high": 0.979167,
-          "std_error": 0.021641
+          "point": 0.97375,
+          "ci95_low": 0.94,
+          "ci95_high": 1.0,
+          "std_error": 0.015098
         },
         "mttc": {
-          "point": 1.75,
-          "ci95_low": 1.5875,
-          "ci95_high": 1.925,
-          "std_error": 0.08661
+          "point": 1.6375,
+          "ci95_low": 1.4875,
+          "ci95_high": 1.8,
+          "std_error": 0.080154
         }
       },
       "underpowered": false
@@ -133,28 +133,28 @@
       "rounds": 20000,
       "metrics": {
         "technical_score": {
-          "point": 0.916667,
-          "ci95_low": 0.851333,
-          "ci95_high": 0.950667,
-          "std_error": 0.031128
+          "point": 0.937111,
+          "ci95_low": 0.915333,
+          "ci95_high": 0.949333,
+          "std_error": 0.009782
         },
         "hit_rate_at_10": {
-          "point": 0.966667,
-          "ci95_low": 0.9,
+          "point": 1.0,
+          "ci95_low": 1.0,
           "ci95_high": 1.0,
-          "std_error": 0.032746
+          "std_error": 0.0
         },
         "mrr": {
-          "point": 0.966667,
-          "ci95_low": 0.9,
+          "point": 0.97037,
+          "ci95_low": 0.911111,
           "ci95_high": 1.0,
-          "std_error": 0.032746
+          "std_error": 0.029108
         },
         "mttc": {
-          "point": 3.833333,
-          "ci95_low": 3.466667,
-          "ci95_high": 4.433333,
-          "std_error": 0.259454
+          "point": 3.7,
+          "ci95_low": 3.5,
+          "ci95_high": 3.9,
+          "std_error": 0.096005
         }
       },
       "underpowered": false

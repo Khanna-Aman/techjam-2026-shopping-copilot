@@ -1,72 +1,72 @@
 {
   "control": {
     "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.944187,
-    "mttc": 2.3,
-    "efficiency": 0.87,
-    "technical_score": 0.954756,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.956742,
+    "mttc": 2.185,
+    "efficiency": 0.8815,
+    "technical_score": 0.963323,
     "by_scenario": {
       "boundary": 1.0,
       "browsing": 1.0,
       "buying": 1.0,
-      "intent_override": 0.966667
+      "intent_override": 1.0
     }
   },
   "casing": {
     "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.944187,
-    "mttc": 2.3,
-    "efficiency": 0.87,
-    "technical_score": 0.954756,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.956742,
+    "mttc": 2.185,
+    "efficiency": 0.8815,
+    "technical_score": 0.963323,
     "by_scenario": {
       "boundary": 1.0,
       "browsing": 1.0,
       "buying": 1.0,
-      "intent_override": 0.966667
+      "intent_override": 1.0
     }
   },
   "punctuation": {
     "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.906895,
-    "mttc": 2.47,
-    "efficiency": 0.853,
-    "technical_score": 0.940168,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.927887,
+    "mttc": 2.345,
+    "efficiency": 0.8655,
+    "technical_score": 0.951466,
     "by_scenario": {
       "boundary": 1.0,
       "browsing": 1.0,
       "buying": 1.0,
-      "intent_override": 0.966667
+      "intent_override": 1.0
     }
   },
   "light": {
     "sample_count": 200,
-    "hit_rate_at_10": 0.985,
-    "mrr": 0.902274,
-    "mttc": 2.545,
-    "efficiency": 0.8455,
-    "technical_score": 0.932282,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.938353,
+    "mttc": 2.34,
+    "efficiency": 0.866,
+    "technical_score": 0.954706,
     "by_scenario": {
       "boundary": 1.0,
-      "browsing": 0.9875,
-      "buying": 0.9875,
-      "intent_override": 0.966667
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 1.0
     }
   },
   "heavy": {
     "sample_count": 200,
     "hit_rate_at_10": 0.99,
-    "mrr": 0.899401,
-    "mttc": 2.615,
-    "efficiency": 0.8385,
-    "technical_score": 0.93252,
+    "mrr": 0.899895,
+    "mttc": 2.54,
+    "efficiency": 0.846,
+    "technical_score": 0.934168,
     "by_scenario": {
       "boundary": 1.0,
-      "browsing": 1.0,
+      "browsing": 0.9875,
       "buying": 0.9875,
-      "intent_override": 0.966667
+      "intent_override": 1.0
     }
   }
 }

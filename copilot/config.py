@@ -87,7 +87,18 @@ class AgentConfig:
     w_constraint: float = 2.60
     #: Weight on the latent-space cosine term. Inert unless use_dense_rerank is on.
     w_dense: float = 0.60
-    w_popularity: float = 0.55
+    # Raised from 0.55 after finding that the held-out harness that rejected 1.2 was
+    # measuring the wrong distribution. `tools/proxy_private.py` had a `uniform` regime
+    # that sampled targets uniformly from the 50,000-product catalog, drawing products
+    # with under 100 ratings 81% of the time. The organiser samples sessions from the
+    # Clothing 5-core leave-last-out split (docs/PARTICIPANT_KIT_README.md), where that
+    # happens 5% of the time: public targets sit at the 99.4th popularity percentile,
+    # median 6,846 ratings against the uniform regime's 13. Popularity is evidence in
+    # this task because targets are real last purchases, and last purchases are popular.
+    # Re-measured against a popularity-faithful held-out set of 800 disjoint targets:
+    # +0.0062, 95% CI [+0.0029, +0.0102], 109 sessions improved against 28 regressed.
+    # Wins all five paraphrase perturbations. See the README finding on the recalibration.
+    w_popularity: float = 1.20
     # Left at 1.0 deliberately. Raising this to 5.0 scores better on clean input (0.9083
     # against 0.9062) and the gain survives held-out targets, but it buys that by making
     # the agent lean harder on a prior that paraphrase disturbs: under heavy paraphrase it

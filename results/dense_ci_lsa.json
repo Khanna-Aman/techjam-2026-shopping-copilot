@@ -8,7 +8,7 @@
   "rounds": 20000,
   "seed": 20260901,
   "reference": {
-    "technical_score": 0.954756,
+    "technical_score": 0.963323,
     "sample_count": 200
   },
   "ablations": {
@@ -17,32 +17,32 @@
         "use_dense_rerank": true,
         "w_dense": 0.15
       },
-      "technical_score": 0.945989,
-      "delta": -0.008767,
-      "ci95_low": -0.017625,
-      "ci95_high": -0.002425,
-      "significant": true
+      "technical_score": 0.964727,
+      "delta": 0.001404,
+      "ci95_low": -0.0022,
+      "ci95_high": 0.005171,
+      "significant": false
     },
     "dense w=0.3": {
       "overrides": {
         "use_dense_rerank": true,
         "w_dense": 0.3
       },
-      "technical_score": 0.944164,
-      "delta": -0.010592,
-      "ci95_low": -0.019975,
-      "ci95_high": -0.00335,
-      "significant": true
+      "technical_score": 0.959591,
+      "delta": -0.003732,
+      "ci95_low": -0.012601,
+      "ci95_high": 0.003129,
+      "significant": false
     },
     "dense w=0.6": {
       "overrides": {
         "use_dense_rerank": true,
         "w_dense": 0.6
       },
-      "technical_score": 0.940981,
-      "delta": -0.013775,
-      "ci95_low": -0.0236,
-      "ci95_high": -0.005925,
+      "technical_score": 0.952789,
+      "delta": -0.010533,
+      "ci95_low": -0.022586,
+      "ci95_high": -0.000902,
       "significant": true
     },
     "dense w=1.0": {
@@ -50,10 +50,10 @@
         "use_dense_rerank": true,
         "w_dense": 1.0
       },
-      "technical_score": 0.931741,
-      "delta": -0.023015,
-      "ci95_low": -0.036101,
-      "ci95_high": -0.012561,
+      "technical_score": 0.947964,
+      "delta": -0.015358,
+      "ci95_low": -0.02795,
+      "ci95_high": -0.004977,
       "significant": true
     },
     "dense w=1.8": {
@@ -61,10 +61,10 @@
         "use_dense_rerank": true,
         "w_dense": 1.8
       },
-      "technical_score": 0.918898,
-      "delta": -0.035858,
-      "ci95_low": -0.052867,
-      "ci95_high": -0.021654,
+      "technical_score": 0.938754,
+      "delta": -0.024568,
+      "ci95_low": -0.038279,
+      "ci95_high": -0.012593,
       "significant": true
     },
     "dense w=3.0": {
@@ -72,10 +72,10 @@
         "use_dense_rerank": true,
         "w_dense": 3.0
       },
-      "technical_score": 0.894387,
-      "delta": -0.060369,
-      "ci95_low": -0.085376,
-      "ci95_high": -0.038789,
+      "technical_score": 0.927408,
+      "delta": -0.035914,
+      "ci95_low": -0.053114,
+      "ci95_high": -0.020973,
       "significant": true
     },
     "cold-start dense w=0.3": {
@@ -84,7 +84,7 @@
         "dense_cold_start_only": true,
         "w_dense": 0.3
       },
-      "technical_score": 0.954656,
+      "technical_score": 0.963223,
       "delta": -0.0001,
       "ci95_low": -0.0003,
       "ci95_high": 0.0,
@@ -96,10 +96,10 @@
         "dense_cold_start_only": true,
         "w_dense": 0.6
       },
-      "technical_score": 0.954656,
+      "technical_score": 0.963223,
       "delta": -0.0001,
-      "ci95_low": -0.0005,
-      "ci95_high": 0.0002,
+      "ci95_low": -0.0003,
+      "ci95_high": 0.0,
       "significant": false
     },
     "cold-start dense w=1.2": {
@@ -108,10 +108,10 @@
         "dense_cold_start_only": true,
         "w_dense": 1.2
       },
-      "technical_score": 0.954356,
-      "delta": -0.0004,
-      "ci95_low": -0.0009,
-      "ci95_high": 0.0,
+      "technical_score": 0.963223,
+      "delta": -0.0001,
+      "ci95_low": -0.0005,
+      "ci95_high": 0.0002,
       "significant": false
     },
     "cold-start dense w=2.5": {
@@ -120,10 +120,10 @@
         "dense_cold_start_only": true,
         "w_dense": 2.5
       },
-      "technical_score": 0.953206,
-      "delta": -0.00155,
-      "ci95_low": -0.00395,
-      "ci95_high": -0.0001,
+      "technical_score": 0.962523,
+      "delta": -0.0008,
+      "ci95_low": -0.0015,
+      "ci95_high": -0.0002,
       "significant": true
     }
   }

@@ -15,27 +15,33 @@ Only the choice of target product differs.
 Two sampling regimes, because they answer different questions.
 
 ``matched``
-    Target popularity is decile-matched to the public set. Public targets are drawn from a
-    5-core split and are overwhelmingly popular: their median `rating_number` is ~7,000
-    against a catalog median of 12, and 89% carry a price against 21% catalog-wide. A
-    uniform sample would therefore be a much harder task and would understate the score for
-    reasons that have nothing to do with generalisation. The catalog caps this regime at
-    roughly 110 sessions -- the public 200 have already consumed most of the high-review
-    tail -- so it is small, and the reported interval is correspondingly wide.
+    Target popularity follows the public set's. Public targets come from the organiser's
+    Clothing 5-core leave-last-out split (docs/PARTICIPANT_KIT_README.md) and are therefore
+    overwhelmingly popular -- median `rating_number` 6,846, the 99.4th percentile of the
+    catalog, against a catalog median of 12 -- because a leave-last-out target is somebody's
+    real last purchase, and real purchases concentrate on popular products. `docs` also says
+    both splits use the same fixed scenario mix and the same deterministic sampling, so the
+    private 800 carry this same skew. This is the regime to read for generalisation.
 
-    The match is on popularity, and it is close: median rating_number 6,845 against the
-    public set's 6,614. It is *not* exact on everything. Matched targets carry a price 55%
-    of the time against the public set's 89%, because popularity and price coverage are not
-    the same axis and the tail is too thin to constrain both. Budget is disclosed in roughly
-    0.5% of turns, so the residual should be immaterial -- but it is a real difference, it is
-    reported in the output under `target_popularity`, and it is not being hidden.
+    **This regime was rebuilt.** It previously took an equal count from each of ten
+    popularity deciles, which capped it at ten times the *smallest* decile. The smallest
+    decile is the most popular one, holding 11 eligible products, so the sample was 110 of
+    43,149 available targets and its 95% interval was 0.046 wide. An effect of a few
+    thousandths could not have been resolved, and `w_popularity=1.2` was rejected partly on
+    a reading of this regime that the sample size did not support. It now draws a reference
+    popularity per target and takes the nearest unused product, following the whole shape of
+    the distribution at any sample size. The residual bias is stated in `sample_matched`:
+    the catalog is thin at the top, so a large sample drifts *less* popular than the truth,
+    which makes this harder than reality rather than easier.
 
 ``uniform``
-    Uniform over every eligible product. Deliberately harsher than the private set is
-    likely to be, since it abandons the popularity regularity entirely. This is the
-    pessimistic bound, and the gap between the two regimes is a direct measurement of how
-    much the popularity prior depends on how sessions are sampled -- a dependence the README
-    flags as a limitation but could not previously quantify.
+    Uniform over every eligible product. **This is an out-of-distribution stress test and
+    must not be read as an estimate of the private-set score.** It draws targets with fewer
+    than 100 ratings 81% of the time; the real split does so 5% of the time. It answers "how
+    much does the ranking lean on the popularity regularity", which is a fair question about
+    fragility, and it is reported for that reason. It is not a generalisation estimate, and
+    treating it as one is the specific mistake that cost this submission a correct
+    calibration of `w_popularity` for several days.
 
 Scores produced here are DIAGNOSTIC ONLY and are not the official metric.
 
@@ -48,6 +54,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import bisect
 import json
 import random
 import sys
@@ -59,6 +66,7 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from evaluator.local_evaluator import (  # noqa: E402
+    MAX_TURNS,
     catalog_index,
     evaluate,
     load_jsonl,
@@ -126,36 +134,107 @@ def sample_matched(
     rng: random.Random,
     requested: int,
 ) -> tuple[list[str], int]:
-    """Draw targets whose popularity distribution matches ``reference`` by decile.
+    """Draw targets whose popularity distribution follows ``reference``.
 
-    Returns the sample and the largest size the catalog could actually support, which is
-    almost always the binding constraint rather than ``requested``.
+    This replaces an equal-count-per-decile scheme that capped the sample at 110 of the
+    43,149 eligible targets -- 10 x the *smallest* decile, and the smallest decile is the
+    most popular one, which held 11 products. Matching popularity was the goal, and the
+    popularity skew was what starved the sample. At n=110 the 95% interval was 0.046 wide,
+    so an effect of a few thousandths was invisible; that is how `w_popularity=1.2` came
+    to be rejected on a test that could not have detected it.
+
+    Instead we draw one reference popularity per target and take the nearest unused
+    product to it, which follows the whole shape of the reference rather than forcing
+    equal mass into ten buckets, and scales to any requested size.
+
+    Note the residual bias, because it matters when reading the result: the catalog holds
+    far fewer very popular products than the reference wants, so a large sample must drift
+    downward in popularity (at n=800, median ~3.2k ratings against the public set's 6.8k).
+    That drift makes this test *harder* than the real distribution, so a gain measured
+    here is a lower bound rather than an optimistic one.
     """
-    edges = _decile_edges(reference)
-    buckets: list[list[str]] = [[] for _ in range(DECILES)]
-    for asin in pool:
-        count = _rating_number(products[asin])
-        for index in range(DECILES):
-            low, high = edges[index], edges[index + 1]
-            # The final decile is open-ended; the rest are half-open so the edges do not
-            # double-count a product sitting exactly on a boundary.
-            if (low <= count <= high) if index == DECILES - 1 else (low <= count < high):
-                buckets[index].append(asin)
-                break
+    if not reference or not pool:
+        return [], 0
+    # Sorted here as well as at the call site, deliberately. We draw by *indexing* into
+    # `reference`, so its order decides which targets come out; a caller that builds it by
+    # iterating a set hands us an order that changes with hash randomisation, and the whole
+    # harness stops being reproducible across processes. That happened -- two runs at one
+    # seed scored 0.9444 and 0.9474 -- so the invariant is enforced where it is relied on
+    # rather than trusted to every caller.
+    reference = sorted(reference)
+    by_count = sorted((_rating_number(products[asin]), asin) for asin in pool)
+    counts = [count for count, _ in by_count]
+    feasible = min(requested, len(pool))
 
-    per_decile = min(len(bucket) for bucket in buckets)
-    feasible = per_decile * DECILES
-    take = min(requested, feasible) // DECILES
-
+    used: set[str] = set()
     chosen: list[str] = []
-    for bucket in buckets:
-        chosen.extend(rng.sample(bucket, take))
+    while len(chosen) < feasible:
+        target_count = reference[rng.randrange(len(reference))]
+        start = bisect.bisect_left(counts, target_count)
+        # Walk outward from the reference popularity until an unused product turns up.
+        for offset in range(len(by_count)):
+            hit = None
+            for index in (start + offset, start - offset):
+                if 0 <= index < len(by_count) and by_count[index][1] not in used:
+                    hit = by_count[index][1]
+                    break
+            if hit is not None:
+                used.add(hit)
+                chosen.append(hit)
+                break
     rng.shuffle(chosen)
     return chosen, feasible
 
 
 def sample_uniform(pool: list[str], rng: random.Random, count: int) -> list[str]:
     return rng.sample(pool, min(count, len(pool)))
+
+
+def paired_delta(
+    base_sessions: list[dict], other_sessions: list[dict], rng: random.Random,
+    rounds: int = 20000,
+) -> dict:
+    """Bootstrap the per-session score difference between two configs on the same sessions.
+
+    Marginal intervals on two scores can overlap while the difference between them is
+    unambiguous, because the two runs answer the *same* sessions and the variance they share
+    cancels in the difference. Comparing the two `technical_score` intervals reported per
+    regime is the weaker test, and the weight recalibration rests on this one, so it needs a
+    command that produces it rather than a number quoted from a notebook.
+
+    The composite is a mean of per-session terms, so it decomposes exactly:
+    ``0.5*hit + 0.3*rr + 0.2*(11 - turn)/10``, with a miss counted at ``MAX_TURNS + 1``
+    exactly as the official evaluator does.
+    """
+    def per_session(sessions: list[dict]) -> dict[str, float]:
+        out: dict[str, float] = {}
+        for item in sessions:
+            turn = item["first_hit_turn"]
+            turn = (MAX_TURNS + 1) if turn is None else turn
+            out[item["sample_id"]] = (
+                0.5 * int(item["hit"]) + 0.3 * item["reciprocal_rank"] + 0.02 * (11 - turn)
+            )
+        return out
+
+    left, right = per_session(base_sessions), per_session(other_sessions)
+    shared = sorted(set(left) & set(right))
+    deltas = [left[key] - right[key] for key in shared]
+    if not deltas:
+        return {}
+    means = []
+    for _ in range(rounds):
+        means.append(
+            sum(deltas[rng.randrange(len(deltas))] for _ in deltas) / len(deltas)
+        )
+    means.sort()
+    return {
+        "n": len(deltas),
+        "delta": round(sum(deltas) / len(deltas), 6),
+        "ci95_low": round(means[int(0.025 * rounds)], 6),
+        "ci95_high": round(means[int(0.975 * rounds)], 6),
+        "improved": sum(1 for value in deltas if value > 1e-9),
+        "regressed": sum(1 for value in deltas if value < -1e-9),
+    }
 
 
 # ------------------------------------------------------------------ session synthesis
@@ -243,12 +322,21 @@ def main() -> None:
     parser.add_argument("--catalog", default="data/catalog.jsonl")
     parser.add_argument("--dataset", default="data/public_set.jsonl")
     parser.add_argument("--mode", default="both", choices=("matched", "uniform", "both"))
-    parser.add_argument("--n-matched", type=int, default=200)
+    parser.add_argument("--n-matched", type=int, default=800)
     parser.add_argument("--n-uniform", type=int, default=1000)
     parser.add_argument("--seed", type=int, default=20260825)
     parser.add_argument("--output", default="results/proxy_private.json")
     parser.add_argument(
         "--base", default=None, help="JSON object of AgentConfig overrides"
+    )
+    parser.add_argument(
+        "--against", default=None,
+        help=(
+            "JSON object of AgentConfig overrides for a second configuration. Both are run "
+            "over the SAME synthesised sessions and the difference is bootstrapped pairwise, "
+            "which is the test a weight change has to pass -- two overlapping marginal "
+            "intervals say much less than one paired one."
+        ),
     )
     args = parser.parse_args()
 
@@ -257,7 +345,15 @@ def main() -> None:
     profiles = [row["user_profile"] for row in public]
 
     catalog_ids, categories, products = catalog_index(args.catalog)
-    reference = [_rating_number(products[a]) for a in public_targets if a in products]
+    # sorted() is load-bearing, not tidiness: `public_targets` is a set of strings, so its
+    # iteration order changes with per-process hash randomisation. The decile sampler this
+    # replaced only ever passed `reference` through `_decile_edges`, which sorts internally,
+    # so the order was invisible. `sample_matched` now indexes into it, which made the whole
+    # harness non-reproducible across processes -- two runs at the same seed drew different
+    # targets and scored 0.9444 and 0.9474.
+    reference = sorted(
+        _rating_number(products[a]) for a in sorted(public_targets) if a in products
+    )
 
     config: AgentConfig = DEFAULT_CONFIG
     if args.base:
@@ -279,10 +375,13 @@ def main() -> None:
         rng = random.Random(args.seed)
         if regime == "matched":
             targets, feasible = sample_matched(products, pool, reference, rng, args.n_matched)
-            note = f"decile-matched; catalog supports at most {feasible}"
+            note = (f"popularity-matched to the public targets, n={feasible}; the catalog "
+                    f"is thin at the top so this drifts less popular, making it a lower bound")
         else:
             targets = sample_uniform(pool, rng, args.n_uniform)
-            note = "uniform over eligible targets"
+            note = ("OUT-OF-DISTRIBUTION STRESS TEST, not an estimate of private-set score: "
+                    "uniform catalog sampling draws sub-100-rating targets 81% of the time "
+                    "against the real split's 5%. Read `matched` for generalisation.")
 
         samples = build_samples(targets, profiles, rng, prefix=f"proxy_{regime}")
         # Share the prebuilt index across regimes rather than paying the build cost twice.
@@ -301,6 +400,39 @@ def main() -> None:
             "target_popularity": popularity_summary(products, targets),
             "scenario_metrics": outcome["scenario_metrics"],
         }
+
+        if args.against:
+            rival = replace(
+                config,
+                **{
+                    key: value
+                    for key, value in json.loads(args.against).items()
+                    if key in set(AgentConfig.__dataclass_fields__)
+                },
+            )
+            rival_outcome = evaluate(
+                ShoppingCopilot(args.catalog, config=rival, index=index),
+                samples, catalog_ids, categories, products,
+            )
+            comparison = paired_delta(
+                outcome["sessions"], rival_outcome["sessions"], random.Random(args.seed)
+            )
+            comparison["against"] = json.loads(args.against)
+            comparison["against_technical_score"] = rival_outcome[
+                "recommended_technical_score"
+            ]
+            results[regime]["paired_comparison"] = comparison
+            verdict = (
+                "gain" if comparison["ci95_low"] > 0
+                else "harm" if comparison["ci95_high"] < 0
+                else "spans zero"
+            )
+            print(
+                f"{'':<10}{'':>7}{'paired vs --against':>9} "
+                f"{comparison['delta']:+.4f} "
+                f"[{comparison['ci95_low']:+.4f}, {comparison['ci95_high']:+.4f}] {verdict} "
+                f"(+{comparison['improved']}/-{comparison['regressed']})"
+            )
         row = results[regime]
         print(
             f"{regime:<10}{row['sample_count']:>7}{row['technical_score']:>9.4f}"

@@ -54,8 +54,11 @@ _FEATURE_PRIOR = 0.90
 #: P(the customer's hidden card contains at least one constraint of this type), measured
 #: over all 50,000 catalog products by applying the published card-construction rule.
 #: This uses the catalog only -- no session labels -- and it is the term a pure-entropy
-#: model omits. Omitting it is a real error: a budget question splits the candidate pool
-#: beautifully but goes unanswered 99.5% of the time, so its true value is near zero.
+#: model omits. Omitting it is a real error, and `size` is the clearest case: it is the
+#: single best discriminator in the catalog (mean partition quality 0.93 at turn one, above
+#: every other attribute) and it is answered 7.6% of the time, so a policy ranking questions
+#: by partition quality asks it first and is met with silence. `budget` is the extreme of
+#: the same effect from the other end -- a middling partition, answered 0.5% of the time.
 YIELD_PROBABILITY: dict[str, float] = {
     "feature": 0.958,
     "material": 0.573,
@@ -186,7 +189,7 @@ def expected_gain(
         P(the customer can answer) x E[constraints returned] x how well they split the pool
 
     Dropping the first term is what makes a naive information-gain policy pick questions
-    that are beautifully discriminating and almost never answered.
+    that discriminate sharply and are almost never answered -- `size` above all.
     """
     if attribute in state.exhausted or attribute in UNPRODUCTIVE_ATTRIBUTES:
         return 0.0

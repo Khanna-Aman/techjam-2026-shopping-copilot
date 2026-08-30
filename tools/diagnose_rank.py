@@ -35,6 +35,7 @@ import json
 import sys
 import uuid
 from collections import Counter
+from dataclasses import replace
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parent.parent
@@ -55,7 +56,7 @@ from evaluator.local_evaluator import (  # noqa: E402
 
 from copilot.agent import ShoppingCopilot  # noqa: E402
 from copilot.catalog import CatalogIndex  # noqa: E402
-from copilot.config import DEFAULT_CONFIG  # noqa: E402
+from copilot.config import DEFAULT_CONFIG, AgentConfig  # noqa: E402
 from copilot.retrieval import candidate_pool  # noqa: E402
 
 #: Scores within this fraction of the target's are treated as ties rather than as genuine
@@ -71,11 +72,15 @@ def _scored_pool(agent: ShoppingCopilot, state) -> dict[int, float]:
     return _score_pool(agent.index, state, agent.config, dense=agent.dense)
 
 
-def analyse(catalog: str, dataset: str) -> dict:
+def analyse(catalog: str, dataset: str, overrides: dict | None = None) -> dict:
     samples = load_jsonl(dataset)
     catalog_ids, categories, products = catalog_index(catalog)
     index = CatalogIndex(catalog)
-    agent = ShoppingCopilot(catalog, config=DEFAULT_CONFIG, index=index)
+    config = DEFAULT_CONFIG
+    if overrides:
+        allowed = set(AgentConfig.__dataclass_fields__)
+        config = replace(config, **{k: v for k, v in overrides.items() if k in allowed})
+    agent = ShoppingCopilot(catalog, config=config, index=index)
 
     records: list[dict] = []
     for sample in samples:
@@ -138,9 +143,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--catalog", default="data/catalog.jsonl")
     parser.add_argument("--dataset", default="data/public_set.jsonl")
     parser.add_argument("--out", default=str(_ROOT / "results" / "rank_diagnosis.json"))
+    parser.add_argument(
+        "--base", default=None,
+        help=(
+            "JSON object of AgentConfig overrides. The finding that motivated the "
+            "confidence gate is a statement about the agent *before* the gate existed, so "
+            "reproducing it needs --base '{\"use_confidence_gate\": false}'. Without this "
+            "flag the command reports the post-gate residual instead, which is a different "
+            "and much smaller number."
+        ),
+    )
     args = parser.parse_args(argv)
 
-    report = analyse(args.catalog, args.dataset)
+    report = analyse(args.catalog, args.dataset, json.loads(args.base) if args.base else None)
     records = report["sessions"]
     missed = [r for r in records if r["rank"] > 1]
 

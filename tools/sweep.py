@@ -120,20 +120,47 @@ def _wcon_grid() -> list[tuple[str, dict]]:
 
 
 def _gate_grid() -> list[tuple[str, dict]]:
-    """Withholding the list while under-informed: does the MRR gain beat the Hit@10 risk?"""
-    rows = [("gate off (default)", {})]
-    for min_c in (4,):
-        for size in (1,):
-            for max_turn in (3,):
-                rows.append((
-                    f"gate<{min_c}c show{size} to t{max_turn}",
-                    {
-                        "use_confidence_gate": True,
-                        "gate_min_constraints": min_c,
-                        "gate_list_size": size,
-                        "gate_max_turn": max_turn,
-                    },
-                ))
+    """Withholding the list while under-informed: does the MRR gain beat the Hit@10 risk?
+
+    The rows are the README's list-size table, so the table has a command that produces it.
+    An earlier version of this grid opened with a row labelled "gate off (default)" carrying
+    an empty override dict. That was accurate only while the gate was off by default; once
+    the gate shipped, the empty dict inherited it and the row silently became a duplicate of
+    the shipped configuration under a label saying the opposite. The row below turns the
+    gate off explicitly rather than relying on what the default happens to be.
+    """
+    shipped = {"gate_min_constraints": 4, "gate_max_turn": 3}
+    rows: list[tuple[str, dict]] = [
+        ("ten (no gate)", {"use_confidence_gate": False}),
+    ]
+    for size in (5, 3, 1, 0):
+        rows.append((
+            {5: "five", 3: "three", 1: "one (default)", 0: "none"}[size],
+            {"use_confidence_gate": True, "gate_list_size": size, **shipped},
+        ))
+    return rows
+
+
+def _gate_plateau_grid() -> list[tuple[str, dict]]:
+    """The gate's two thresholds crossed, to show the default sits on a flat region.
+
+    Finding 5 claims the setting was "chosen from a flat region rather than an argmax". That
+    is a claim about a grid, so the grid needs a command. Without this mode the sentence was
+    unbacked by any committed artifact, and it had also gone stale: the numbers in it were
+    measured at the previous popularity weight and never re-swept.
+    """
+    rows: list[tuple[str, dict]] = []
+    for min_c in (4, 5, 6):
+        for max_turn in (2, 3, 6):
+            rows.append((
+                f"min_c={min_c} max_turn={max_turn}",
+                {
+                    "use_confidence_gate": True,
+                    "gate_list_size": 1,
+                    "gate_min_constraints": min_c,
+                    "gate_max_turn": max_turn,
+                },
+            ))
     return rows
 
 
@@ -179,6 +206,7 @@ def _llm_grid() -> list[tuple[str, dict]]:
 MODES = {
     "ablation": lambda: ABLATIONS,
     "gate": _gate_grid,
+    "gate_plateau": _gate_plateau_grid,
     "override": _override_grid,
     "pop": _pop_grid,
     "profile": _profile_grid,

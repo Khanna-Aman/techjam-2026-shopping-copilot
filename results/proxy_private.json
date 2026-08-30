@@ -1,55 +1,67 @@
 {
   "matched": {
-    "note": "decile-matched; catalog supports at most 110",
-    "sample_count": 110,
-    "hit_rate_at_10": 0.990909,
-    "mrr": 0.89342,
-    "mttc": 2.545455,
-    "technical_score": 0.932571,
-    "ci95_low": 0.906182,
-    "ci95_high": 0.952455,
+    "note": "popularity-matched to the public targets, n=800; the catalog is thin at the top so this drifts less popular, making it a lower bound",
+    "sample_count": 800,
+    "hit_rate_at_10": 0.98875,
+    "mrr": 0.916829,
+    "mttc": 2.39,
+    "technical_score": 0.941624,
+    "ci95_low": 0.932933,
+    "ci95_high": 0.950222,
     "target_popularity": {
-      "median_rating_number": 6845,
-      "p25_rating_number": 1066,
-      "p75_rating_number": 18333,
-      "priced_fraction": 0.5545
+      "median_rating_number": 3155,
+      "p25_rating_number": 846,
+      "p75_rating_number": 5948,
+      "priced_fraction": 0.495
     },
     "scenario_metrics": {
       "boundary": {
-        "sample_count": 5,
+        "sample_count": 40,
         "hit_rate_at_10": 1.0,
-        "mrr": 0.866667,
-        "mttc": 3.6
+        "mrr": 0.948958,
+        "mttc": 3.175
       },
       "browsing": {
-        "sample_count": 44,
-        "hit_rate_at_10": 1.0,
-        "mrr": 0.891883,
-        "mttc": 2.454545
+        "sample_count": 320,
+        "hit_rate_at_10": 0.990625,
+        "mrr": 0.938472,
+        "mttc": 2.290625
       },
       "buying": {
-        "sample_count": 44,
-        "hit_rate_at_10": 0.977273,
-        "mrr": 0.887121,
-        "mttc": 2.090909
+        "sample_count": 320,
+        "hit_rate_at_10": 0.984375,
+        "mrr": 0.901908,
+        "mttc": 1.9125
       },
       "intent_override": {
-        "sample_count": 17,
-        "hit_rate_at_10": 1.0,
-        "mrr": 0.921569,
-        "mttc": 3.647059
+        "sample_count": 120,
+        "hit_rate_at_10": 0.991667,
+        "mrr": 0.888194,
+        "mttc": 3.666667
       }
+    },
+    "paired_comparison": {
+      "n": 800,
+      "delta": 0.006233,
+      "ci95_low": 0.002876,
+      "ci95_high": 0.010195,
+      "improved": 109,
+      "regressed": 28,
+      "against": {
+        "w_popularity": 0.55
+      },
+      "against_technical_score": 0.93539
     }
   },
   "uniform": {
-    "note": "uniform over eligible targets",
+    "note": "OUT-OF-DISTRIBUTION STRESS TEST, not an estimate of private-set score: uniform catalog sampling draws sub-100-rating targets 81% of the time against the real split's 5%. Read `matched` for generalisation.",
     "sample_count": 1000,
-    "hit_rate_at_10": 0.968,
-    "mrr": 0.886706,
-    "mttc": 2.825,
-    "technical_score": 0.913512,
-    "ci95_low": 0.901784,
-    "ci95_high": 0.924951,
+    "hit_rate_at_10": 0.957,
+    "mrr": 0.87009,
+    "mttc": 2.933,
+    "technical_score": 0.900867,
+    "ci95_low": 0.887694,
+    "ci95_high": 0.913459,
     "target_popularity": {
       "median_rating_number": 13,
       "p25_rating_number": 4,
@@ -60,27 +72,39 @@
       "boundary": {
         "sample_count": 50,
         "hit_rate_at_10": 0.96,
-        "mrr": 0.781079,
-        "mttc": 4.02
+        "mrr": 0.740135,
+        "mttc": 4.08
       },
       "browsing": {
         "sample_count": 400,
-        "hit_rate_at_10": 0.9575,
-        "mrr": 0.895403,
-        "mttc": 2.86
+        "hit_rate_at_10": 0.955,
+        "mrr": 0.881663,
+        "mttc": 2.8975
       },
       "buying": {
         "sample_count": 400,
-        "hit_rate_at_10": 0.9725,
-        "mrr": 0.89261,
-        "mttc": 2.3
+        "hit_rate_at_10": 0.96,
+        "mrr": 0.874894,
+        "mttc": 2.435
       },
       "intent_override": {
         "sample_count": 150,
-        "hit_rate_at_10": 0.986667,
-        "mrr": 0.882979,
-        "mttc": 3.733333
+        "hit_rate_at_10": 0.953333,
+        "mrr": 0.869741,
+        "mttc": 3.973333
       }
+    },
+    "paired_comparison": {
+      "n": 1000,
+      "delta": -0.012645,
+      "ci95_low": -0.018011,
+      "ci95_high": -0.007811,
+      "improved": 22,
+      "regressed": 103,
+      "against": {
+        "w_popularity": 0.55
+      },
+      "against_technical_score": 0.913512
     }
   },
   "public_reference": {

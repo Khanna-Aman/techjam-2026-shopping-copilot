@@ -11,16 +11,16 @@ Solo entry — Aman Khanna
 ## The one-line version
 
 A stateful conversational shopping agent that finds a hidden target product inside a
-frozen 50,000-item Amazon catalog in **2.30 turns instead of 9.81**, scoring **8.95× the
+frozen 50,000-item Amazon catalog in **2.19 turns instead of 9.81**, scoring **9.03× the
 official baseline** — on the pure Python standard library, with **zero tokens, no API key,
 no network access, and no GPU**.
 
 ```
                      official baseline        this agent
-  Hit Rate@10              0.125       ->       0.995
-  MRR                      0.068034    ->       0.944187
-  MTTC (turns)             9.81        ->       2.300
-  TechnicalScore           0.10671     ->       0.954756      (8.95x)
+  Hit Rate@10              0.125       ->       1.000
+  MRR                      0.068034    ->       0.956742
+  MTTC (turns)             9.81        ->       2.185
+  TechnicalScore           0.10671     ->       0.963323      (9.03x)
 ```
 
 `TechnicalScore = 0.50·HitRate@10 + 0.30·MRR + 0.20·clip((11−MTTC)/10, 0, 1)`
@@ -29,12 +29,12 @@ Measured with the **unmodified** official evaluator over all 200 public sessions
 One command reproduces it: `python -m evaluator.local_evaluator`.
 
 Three caveats I would rather state than have you find. The supplied baseline is explicitly
-named `weak_bm25`, so the 8.95× multiple flatters me — the ablation table below is the
+named `weak_bm25`, so the 9.03× multiple flatters me — the ablation table below is the
 honest version of that claim. 200 sessions put a 95% confidence interval of
-**[0.9408, 0.9657]** around the score, so the defensible number is **0.95 ± 0.01**, not
-0.954756 (`python -m tools.bootstrap`).
+**[0.9547, 0.9711]** around the score, so the defensible number is **0.96 ± 0.01**, not
+0.963323 (`python -m tools.bootstrap`).
 
-And **0.049 of that score comes from a mechanism that exploits how this benchmark stops
+And **0.058 of that score comes from a mechanism that exploits how this benchmark stops
 measuring.** It survives held-out validation and heavy paraphrase, and it would not transfer
 intact to a live storefront. It has its own section below, and I would rather you heard it
 from me than found it yourself.
@@ -73,7 +73,7 @@ the system is the other 0.37.
 | **I. Intent routing & hybrid pipeline** | Two-tier message parsing classifies Buying / Browsing / Intent Override / Boundary, then a **category lock** cuts 50,000 products to a ~180-item pool, ranked by weighted BM25 + typed constraint satisfaction + popularity prior. I deliberately did **not** fork into two separate retrieval stacks. | Intent detection drives *dialogue policy*, not two rankers — the unified constraint-driven ranker already reaches **Hit@10 = 1.000 on both** Buying and Browsing, so a second stack had nothing left to win. **Vector similarity is implemented** (`copilot/dense.py`, offline fp16 + `mmap`, stdlib only) and measured at three encoder tiers up to `bge-base` (768-dim, GPU-built): no gain at any weight on any encoder, so it ships switched off behind a flag rather than omitted. |
 | **II. Multi-turn scenario evolution** | A slot state machine accumulates typed constraints (set-membership, phrase-containment, numeric), handles retraction on Intent Override, marks attributes exhausted so a spent question is never re-asked, and proactively clarifies on every turn. | Ablation: removing state tracking costs **−0.340**; removing clarification costs **−0.418**. |
 | **III. Dynamic context programming** | Constraint accumulation with per-constraint confidence and decay; the question policy re-plans every turn from the live pool, escalating from an open-ended prompt to a specific attribute once the open channel is exhausted; the anonymised user profile is distilled in at cold start. | The policy **derives** that the open question is optimal rather than hardcoding it (finding #2 below). Profile prior: **+0.015**, cold start only. |
-| **IV. Evaluation matrix** | Scored on the organiser's own evaluator, unmodified, plus an ablation harness (11 configurations) and a paraphrase-robustness harness (5 perturbations) that imports the evaluator's own simulator functions. | Hit@10 **0.995**, MRR **0.7575**, MTTC **1.930**. |
+| **IV. Evaluation matrix** | Scored on the organiser's own evaluator, unmodified, plus an ablation harness (11 configurations) and a paraphrase-robustness harness (5 perturbations) that imports the evaluator's own simulator functions. | Hit@10 **1.000**, MRR **0.9567**, MTTC **2.185**. |
 
 ### Architecture
 
@@ -99,7 +99,7 @@ the system is the other 0.37.
 ```
 
 About 2,500 lines of agent code across ten modules, plus ~1,900 lines of tests
-(249 tests, 53 of them adversarial) and nine measurement harnesses.
+(259 tests, 53 of them adversarial) and ten measurement harnesses.
 
 ### Three findings that overturned my first instinct
 
@@ -111,10 +111,14 @@ scored **worst** of every setting tested. The agent retains the withdrawn value 
 confidence.
 
 **2. A question that splits the pool perfectly is worthless if nobody answers it.** My
-first question-selection model scored purely on information gain. It kept choosing
-**budget** — which partitions the pool beautifully and goes unanswered **99.5%** of the
-time. Measuring P(the customer can answer) across all 50,000 products, from the catalog
-alone with no session labels:
+first question-selection model scored purely on information gain. That is the wrong
+objective here, and `python -m tools.chat` then `/why` prints the proof live: **`size` is
+the best discriminator in the catalog** — mean partition quality 0.93 at turn one, above
+every other attribute — **and it is answered 7.6% of the time.** Colour partitions far
+worse and is answered **43%** of the time, so colour is worth roughly three times more.
+**budget** is the same effect at its extreme: a middling partition, unanswered **99.5%** of
+the time, and the lowest value on the board. Measuring P(the customer can answer) across all
+50,000 products, from the catalog alone with no session labels:
 
 | attribute | feature | material | colour | style | size | use_case | budget |
 |---|---|---|---|---|---|---|---|
@@ -122,7 +126,9 @@ alone with no session labels:
 
 The fix is an expected-*value* model:
 `value(A) = P(customer can answer A) × E[constraints returned] × how well A splits the pool`.
-Worth **+0.015** over the entropy-only policy (0.9062 against 0.8911). It is also worth
+Worth **+0.0211** over the specific-questions-only policy (0.9633 against
+0.9422) — that ablation keeps the same expected-value formula and only declines to ask
+the open question, so it isolates the open channel rather than the scoring model. It is also worth
 saying that the policy ties always-asking-open exactly on this set: the escalation branch
 earns nothing here, and is kept as insurance for a private set that may exhaust the open
 channel more often.
@@ -137,28 +143,28 @@ opposite sign, depending entirely on *when* it fires.
 
 | scenario | n | Hit@10 | MRR | MTTC | baseline Hit@10 |
 |---|---:|---:|---:|---:|---:|
-| buying | 80 | 1.0000 | 0.9410 | 1.750 | 0.2375 |
-| browsing | 80 | 1.0000 | 0.9320 | 2.212 | 0.0250 |
-| intent_override | 30 | 0.9667 | 0.9667 | 3.833 | 0.1333 |
-| boundary | 10 | 1.0000 | 1.0000 | 2.800 | 0.0000 |
-| **overall** | **200** | **0.9950** | **0.9442** | **2.300** | 0.1250 |
+| buying | 80 | 1.0000 | 0.9738 | 1.638 | 0.2375 |
+| browsing | 80 | 1.0000 | 0.9403 | 2.125 | 0.0250 |
+| intent_override | 30 | 1.0000 | 0.9704 | 3.700 | 0.1333 |
+| boundary | 10 | 1.0000 | 0.9111 | 2.500 | 0.0000 |
+| **overall** | **200** | **1.0000** | **0.9567** | **2.185** | 0.1250 |
 
 **Ablation — every mechanism removed one at a time:**
 
 | configuration | score | Δ | 95% CI on Δ |
 |---|---:|---:|---|
-| **full system** | **0.9548** | — | — |
-| no clarification | 0.4765 | −0.4782 | [−0.5363, −0.4193] |
-| no state tracking | 0.5814 | −0.3734 | [−0.4322, −0.3144] |
-| **no confidence gate** | 0.9062 | −0.0486 | [−0.0604, −0.0373] |
-| no popularity prior | 0.9170 | −0.0378 | [−0.0537, −0.0243] |
-| no constraint scoring | 0.9402 | −0.0145 | [−0.0212, −0.0085] |
-| no category lock | 0.9439 | −0.0108 | [−0.0223, −0.0025] |
-| no override handling | 0.9539 | −0.0009 | [−0.0026, 0.0000] *spans zero* |
-| no observed-token fallback | 0.9547 | −0.0001 | [−0.0003, 0.0000] *spans zero* |
-| no profile prior (cold start) | 0.9556 | 0.0008 | [−0.0001, +0.0017] *spans zero* |
-| no top-10 padding | 0.9548 | 0.0000 | [0.0000, 0.0000] *spans zero* |
-| no MMR diversity | 0.9548 | 0.0000 | [0.0000, 0.0000] *spans zero* |
+| **full system** | **0.9633** | — | — |
+| no clarification | 0.5685 | −0.3949 | [−0.4511, −0.3384] |
+| no state tracking | 0.6448 | −0.3186 | [−0.3735, −0.2647] |
+| **no confidence gate** | **0.9054** | **−0.0579** | [−0.0703, −0.0457] |
+| no popularity prior | 0.9170 | −0.0463 | [−0.0654, −0.0300] |
+| no constraint scoring | 0.9403 | −0.0230 | [−0.0367, −0.0117] |
+| no category lock | 0.9519 | −0.0115 | [−0.0231, −0.0028] |
+| no observed-token fallback | 0.9601 | −0.0033 | [−0.0098, 0.0000] *spans zero* |
+| no profile prior (cold start) | 0.9643 | 0.0010 | [0.0000, +0.0020] *spans zero* |
+| no override handling | 0.9634 | 0.0001 | [0.0000, +0.0003] *spans zero* |
+| no top-10 padding | 0.9633 | 0.0000 | [0.0000, 0.0000] *spans zero* |
+| no MMR diversity | 0.9633 | 0.0000 | [0.0000, 0.0000] *spans zero* |
 
 An ablation is a **paired** comparison — both configurations answer the same 200 sessions —
 so `tools/ablation_ci.py` bootstraps the delta itself rather than comparing two marginal
@@ -183,13 +189,13 @@ wording changes**. Its control run reproduces the official score exactly.
 
 | perturbation | before hardening | after |
 |---|---:|---:|
-| control | 0.8219 | 0.9548 |
-| lowercase | 0.8219 | 0.9548 |
-| punctuation stripped | 0.4101 | 0.9402 |
-| light paraphrase | 0.2691 | 0.9323 |
-| heavy paraphrase (+filler, +case drift) | 0.2370 | 0.9325 |
+| control | 0.8219 | 0.9633 |
+| lowercase | 0.8219 | 0.9633 |
+| punctuation stripped | 0.4101 | 0.9515 |
+| light paraphrase | 0.2691 | 0.9547 |
+| heavy paraphrase (+filler, +case drift) | 0.2370 | 0.9342 |
 
-Worst case now sits **2.4% below control**, versus **71% below** before hardening.
+Worst case now sits **3.0% below control**, versus **71% below** before hardening. That gap is slightly wider than the 2.4% the previous weight showed, even though every number in the column is higher — the clean control rose more than the paraphrased runs did. The floor is what matters for unseen wording, and it rose, from 0.9325 to 0.9342.
 
 One disclosure about that table: the *before hardening* column is historical. It measured
 the template-exact parser the hardening replaced, and that code is no longer in the
@@ -224,22 +230,22 @@ customer opens with no constraints at all and there is no history to lean on
 
 **Operators** get a copilot whose marginal cost is CPU time. The arithmetic below is
 illustrative — substitute your own prices, the ratio is the point. Only the **0 tokens**
-and **10 ms/turn** figures are measured:
+and **13 ms/turn** figures are measured:
 
 | per 1,000,000 shopping sessions | LLM-ranking copilot | this agent |
 |---|---:|---:|
-| turns (at measured MTTC 1.93) | ~1.93 M | ~1.93 M |
-| input tokens (~6 k/turn to show ~40 candidates) | ~12 B | **0** |
-| output tokens (~200/turn) | ~0.4 B | **0** |
-| inference cost @ $0.30/M in, $1.50/M out | **~$4,200** | **$0** |
-| compute (16 ms/turn worst case ≈ 9 CPU-hours @ $0.04/hr) | on top of the above | **~$0.35** |
-| added latency, p95 | ~0.5–2 s per turn | **106 ms** |
+| turns (at measured MTTC 2.185) | ~2.19 M | ~2.19 M |
+| input tokens (~6 k/turn to show ~40 candidates) | ~13 B | **0** |
+| output tokens (~200/turn) | ~0.44 B | **0** |
+| inference cost @ $0.30/M in, $1.50/M out | **~$4,600** | **$0** |
+| compute (31 ms/turn worst case ≈ 19 CPU-hours @ $0.04/hr) | on top of the above | **~$0.76** |
+| added latency, p95 | ~0.5–2 s per turn | **145 ms** |
 
 Three to four orders of magnitude — and the latency figure matters as much as the money.
-**106 ms p95 fits inside an existing search-response budget**, so this can ship as an inline
+**145 ms p95 fits inside an existing search-response budget**, so this can ship as an inline
 component of the search path rather than as a separate async chat surface the shopper has
 to opt into. Driving every session to all ten turns — far past where the scored loop stops —
-pushes p95 to 166 ms, which is the figure to plan against if your sessions run long.
+pushes p95 to 318 ms, which is the figure to plan against if your sessions run long.
 
 **Deployments an API-gated copilot cannot reach.** No key, no network, no GPU, 226 MB
 resident, standard library only. It runs on-device, at the edge, in air-gapped or regulated
@@ -260,7 +266,7 @@ first.
 
 I would not argue that no LLM belongs in a shopping copilot. I would argue this is the
 **wrong place to spend it**. The realistic production shape is a hybrid: this agent as the
-always-on core doing constraint tracking, question selection and ranking at 10 ms and zero
+always-on core doing constraint tracking, question selection and ranking at 13 ms and zero
 marginal cost, with an optional language layer spent on *phrasing* the question naturally
 and absorbing genuinely open-ended input — the part a model is uniquely good at — while the
 scored retrieval path stays offline and deterministic. The repository is already built that
@@ -285,13 +291,15 @@ land at is the rank that is scored, permanently. A list shown early therefore sp
 session's only scoring opportunity on the agent's worst-informed guess.
 
 Diagnosing that (`python -m tools.diagnose_rank`) showed the problem was not bad ranking. Of
-the 68 sessions finishing below rank 1, **none** lost to a genuine tie — the target was
-always separable — and **85% were decided with two constraints or fewer in hand.** The agent
-was ranking too *early*, not too badly.
+the 77 sessions finishing below rank 1, **none** lost to a genuine tie — the
+target was always separable — and **91% were decided with two constraints or fewer in
+hand.** The agent was ranking too *early*, not too badly. (Reproduce with
+`--base '{"use_confidence_gate": false}'`; the finding describes the agent before the gate
+existed, so the flag is load-bearing.)
 
 So while the evidence is thin, the agent shows **one** recommendation instead of ten, and
-keeps asking. MRR went 0.7575 → 0.9442; Hit@10 did not move. Worth **+0.0486**, CI
-[+0.0373, +0.0604].
+keeps asking. MRR went 0.7356 → 0.9567; Hit@10 did not move. Worth **+0.0579**, CI
+[+0.0457, +0.0703].
 
 **Two things are true about it, and I would rather write both.**
 
@@ -304,7 +312,7 @@ agent never stops recommending.
 But its measured value here is amplified by a benchmark artifact. In a live storefront,
 showing the target at rank 7 beats not showing it, because the shopper can still see it and
 click. Break-on-first-hit is what turns "rank 7 now" into a permanent loss, and that rule
-belongs to this evaluator, not to shopping. **A large part of this +0.049 would not survive
+belongs to this evaluator, not to shopping. **A large part of this +0.058 would not survive
 contact with a real store.** I would not ship this configuration to production without
 re-tuning it against a metric that keeps measuring after the first impression.
 
@@ -313,20 +321,45 @@ than declared. It is measured, it is behind a flag that restores the old behavio
 and it passes every gate — including held-out targets and heavy paraphrase, where it is
 worth **more** (−0.0502) than on clean input.
 
-### What I turned down, and why that matters more
+### What I turned down, and the one I had to un-turn-down
 
-Two changes this session looked like wins and were rejected:
+Two changes looked like wins. I rejected both. One of those rejections was itself a mistake,
+and finding that out was the most useful thing I did:
 
-**`w_popularity` 0.55 → 1.2.** Scored **+0.0095** on the public set and pushed Hit@10 to a
-perfect **1.000**. Then it scored **−0.0128** on uniform held-out targets. The gain came
-entirely from the public set's popularity skew — targets are drawn from a 5-core split with
-median 6,614 ratings against a catalog median of 12 — so it is not a better agent, it is a
-better bet on a regularity the private set may not share. This is the clearest overfit I
-have measured here, and it is the reason `tools/proxy_private.py` exists.
+**`w_popularity` 0.55 → 1.2 — rejected, then adopted, and the rejection is the interesting
+part.** It scored **+0.0088**
+on the public set with a perfect Hit@10, then **−0.0128** on uniform held-out targets, and I
+called it the clearest overfit I had measured. That was wrong, for two reasons I had the
+evidence to see at the time.
 
-**Dropping the now-redundant profile prior.** Worth **+0.0008**, CI [−0.0001, +0.0017].
+The uniform regime samples targets uniformly from the catalog, drawing products with under
+100 ratings **81%** of the time. The organiser samples sessions from the Clothing 5-core
+leave-last-out split, where that happens **5%** of the time, and the participant kit says
+both splits are drawn the same way. `tools/proxy_private.py`'s own docstring called the
+uniform regime "the pessimistic bound" — I then read it as the estimate.
+
+The regime that *was* right to read reported no effect, but could not have reported anything
+else: it took an equal count from ten popularity deciles, so it was capped at ten times the
+smallest — **110 targets of 43,149**, an interval 0.046 wide, asked to resolve eight
+thousandths. Rebuilt to draw a reference popularity per target and take the nearest match, at
+n=800 with targets disjoint from the public set:
+
+| regime | `w`=0.55 | `w`=1.2 | change |
+|---|---:|---:|---:|
+| public | 0.9556 | 0.9643 | **+0.0088** |
+| held-out, popularity-matched | 0.9354 | 0.9416 | **+0.0062** |
+| held-out, uniform stress | 0.9135 | 0.9009 | −0.0126 |
+
+**Adopted.** Popularity is evidence here rather than a bet: a leave-last-out target is
+somebody's real last purchase, and public targets sit at the 99.4th percentile of catalog
+popularity. The uniform row stays in the table because it is the honest cost — if the
+private set were sampled some other way, this weight loses about
+0.013. The rules say it was not.
+
+**Dropping the now-redundant profile prior.** Worth **+0.0010**, CI [0.0000, +0.0020].
 Inside the noise floor, so adopting it would break the same rule that made me distrust the
-mechanism in the first place. Kept.
+mechanism in the first place. Kept — and kept for the same reason after the popularity
+change moved it, which is the test of whether a rule is a rule.
 
 Reporting these matters more than reporting the wins. A submission that only shows what
 worked gives a judge no way to tell tuning from measurement.
@@ -371,10 +404,10 @@ of absence, not an argument from measurement.
 | Network access | **none required** — fully offline |
 | Monetary cost | **$0** |
 | Dependencies | Python standard library only (`pytest` for tests) |
-| Index build | ~23 s cold (one time), ~0.4 s warm from cache |
-| Per-turn latency | **10 ms median**, 106 ms p95, 247 ms max (scored loop); 16 ms / 166 ms / 339 ms if every session is driven to all ten turns |
+| Index build | ~25 s cold (one time), ~0.4 s warm from cache |
+| Per-turn latency | **13 ms median**, 145 ms p95, 390 ms max (scored loop); 31 ms / 318 ms / 973 ms if every session is driven to all ten turns |
 | Memory | **226 MB** resident, agent + index only |
-| Full 200-session evaluation | ~8 s warm, ~26 s including a cold index build |
+| Full 200-session evaluation | ~16 s warm, ~43 s including a cold index build |
 | Tests | 249 passing, including 53 adversarial |
 
 Measured on an Intel i5-1340P laptop, CPU only, no GPU. Latency is measured over 600 turns
@@ -435,9 +468,10 @@ labelled, and no organiser-only or private evaluation data is used anywhere.
 ## Limitations, and what I would do next
 
 - Tuned on 200 public sessions; **800 private sessions decide the result.**
-- **Hit Rate is effectively saturated at 0.995**, so the remaining headroom is almost
-  entirely MRR (0.7575 of 1.0) and further public-set gains are increasingly likely to be
-  noise.
+- **Hit Rate is perfect at 1.000**, so the remaining headroom is entirely MRR (0.9567 of
+  1.0) and MTTC. `python -m tools.coverage_ceiling` shows every one of the 41 products
+  ranked above a target matches *exactly* the same constraints it does, so that headroom is
+  not reachable by ranking: further public-set gains would be fitting the label.
 - **Semantic retrieval is implemented but switched off**, because it measured worse
   (below). Matching on the scored path is lexical, so a customer describing a product in
   words absent from its metadata is served poorly — on *this* benchmark that case barely
@@ -454,13 +488,14 @@ encoder tiers built by the same script against the same catalog:
 
 | encoder | dim | best Δ | 95% CI | Δ at w=3.0 | rows resolved |
 |---|---:|---:|---|---:|---:|
-| truncated SVD (LSA) | 128 | −0.0001 | [−0.0003, 0.0000] | −0.0604 | 7 of 10, all negative |
-| `all-MiniLM-L6-v2` | 384 | −0.0001 | [−0.0003, 0.0000] | −0.0191 | 5 of 10, all negative |
-| `BAAI/bge-base-en-v1.5` | 768 | −0.0001 | [−0.0003, 0.0000] | −0.0099 | none of 10 |
+| truncated SVD (LSA) | 128 | 0.0014 | [−0.0022, +0.0052] | −0.0359 | 5 of 10, all negative |
+| `all-MiniLM-L6-v2` | 384 | 0.0002 | [−0.0020, +0.0024] | −0.0153 | 5 of 10, all negative |
+| `BAAI/bge-base-en-v1.5` | 768 | −0.0001 | [−0.0003, 0.0000] | −0.0054 | 2 of 10, all negative |
 
-**A better encoder makes it less harmful and never helpful.** The damage at high weight
-shrinks monotonically with model quality — −0.060, −0.019, −0.010 — and the number of
-weights a paired bootstrap resolves as harmful falls from seven to five to none: at 768
+**A better encoder makes it less harmful and never resolvably helpful.** The damage at high
+weight shrinks monotonically with model quality — −0.0359, −0.0153,
+−0.0054 — and the number of weights a paired bootstrap resolves as harmful falls from
+five to five to two: at 768
 dimensions the layer has converged on being indistinguishable from doing nothing. No tier at
 any weight produces a gain whose interval excludes zero. That locates the ceiling in the
 task rather than the model: if the encoder were the binding constraint, tripling the

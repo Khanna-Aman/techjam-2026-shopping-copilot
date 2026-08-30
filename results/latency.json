@@ -3,84 +3,84 @@
   "repeats": 3,
   "per_turn_ms": {
     "scored_loop": {
-      "turns": 459,
-      "median": 10.165,
-      "mean": 23.165,
-      "p95": 105.606,
-      "p99": 177.154,
-      "max": 246.7
+      "turns": 437,
+      "median": 13.232,
+      "mean": 32.313,
+      "p95": 144.859,
+      "p99": 310.582,
+      "max": 390.345
     },
     "all_ten_turns": {
       "turns": 2000,
-      "median": 16.466,
-      "mean": 38.912,
-      "p95": 166.167,
-      "p99": 245.026,
-      "max": 339.37
+      "median": 31.219,
+      "mean": 81.756,
+      "p95": 317.793,
+      "p99": 553.991,
+      "max": 972.573
     }
   },
   "per_turn_ms_runs": {
     "scored_loop": [
       {
-        "turns": 459,
-        "median": 11.019,
-        "mean": 26.039,
-        "p95": 106.45,
-        "p99": 232.168,
-        "max": 306.986
+        "turns": 437,
+        "median": 13.232,
+        "mean": 32.313,
+        "p95": 144.859,
+        "p99": 310.582,
+        "max": 387.126
       },
       {
-        "turns": 459,
-        "median": 10.165,
-        "mean": 23.165,
-        "p95": 105.606,
-        "p99": 177.154,
-        "max": 246.7
+        "turns": 437,
+        "median": 12.14,
+        "mean": 28.3,
+        "p95": 113.543,
+        "p99": 258.079,
+        "max": 390.345
       },
       {
-        "turns": 459,
-        "median": 7.485,
-        "mean": 16.792,
-        "p95": 73.022,
-        "p99": 150.837,
-        "max": 190.653
+        "turns": 437,
+        "median": 20.571,
+        "mean": 59.716,
+        "p95": 235.461,
+        "p99": 559.55,
+        "max": 943.002
       }
     ],
     "all_ten_turns": [
       {
         "turns": 2000,
-        "median": 20.44,
-        "mean": 48.681,
-        "p95": 198.985,
-        "p99": 312.266,
-        "max": 425.403
+        "median": 26.572,
+        "mean": 64.562,
+        "p95": 269.506,
+        "p99": 410.056,
+        "max": 620.519
       },
       {
         "turns": 2000,
-        "median": 16.466,
-        "mean": 38.912,
-        "p95": 166.167,
-        "p99": 245.026,
-        "max": 317.681
+        "median": 31.219,
+        "mean": 81.756,
+        "p95": 317.793,
+        "p99": 771.318,
+        "max": 1882.766
       },
       {
         "turns": 2000,
-        "median": 15.058,
-        "mean": 36.199,
-        "p95": 139.34,
-        "p99": 242.104,
-        "max": 339.37
+        "median": 36.078,
+        "mean": 84.845,
+        "p95": 370.602,
+        "p99": 553.991,
+        "max": 972.573
       }
     ]
   },
   "index_build_seconds": {
-    "cold": 22.664,
-    "warm_from_cache": 0.44
+    "cold": 24.703,
+    "warm_from_cache": 0.393
   },
   "memory_mb": {
-    "agent_only_resident": 225.9,
-    "harness_after_index_load": 634.1,
-    "harness_after_run": 643.7
+    "agent_only_resident": 226.4,
+    "harness_after_index_load": 634.3,
+    "harness_after_run": 644.1
   },
   "platform": "win32",
   "python": "3.12.6"

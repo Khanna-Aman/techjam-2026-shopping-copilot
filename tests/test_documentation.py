@@ -513,20 +513,33 @@ def test_the_yield_table_in_the_readme_matches_the_derivation():
 
 
 def test_the_question_policy_claim_matches_the_strategy_sweep():
-    """The +0.015 in finding 3 is hybrid minus infogain, and must stay that."""
+    """Finding 3's headline number is hybrid minus infogain, and must stay that.
+
+    The comparison is named carefully. `infogain` is not an entropy-only policy -- it scores
+    with the same expected-value product the default uses and merely refuses to ask the open
+    question (see `copilot/question.py`), so describing it as "entropy-only" overstated what
+    the ablation isolates. The README says "specific-questions-only", and this pins the
+    phrasing so it cannot drift back.
+    """
     strategies = _load("clarification_strategies.json")
     hybrid = strategies["strategy: hybrid"]["technical_score"]
     infogain = strategies["strategy: infogain"]["technical_score"]
-    stated = re.search(r"Worth\s+\*\*\+([\d.]+)\*\*\s+over the entropy-only policy", _README)
+    stated = re.search(
+        r"Worth\s+\*\*\+([\d.]+)\*\*\s+over the specific-questions-only policy", _README
+    )
     assert stated, "the question-policy claim is no longer phrased as expected"
     assert float(stated.group(1)) == pytest.approx(hybrid - infogain, abs=5e-4)
+    assert "entropy-only" not in _README, (
+        "`infogain` is not an entropy-only policy; it uses the same expected-value product "
+        "and only declines the open question"
+    )
 
 
 def test_the_question_policy_interval_matches_the_paired_bootstrap():
     """The README quotes this interval with the sign flipped, deliberately.
 
     `tools/ablation_ci.py` always measures `variant - default`, so the infogain row is
-    negative: the entropy-only policy is *worse* than the shipped one. Finding 3 states the
+    negative: the specific-questions-only policy is *worse* than the shipped one. Finding 3 states the
     same fact the other way up -- what the expected-value policy is worth *over* infogain --
     so the documented bounds are the negated, swapped tool output. That flip is easy to get
     backwards in an edit, which is why it is pinned here rather than left to review.
@@ -590,32 +603,171 @@ def test_the_sign_of_the_personalization_finding_holds():
     assert cold > always, "timing must still matter"
 
 
-def test_the_rejected_popularity_weight_really_did_fail_held_out():
-    """The rejection is a claim about two runs, so check both.
+def test_the_popularity_skew_figures_are_true_of_the_actual_catalog():
+    """The recalibration argument rests on four numbers about the data, not about the agent.
 
-    A rejected idea is only credible if the numbers behind it are in the repository. This
-    asserts the shape of the finding rather than its exact values: better on public, worse
-    on uniform held-out targets. If that ever stops being true, the section arguing for the
-    held-out harness is arguing from a result that no longer exists.
+    "Targets sit at the 99.4th percentile", "86.5% are in the top decile", "uniform sampling
+    draws a sub-100-rating target 81% of the time" and "the real split does so 5% of the
+    time" are quoted in the README, in DEVPOST, in the demo narration and in the comment
+    justifying `w_popularity` in `copilot/config.py`. They are claims about `data/catalog.jsonl`
+    and `data/public_set.jsonl`, so they are checkable, and if they drift the whole argument
+    for the weight goes with them.
     """
-    rejected = _load("proxy_private_pop12.json")
-    shipped = _load("proxy_private.json")
+    import bisect
+
+    catalog = _ROOT / "data" / "catalog.jsonl"
+    if not catalog.exists():
+        pytest.skip("data/catalog.jsonl not present")
+
+    from evaluator.local_evaluator import catalog_index, load_jsonl
+
+    _ids, _cats, products = catalog_index(str(catalog))
+    targets = [
+        str(row["ground_truth"]["parent_asin"])
+        for row in load_jsonl(str(_ROOT / "data" / "public_set.jsonl"))
+    ]
+
+    def ratings(product: dict) -> int:
+        try:
+            return int(product.get("rating_number", 0) or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    catalog_counts = sorted(ratings(p) for p in products.values())
+    target_counts = [ratings(products[a]) for a in targets if a in products]
+
+    percentiles = [
+        100.0 * bisect.bisect_left(catalog_counts, c) / len(catalog_counts)
+        for c in target_counts
+    ]
+    percentiles.sort()
+    median_percentile = percentiles[len(percentiles) // 2]
+    top_decile = 100.0 * sum(1 for p in percentiles if p > 90) / len(percentiles)
+
+    assert median_percentile > 98.0, (
+        f"targets sit at the {median_percentile:.1f}th percentile, not ~99.4th; the "
+        "README's popularity-skew argument no longer holds"
+    )
+    assert top_decile > 80.0, f"only {top_decile:.1f}% of targets are in the top decile"
+
+    catalog_obscure = 100.0 * sum(1 for c in catalog_counts if c < 100) / len(catalog_counts)
+    target_obscure = 100.0 * sum(1 for c in target_counts if c < 100) / len(target_counts)
+    assert catalog_obscure > 75.0, (
+        f"uniform catalog sampling now draws a sub-100-rating target {catalog_obscure:.0f}% "
+        "of the time; the README says ~81%"
+    )
+    assert target_obscure < 10.0, (
+        f"the real split now draws one {target_obscure:.0f}% of the time; README says ~5%"
+    )
+
+
+def test_the_popularity_recalibration_is_supported_by_the_corrected_proxy():
+    """`w_popularity` 0.55 -> 1.2 was rejected, then adopted. The evidence must be committed.
+
+    The comparison lives inside one artifact rather than two, and that is deliberate: both
+    configurations are run over the *same* synthesised sessions and the difference is
+    bootstrapped pairwise. Two separate runs would draw different targets, and comparing
+    their marginal intervals is the weaker test -- those intervals overlap here while the
+    paired one does not, which is exactly the trap the original rejection fell into.
+
+    It also asserts the part that argues against us. The uniform regime still prefers the
+    old weight, and that is the honest content of the finding: popularity is evidence *for
+    this sampling scheme* and a liability outside it.
+    """
+    proxy = _load("proxy_private.json")
     sweep = _load("sweep_popularity.json")
 
     assert sweep["w_pop=1.2"]["technical_score"] > sweep["w_pop=0.55"]["technical_score"], (
-        "the rejected weight is supposed to look better on the public set"
+        "the adopted weight is supposed to score better on the public set"
     )
-    assert rejected["uniform"]["technical_score"] < shipped["uniform"]["technical_score"], (
-        "the rejected weight no longer loses on uniform held-out targets"
+
+    matched = proxy["matched"]["paired_comparison"]
+    assert matched["against"] == {"w_popularity": 0.55}, (
+        "the committed comparison is no longer against the previous weight"
     )
-    assert rejected["uniform"]["hit_rate_at_10"] < shipped["uniform"]["hit_rate_at_10"]
+    assert matched["ci95_low"] > 0, (
+        f"the paired gain on popularity-matched held-out targets no longer excludes zero "
+        f"({matched['delta']:+.4f} [{matched['ci95_low']:+.4f}, {matched['ci95_high']:+.4f}]); "
+        "the README rests the reversal on this interval"
+    )
+    assert matched["improved"] > matched["regressed"] * 2, (
+        "the gain is no longer broad: it should improve far more sessions than it breaks, "
+        "or it is the kind of concentrated effect that signals overfitting"
+    )
+
+    uniform = proxy["uniform"]["paired_comparison"]
+    assert uniform["ci95_high"] < 0, (
+        "the uniform stress regime is supposed to still prefer the old weight; if that "
+        "stopped being true the README overstates the trade-off it discloses"
+    )
+
+
+def test_the_matched_proxy_is_no_longer_sample_capped():
+    """The bug that made the original rejection unfalsifiable must not come back.
+
+    `sample_matched` used to take an equal count from each of ten popularity deciles, so it
+    was capped at ten times the smallest decile -- 110 targets, with a 95% interval 0.046
+    wide, being asked to resolve an effect of eight thousandths. Any future change that
+    reintroduces a per-decile cap will drop this number back to ~110 and fail here.
+    """
+    proxy = _load("proxy_private.json")
+    assert proxy["matched"]["sample_count"] > 110, (
+        f"the matched regime is back down to {proxy['matched']['sample_count']} samples; "
+        "the decile cap that made w_popularity=1.2 look like a non-result has returned"
+    )
 
 
 def test_the_shipped_popularity_weight_is_still_the_documented_one():
     from copilot.config import DEFAULT_CONFIG
 
-    assert DEFAULT_CONFIG.w_popularity == 0.55, (
-        "the README says the weight stayed at 0.55 after the rejection"
+    assert DEFAULT_CONFIG.w_popularity == 1.20, (
+        "the README documents the recalibration to 1.20"
+    )
+
+
+def test_the_residual_is_saturated_ties_and_not_ranking_headroom():
+    """The README argues the remaining MRR gap cannot be taken. That is a measurement.
+
+    If a product ever outranks a target while satisfying *fewer* of the disclosed
+    constraints, that is a genuine scoring defect and the claim "no reranker can fix this"
+    becomes false. The number to watch is `rivals_mis_scored`: it must stay at zero, and
+    every rival above a target must be in a saturated tie.
+    """
+    summary = _load("coverage_ceiling.json")["summary"]
+
+    assert summary["rivals_mis_scored"] == 0, (
+        f"{summary['rivals_mis_scored']} products outrank a target while matching fewer "
+        "constraints; that is fixable headroom and the ceiling argument needs rewriting"
+    )
+    assert summary["rivals_in_saturated_ties"] == summary["rivals_above_targets"], (
+        "not every rival above a target is a saturated tie any more; finding the residual "
+        "unreachable is no longer supported by the measurement"
+    )
+
+
+def test_the_gate_setting_sits_on_a_flat_region():
+    """Finding 5 says the gate thresholds were "chosen from a flat region, not an argmax".
+
+    That is a claim about a grid, so it needs the grid. The README quotes the spread and
+    concedes the shipped setting is not the top of it; both must stay true, and the spread
+    must stay under the standard error on the score, or "flat" is the wrong word.
+    """
+    plateau = _load("sweep_gate_plateau.json")
+    bootstrap = _load("bootstrap.json")["overall"]["metrics"]["technical_score"]
+    scores = {k: v["technical_score"] for k, v in plateau.items()}
+    assert len(scores) == 9, f"expected a 3x3 grid, found {len(scores)} rows"
+
+    spread = max(scores.values()) - min(scores.values())
+    assert spread < bootstrap["std_error"], (
+        f"the gate grid spans {spread:.4f}, wider than the {bootstrap['std_error']:.4f} "
+        "standard error; it is no longer a flat region and finding 5 needs rewriting"
+    )
+    shipped = scores["min_c=4 max_turn=3"]
+    assert max(scores.values()) - shipped < 0.005, (
+        "the shipped gate setting has fallen measurably behind the best cell in the grid"
+    )
+    assert "the shipped setting is not the" in _README, (
+        "the README no longer concedes that the shipped gate setting is not the argmax"
     )
 
 
@@ -634,5 +786,17 @@ def test_the_override_retention_finding_holds():
     sweep = _load("sweep_override_decay.json")
     scores = {k: v["technical_score"] for k, v in sweep.items()}
     assert scores["override_decay=0.0"] == min(scores.values()), "erasure is no longer worst"
-    best = max(scores, key=lambda key: scores[key])
-    assert best == "override_decay=0.5", f"the tuned default is no longer best: {best}"
+
+    # The finding is "erasure is worst", not "0.5 is the argmax" -- and since the popularity
+    # recalibration 0.5 is no longer the argmax, though it trails by 0.0001. Asserting the
+    # argmax here would demand chasing a difference this document calls noise everywhere
+    # else. What must stay true is that the shipped value is not meaningfully behind the
+    # best one, and that the README says so rather than implying 0.5 wins.
+    shipped = scores["override_decay=0.5"]
+    assert max(scores.values()) - shipped < 0.005, (
+        "override_decay=0.5 has fallen measurably behind the best setting; finding 2 needs "
+        "revisiting rather than a comment"
+    )
+    assert "0.5 is not" in _README, (
+        "the README no longer discloses that 0.5 is not the argmax"
+    )

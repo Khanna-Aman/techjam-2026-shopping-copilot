@@ -3,24 +3,24 @@
     {
       "sample_id": "public_0001",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 2,
+      "constraints_known": 1,
       "pool_size": 329,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.144529
     },
     {
       "sample_id": "public_0002",
       "scenario_type": "intent_override",
-      "turn": 4,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 3,
+      "rank": 2,
+      "constraints_known": 3,
       "pool_size": 258,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.025301
     },
     {
       "sample_id": "public_0003",
@@ -69,13 +69,13 @@
     {
       "sample_id": "public_0007",
       "scenario_type": "browsing",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 2,
+      "turn": 1,
+      "rank": 6,
+      "constraints_known": 0,
       "pool_size": 519,
-      "strictly_above": 0,
+      "strictly_above": 5,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.158644
     },
     {
       "sample_id": "public_0008",
@@ -91,13 +91,13 @@
     {
       "sample_id": "public_0009",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 2,
+      "constraints_known": 1,
       "pool_size": 184,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.139387
     },
     {
       "sample_id": "public_0010",
@@ -113,24 +113,24 @@
     {
       "sample_id": "public_0011",
       "scenario_type": "browsing",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 1,
+      "rank": 6,
+      "constraints_known": 0,
       "pool_size": 46,
-      "strictly_above": 0,
+      "strictly_above": 5,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.391865
     },
     {
       "sample_id": "public_0012",
       "scenario_type": "browsing",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 2,
+      "rank": 3,
+      "constraints_known": 2,
       "pool_size": 591,
-      "strictly_above": 0,
+      "strictly_above": 2,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.01512
     },
     {
       "sample_id": "public_0013",
@@ -146,13 +146,13 @@
     {
       "sample_id": "public_0014",
       "scenario_type": "browsing",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 9,
+      "constraints_known": 0,
       "pool_size": 51,
-      "strictly_above": 0,
+      "strictly_above": 8,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.212058
     },
     {
       "sample_id": "public_0015",
@@ -179,24 +179,24 @@
     {
       "sample_id": "public_0017",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 2,
+      "turn": 1,
+      "rank": 2,
+      "constraints_known": 1,
       "pool_size": 349,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.001772
     },
     {
       "sample_id": "public_0018",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 4,
+      "constraints_known": 1,
       "pool_size": 42,
-      "strictly_above": 0,
+      "strictly_above": 3,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.268505
     },
     {
       "sample_id": "public_0019",
@@ -223,13 +223,13 @@
     {
       "sample_id": "public_0021",
       "scenario_type": "browsing",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 2,
+      "turn": 1,
+      "rank": 6,
+      "constraints_known": 0,
       "pool_size": 56,
-      "strictly_above": 0,
+      "strictly_above": 5,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.35454
     },
     {
       "sample_id": "public_0022",
@@ -256,24 +256,24 @@
     {
       "sample_id": "public_0024",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 3,
+      "constraints_known": 1,
       "pool_size": 192,
-      "strictly_above": 0,
+      "strictly_above": 2,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.167114
     },
     {
       "sample_id": "public_0025",
       "scenario_type": "browsing",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 2,
+      "turn": 1,
+      "rank": 10,
+      "constraints_known": 0,
       "pool_size": 58,
-      "strictly_above": 0,
+      "strictly_above": 9,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.189111
     },
     {
       "sample_id": "public_0026",
@@ -289,13 +289,13 @@
     {
       "sample_id": "public_0027",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 5,
+      "constraints_known": 1,
       "pool_size": 319,
-      "strictly_above": 0,
+      "strictly_above": 4,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.132561
     },
     {
       "sample_id": "public_0028",
@@ -344,24 +344,24 @@
     {
       "sample_id": "public_0032",
       "scenario_type": "buying",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 1,
+      "rank": 2,
+      "constraints_known": 1,
       "pool_size": 178,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.008947
     },
     {
       "sample_id": "public_0033",
       "scenario_type": "browsing",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 2,
+      "turn": 1,
+      "rank": 2,
+      "constraints_known": 0,
       "pool_size": 342,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.54464
     },
     {
       "sample_id": "public_0034",
@@ -421,35 +421,35 @@
     {
       "sample_id": "public_0039",
       "scenario_type": "browsing",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 4,
-      "pool_size": 423,
-      "strictly_above": 0,
+      "turn": 2,
+      "rank": 2,
+      "constraints_known": 2,
+      "pool_size": 421,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.017267
     },
     {
       "sample_id": "public_0040",
       "scenario_type": "browsing",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 2,
+      "turn": 1,
+      "rank": 6,
+      "constraints_known": 0,
       "pool_size": 127,
-      "strictly_above": 0,
+      "strictly_above": 5,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.133521
     },
     {
       "sample_id": "public_0041",
       "scenario_type": "boundary",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 5,
+      "turn": 1,
+      "rank": 9,
+      "constraints_known": 0,
       "pool_size": 519,
-      "strictly_above": 0,
+      "strictly_above": 8,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.263209
     },
     {
       "sample_id": "public_0042",
@@ -487,13 +487,13 @@
     {
       "sample_id": "public_0045",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 4,
+      "constraints_known": 1,
       "pool_size": 519,
-      "strictly_above": 0,
+      "strictly_above": 3,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.036831
     },
     {
       "sample_id": "public_0046",
@@ -520,13 +520,13 @@
     {
       "sample_id": "public_0048",
       "scenario_type": "browsing",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 2,
-      "pool_size": 413,
-      "strictly_above": 0,
+      "turn": 1,
+      "rank": 8,
+      "constraints_known": 0,
+      "pool_size": 400,
+      "strictly_above": 7,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.55247
     },
     {
       "sample_id": "public_0049",
@@ -564,13 +564,13 @@
     {
       "sample_id": "public_0052",
       "scenario_type": "intent_override",
-      "turn": 4,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 3,
+      "rank": 2,
+      "constraints_known": 3,
       "pool_size": 519,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.002276
     },
     {
       "sample_id": "public_0053",
@@ -586,13 +586,13 @@
     {
       "sample_id": "public_0054",
       "scenario_type": "buying",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 1,
+      "rank": 5,
+      "constraints_known": 1,
       "pool_size": 338,
-      "strictly_above": 0,
+      "strictly_above": 4,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.161815
     },
     {
       "sample_id": "public_0055",
@@ -619,46 +619,46 @@
     {
       "sample_id": "public_0057",
       "scenario_type": "browsing",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 2,
+      "turn": 1,
+      "rank": 6,
+      "constraints_known": 0,
       "pool_size": 283,
-      "strictly_above": 0,
+      "strictly_above": 5,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.212152
     },
     {
       "sample_id": "public_0058",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 4,
+      "constraints_known": 1,
       "pool_size": 49,
-      "strictly_above": 0,
+      "strictly_above": 3,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.072273
     },
     {
       "sample_id": "public_0059",
       "scenario_type": "browsing",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 2,
-      "pool_size": 405,
-      "strictly_above": 0,
+      "turn": 1,
+      "rank": 9,
+      "constraints_known": 0,
+      "pool_size": 307,
+      "strictly_above": 8,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.302402
     },
     {
       "sample_id": "public_0060",
       "scenario_type": "browsing",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 2,
+      "turn": 1,
+      "rank": 9,
+      "constraints_known": 0,
       "pool_size": 68,
-      "strictly_above": 0,
+      "strictly_above": 8,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.355411
     },
     {
       "sample_id": "public_0061",
@@ -674,13 +674,13 @@
     {
       "sample_id": "public_0062",
       "scenario_type": "browsing",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 2,
+      "turn": 1,
+      "rank": 3,
+      "constraints_known": 0,
       "pool_size": 66,
-      "strictly_above": 0,
+      "strictly_above": 2,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.028609
     },
     {
       "sample_id": "public_0063",
@@ -718,13 +718,13 @@
     {
       "sample_id": "public_0066",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 2,
+      "constraints_known": 1,
       "pool_size": 131,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.002344
     },
     {
       "sample_id": "public_0067",
@@ -751,24 +751,24 @@
     {
       "sample_id": "public_0069",
       "scenario_type": "browsing",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 2,
+      "turn": 1,
+      "rank": 6,
+      "constraints_known": 0,
       "pool_size": 503,
-      "strictly_above": 0,
+      "strictly_above": 5,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.178344
     },
     {
       "sample_id": "public_0070",
       "scenario_type": "browsing",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 2,
-      "pool_size": 401,
-      "strictly_above": 0,
+      "turn": 1,
+      "rank": 3,
+      "constraints_known": 0,
+      "pool_size": 400,
+      "strictly_above": 2,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.182741
     },
     {
       "sample_id": "public_0071",
@@ -806,35 +806,35 @@
     {
       "sample_id": "public_0074",
       "scenario_type": "browsing",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 2,
+      "rank": 3,
+      "constraints_known": 2,
       "pool_size": 342,
-      "strictly_above": 0,
+      "strictly_above": 2,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.123009
     },
     {
       "sample_id": "public_0075",
       "scenario_type": "browsing",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 2,
+      "rank": 3,
+      "constraints_known": 2,
       "pool_size": 258,
-      "strictly_above": 0,
+      "strictly_above": 2,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.024589
     },
     {
       "sample_id": "public_0076",
       "scenario_type": "browsing",
-      "turn": 3,
-      "rank": 7,
-      "constraints_known": 6,
+      "turn": 2,
+      "rank": 6,
+      "constraints_known": 2,
       "pool_size": 64,
-      "strictly_above": 6,
+      "strictly_above": 5,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.121416
+      "score_gap_to_top": 0.11023
     },
     {
       "sample_id": "public_0077",
@@ -883,13 +883,13 @@
     {
       "sample_id": "public_0081",
       "scenario_type": "browsing",
-      "turn": 3,
+      "turn": 2,
       "rank": 2,
-      "constraints_known": 4,
+      "constraints_known": 2,
       "pool_size": 46,
       "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.012644
+      "score_gap_to_top": 0.033001
     },
     {
       "sample_id": "public_0082",
@@ -905,13 +905,13 @@
     {
       "sample_id": "public_0083",
       "scenario_type": "buying",
-      "turn": 3,
-      "rank": 5,
-      "constraints_known": 4,
+      "turn": 2,
+      "rank": 6,
+      "constraints_known": 3,
       "pool_size": 681,
-      "strictly_above": 4,
+      "strictly_above": 5,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.132297
+      "score_gap_to_top": 0.141245
     },
     {
       "sample_id": "public_0084",
@@ -949,13 +949,13 @@
     {
       "sample_id": "public_0087",
       "scenario_type": "browsing",
-      "turn": 3,
+      "turn": 2,
       "rank": 3,
-      "constraints_known": 4,
+      "constraints_known": 2,
       "pool_size": 288,
       "strictly_above": 2,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.041759
+      "score_gap_to_top": 0.084033
     },
     {
       "sample_id": "public_0088",
@@ -1004,35 +1004,35 @@
     {
       "sample_id": "public_0092",
       "scenario_type": "browsing",
-      "turn": 3,
-      "rank": 2,
-      "constraints_known": 4,
+      "turn": 2,
+      "rank": 9,
+      "constraints_known": 2,
       "pool_size": 284,
-      "strictly_above": 1,
+      "strictly_above": 8,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.003895
+      "score_gap_to_top": 0.264968
     },
     {
       "sample_id": "public_0093",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 1,
+      "rank": 2,
+      "constraints_known": 1,
       "pool_size": 44,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.16199
     },
     {
       "sample_id": "public_0094",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 3,
+      "constraints_known": 1,
       "pool_size": 137,
-      "strictly_above": 0,
+      "strictly_above": 2,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.094583
     },
     {
       "sample_id": "public_0095",
@@ -1059,13 +1059,13 @@
     {
       "sample_id": "public_0097",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 4,
+      "constraints_known": 1,
       "pool_size": 263,
-      "strictly_above": 0,
+      "strictly_above": 3,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.04603
     },
     {
       "sample_id": "public_0098",
@@ -1081,24 +1081,24 @@
     {
       "sample_id": "public_0099",
       "scenario_type": "browsing",
-      "turn": 3,
+      "turn": 2,
       "rank": 4,
-      "constraints_known": 4,
+      "constraints_known": 2,
       "pool_size": 127,
       "strictly_above": 3,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.180637
+      "score_gap_to_top": 0.195373
     },
     {
       "sample_id": "public_0100",
       "scenario_type": "browsing",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 2,
+      "rank": 2,
+      "constraints_known": 2,
       "pool_size": 665,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.057977
     },
     {
       "sample_id": "public_0101",
@@ -1158,13 +1158,13 @@
     {
       "sample_id": "public_0106",
       "scenario_type": "buying",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 1,
+      "rank": 6,
+      "constraints_known": 1,
       "pool_size": 52,
-      "strictly_above": 0,
+      "strictly_above": 5,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.213488
     },
     {
       "sample_id": "public_0107",
@@ -1202,13 +1202,13 @@
     {
       "sample_id": "public_0110",
       "scenario_type": "browsing",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 2,
+      "turn": 1,
+      "rank": 3,
+      "constraints_known": 0,
       "pool_size": 276,
-      "strictly_above": 0,
+      "strictly_above": 2,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.01545
     },
     {
       "sample_id": "public_0111",
@@ -1224,13 +1224,13 @@
     {
       "sample_id": "public_0112",
       "scenario_type": "boundary",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 1,
+      "turn": 1,
+      "rank": 3,
+      "constraints_known": 0,
       "pool_size": 342,
-      "strictly_above": 0,
+      "strictly_above": 2,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.160896
     },
     {
       "sample_id": "public_0113",
@@ -1246,13 +1246,13 @@
     {
       "sample_id": "public_0114",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 2,
+      "constraints_known": 1,
       "pool_size": 1017,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.064155
     },
     {
       "sample_id": "public_0115",
@@ -1290,13 +1290,13 @@
     {
       "sample_id": "public_0118",
       "scenario_type": "buying",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 1,
+      "rank": 2,
+      "constraints_known": 1,
       "pool_size": 197,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.087549
     },
     {
       "sample_id": "public_0119",
@@ -1312,13 +1312,13 @@
     {
       "sample_id": "public_0120",
       "scenario_type": "browsing",
-      "turn": 3,
+      "turn": 2,
       "rank": 2,
-      "constraints_known": 4,
+      "constraints_known": 2,
       "pool_size": 349,
       "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.119086
+      "score_gap_to_top": 0.114469
     },
     {
       "sample_id": "public_0121",
@@ -1334,13 +1334,13 @@
     {
       "sample_id": "public_0122",
       "scenario_type": "browsing",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 2,
+      "turn": 1,
+      "rank": 7,
+      "constraints_known": 0,
       "pool_size": 263,
-      "strictly_above": 0,
+      "strictly_above": 6,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.305036
     },
     {
       "sample_id": "public_0123",
@@ -1356,13 +1356,13 @@
     {
       "sample_id": "public_0124",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 9,
+      "constraints_known": 1,
       "pool_size": 385,
-      "strictly_above": 0,
+      "strictly_above": 8,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.172751
     },
     {
       "sample_id": "public_0125",
@@ -1411,13 +1411,13 @@
     {
       "sample_id": "public_0129",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
-      "pool_size": 406,
-      "strictly_above": 0,
+      "turn": 1,
+      "rank": 2,
+      "constraints_known": 1,
+      "pool_size": 400,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.072384
     },
     {
       "sample_id": "public_0130",
@@ -1444,13 +1444,13 @@
     {
       "sample_id": "public_0132",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 3,
+      "constraints_known": 1,
       "pool_size": 538,
-      "strictly_above": 0,
+      "strictly_above": 2,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.10886
     },
     {
       "sample_id": "public_0133",
@@ -1587,24 +1587,24 @@
     {
       "sample_id": "public_0145",
       "scenario_type": "buying",
-      "turn": 4,
-      "rank": 2,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 10,
+      "constraints_known": 1,
       "pool_size": 276,
-      "strictly_above": 1,
+      "strictly_above": 9,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.212361
+      "score_gap_to_top": 0.225593
     },
     {
       "sample_id": "public_0146",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 8,
+      "constraints_known": 1,
       "pool_size": 591,
-      "strictly_above": 0,
+      "strictly_above": 7,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.364631
     },
     {
       "sample_id": "public_0147",
@@ -1620,13 +1620,13 @@
     {
       "sample_id": "public_0148",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
-      "pool_size": 421,
-      "strictly_above": 0,
+      "turn": 1,
+      "rank": 2,
+      "constraints_known": 1,
+      "pool_size": 400,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.123262
     },
     {
       "sample_id": "public_0149",
@@ -1664,13 +1664,13 @@
     {
       "sample_id": "public_0152",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 7,
+      "constraints_known": 1,
       "pool_size": 1034,
-      "strictly_above": 0,
+      "strictly_above": 6,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.187408
     },
     {
       "sample_id": "public_0153",
@@ -1686,13 +1686,13 @@
     {
       "sample_id": "public_0154",
       "scenario_type": "buying",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 2,
+      "rank": 2,
+      "constraints_known": 3,
       "pool_size": 230,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.001143
     },
     {
       "sample_id": "public_0155",
@@ -1763,13 +1763,13 @@
     {
       "sample_id": "public_0161",
       "scenario_type": "buying",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 2,
+      "rank": 3,
+      "constraints_known": 3,
       "pool_size": 680,
-      "strictly_above": 0,
+      "strictly_above": 2,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.241547
     },
     {
       "sample_id": "public_0162",
@@ -1785,24 +1785,24 @@
     {
       "sample_id": "public_0163",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 3,
+      "constraints_known": 1,
       "pool_size": 342,
-      "strictly_above": 0,
+      "strictly_above": 2,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.07166
     },
     {
       "sample_id": "public_0164",
       "scenario_type": "browsing",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 2,
+      "rank": 2,
+      "constraints_known": 2,
       "pool_size": 93,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.201962
     },
     {
       "sample_id": "public_0165",
@@ -1829,13 +1829,13 @@
     {
       "sample_id": "public_0167",
       "scenario_type": "browsing",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 2,
+      "rank": 2,
+      "constraints_known": 2,
       "pool_size": 166,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.033773
     },
     {
       "sample_id": "public_0168",
@@ -1873,35 +1873,35 @@
     {
       "sample_id": "public_0171",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 9,
+      "constraints_known": 1,
       "pool_size": 197,
-      "strictly_above": 0,
+      "strictly_above": 8,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.385766
     },
     {
       "sample_id": "public_0172",
       "scenario_type": "browsing",
-      "turn": 3,
+      "turn": 2,
       "rank": 2,
-      "constraints_known": 4,
+      "constraints_known": 2,
       "pool_size": 1017,
       "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.078283
+      "score_gap_to_top": 0.077859
     },
     {
       "sample_id": "public_0173",
       "scenario_type": "browsing",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 2,
+      "rank": 3,
+      "constraints_known": 2,
       "pool_size": 168,
-      "strictly_above": 0,
+      "strictly_above": 2,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.136375
     },
     {
       "sample_id": "public_0174",
@@ -1917,13 +1917,13 @@
     {
       "sample_id": "public_0175",
       "scenario_type": "browsing",
-      "turn": 3,
+      "turn": 2,
       "rank": 2,
-      "constraints_known": 4,
+      "constraints_known": 2,
       "pool_size": 127,
       "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.002594
+      "score_gap_to_top": 0.121269
     },
     {
       "sample_id": "public_0176",
@@ -1950,24 +1950,24 @@
     {
       "sample_id": "public_0178",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 7,
+      "constraints_known": 1,
       "pool_size": 1354,
-      "strictly_above": 0,
+      "strictly_above": 6,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.091304
     },
     {
       "sample_id": "public_0179",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 2,
+      "constraints_known": 1,
       "pool_size": 519,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.05666
     },
     {
       "sample_id": "public_0180",
@@ -2016,24 +2016,24 @@
     {
       "sample_id": "public_0184",
       "scenario_type": "browsing",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 2,
+      "rank": 2,
+      "constraints_known": 2,
       "pool_size": 522,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.185671
     },
     {
       "sample_id": "public_0185",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
-      "pool_size": 403,
-      "strictly_above": 0,
+      "turn": 1,
+      "rank": 2,
+      "constraints_known": 1,
+      "pool_size": 400,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.03231
     },
     {
       "sample_id": "public_0186",
@@ -2060,35 +2060,35 @@
     {
       "sample_id": "public_0188",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 7,
+      "constraints_known": 1,
       "pool_size": 271,
-      "strictly_above": 0,
+      "strictly_above": 6,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.187335
     },
     {
       "sample_id": "public_0189",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 3,
+      "constraints_known": 1,
       "pool_size": 41,
-      "strictly_above": 0,
+      "strictly_above": 2,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.065482
     },
     {
       "sample_id": "public_0190",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 2,
+      "constraints_known": 1,
       "pool_size": 400,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.056523
     },
     {
       "sample_id": "public_0191",
@@ -2126,13 +2126,13 @@
     {
       "sample_id": "public_0194",
       "scenario_type": "buying",
-      "turn": 3,
-      "rank": 1,
-      "constraints_known": 4,
+      "turn": 1,
+      "rank": 4,
+      "constraints_known": 1,
       "pool_size": 680,
-      "strictly_above": 0,
+      "strictly_above": 3,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.076968
     },
     {
       "sample_id": "public_0195",
@@ -2181,13 +2181,13 @@
     {
       "sample_id": "public_0199",
       "scenario_type": "buying",
-      "turn": 2,
-      "rank": 1,
-      "constraints_known": 3,
+      "turn": 1,
+      "rank": 2,
+      "constraints_known": 1,
       "pool_size": 51,
-      "strictly_above": 0,
+      "strictly_above": 1,
       "tied_with_target": 0,
-      "score_gap_to_top": 0.0
+      "score_gap_to_top": 0.038526
     },
     {
       "sample_id": "public_0200",
@@ -2203,24 +2203,25 @@
   ],
   "summary": {
     "hits": 200,
-    "rank_1": 187,
-    "not_rank_1": 13,
+    "rank_1": 123,
+    "not_rank_1": 77,
     "lost_to_ties": 0,
-    "lost_to_scoring": 13,
+    "lost_to_scoring": 77,
     "constraints_known_when_not_rank_1": {
+      "1": 34,
+      "3": 5,
+      "0": 18,
+      "2": 18,
       "5": 1,
-      "6": 1,
-      "4": 9,
-      "3": 1,
-      "2": 1
+      "4": 1
     },
     "constraints_known_when_rank_1": {
-      "3": 41,
-      "4": 37,
-      "1": 41,
-      "2": 55,
+      "3": 14,
+      "1": 40,
+      "2": 40,
+      "4": 17,
       "0": 11,
-      "5": 2
+      "5": 1
     }
   }
 }

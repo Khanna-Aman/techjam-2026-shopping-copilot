@@ -6,7 +6,7 @@
   "rounds": 20000,
   "seed": 20260901,
   "reference": {
-    "technical_score": 0.954756,
+    "technical_score": 0.963323,
     "sample_count": 200
   },
   "ablations": {
@@ -14,17 +14,17 @@
       "overrides": {
         "clarify_strategy": "none"
       },
-      "technical_score": 0.476507,
-      "delta": -0.478249,
-      "ci95_low": -0.536318,
-      "ci95_high": -0.419303,
+      "technical_score": 0.568472,
+      "delta": -0.394851,
+      "ci95_low": -0.451124,
+      "ci95_high": -0.338358,
       "significant": true
     },
     "strategy: open": {
       "overrides": {
         "clarify_strategy": "open"
       },
-      "technical_score": 0.954756,
+      "technical_score": 0.963323,
       "delta": 0.0,
       "ci95_low": 0.0,
       "ci95_high": 0.0,
@@ -34,17 +34,17 @@
       "overrides": {
         "clarify_strategy": "infogain"
       },
-      "technical_score": 0.933883,
-      "delta": -0.020873,
-      "ci95_low": -0.030363,
-      "ci95_high": -0.012248,
+      "technical_score": 0.942227,
+      "delta": -0.021096,
+      "ci95_low": -0.032104,
+      "ci95_high": -0.01155,
       "significant": true
     },
     "strategy: hybrid": {
       "overrides": {
         "clarify_strategy": "hybrid"
       },
-      "technical_score": 0.954756,
+      "technical_score": 0.963323,
       "delta": 0.0,
       "ci95_low": 0.0,
       "ci95_high": 0.0,

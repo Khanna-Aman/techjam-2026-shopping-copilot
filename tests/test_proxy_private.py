@@ -190,3 +190,38 @@ def test_matched_sampling_tracks_the_reference_distribution(real_index, count):
     chosen_median = popularity_summary(products, chosen)["median_rating_number"]
     # Popularity spans five orders of magnitude here, so compare on ratio, not difference.
     assert 0.5 <= chosen_median / reference_median <= 2.0
+
+
+def test_matched_sampling_ignores_the_order_of_the_reference_list():
+    """Same popularities in a different order must draw the same targets.
+
+    This is the bug that made the harness non-reproducible, and it is worth stating exactly
+    because the first guard written for it did not catch it. `main()` built the reference
+    list by iterating a *set* of product ids, whose order changes with per-process hash
+    randomisation. `sample_matched` draws by indexing into that list, so two runs at the same
+    seed drew different targets and scored 0.9444 and 0.9474.
+
+    A test that passes an already-sorted reference cannot detect this -- it asserts a
+    property that held before the fix too. The defect is *order sensitivity*, so the test
+    shuffles the reference and demands the same output, which fails against the unsorted
+    implementation and needs no subprocess or catalog to do it.
+    """
+    products = {
+        f"P{i:04d}": {"rating_number": i * 7 % 991, "features": ["f"], "details": {"d": 1}}
+        for i in range(1, 400)
+    }
+    pool = eligible_targets(products, set())
+    reference = [products[a]["rating_number"] for a in pool[:120]]
+
+    shuffled = list(reference)
+    random.Random(3).shuffle(shuffled)
+    assert shuffled != reference, "the shuffle did not change the order; test is vacuous"
+
+    first, _ = sample_matched(products, pool, reference, random.Random(11), 40)
+    second, _ = sample_matched(products, pool, shuffled, random.Random(11), 40)
+
+    assert first == second, (
+        "sample_matched drew different targets from the same popularities in a different "
+        "order; the reference list has become order-dependent again and the harness is no "
+        "longer reproducible across processes"
+    )

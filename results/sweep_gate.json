@@ -1,377 +1,99 @@
 {
-  "gate off (default)": {
-    "overrides": {},
-    "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.757502,
-    "mttc": 1.93,
-    "efficiency": 0.907,
-    "technical_score": 0.906151,
-    "by_scenario": {
-      "boundary": 1.0,
-      "browsing": 1.0,
-      "buying": 1.0,
-      "intent_override": 0.966667
-    }
-  },
-  "gate<1c show0 to t2": {
+  "ten (no gate)": {
     "overrides": {
-      "use_confidence_gate": true,
-      "gate_min_constraints": 1,
-      "gate_list_size": 0,
-      "gate_max_turn": 2
+      "use_confidence_gate": false
     },
     "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.796087,
-    "mttc": 2.05,
-    "efficiency": 0.895,
-    "technical_score": 0.915326,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.735607,
+    "mttc": 1.765,
+    "efficiency": 0.9235,
+    "technical_score": 0.905382,
     "by_scenario": {
       "boundary": 1.0,
       "browsing": 1.0,
       "buying": 1.0,
-      "intent_override": 0.966667
+      "intent_override": 1.0
     }
   },
-  "gate<1c show0 to t3": {
+  "five": {
     "overrides": {
       "use_confidence_gate": true,
-      "gate_min_constraints": 1,
-      "gate_list_size": 0,
+      "gate_list_size": 5,
+      "gate_min_constraints": 4,
       "gate_max_turn": 3
     },
     "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.796087,
-    "mttc": 2.05,
-    "efficiency": 0.895,
-    "technical_score": 0.915326,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.819575,
+    "mttc": 1.89,
+    "efficiency": 0.911,
+    "technical_score": 0.928072,
     "by_scenario": {
       "boundary": 1.0,
       "browsing": 1.0,
       "buying": 1.0,
-      "intent_override": 0.966667
+      "intent_override": 1.0
     }
   },
-  "gate<1c show0 to t10": {
+  "three": {
     "overrides": {
       "use_confidence_gate": true,
-      "gate_min_constraints": 1,
-      "gate_list_size": 0,
-      "gate_max_turn": 10
-    },
-    "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.796087,
-    "mttc": 2.05,
-    "efficiency": 0.895,
-    "technical_score": 0.915326,
-    "by_scenario": {
-      "boundary": 1.0,
-      "browsing": 1.0,
-      "buying": 1.0,
-      "intent_override": 0.966667
-    }
-  },
-  "gate<1c show3 to t2": {
-    "overrides": {
-      "use_confidence_gate": true,
-      "gate_min_constraints": 1,
       "gate_list_size": 3,
-      "gate_max_turn": 2
-    },
-    "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.796087,
-    "mttc": 1.99,
-    "efficiency": 0.901,
-    "technical_score": 0.916526,
-    "by_scenario": {
-      "boundary": 1.0,
-      "browsing": 1.0,
-      "buying": 1.0,
-      "intent_override": 0.966667
-    }
-  },
-  "gate<1c show3 to t3": {
-    "overrides": {
-      "use_confidence_gate": true,
-      "gate_min_constraints": 1,
-      "gate_list_size": 3,
+      "gate_min_constraints": 4,
       "gate_max_turn": 3
     },
     "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.796087,
-    "mttc": 1.99,
-    "efficiency": 0.901,
-    "technical_score": 0.916526,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.845075,
+    "mttc": 1.935,
+    "efficiency": 0.9065,
+    "technical_score": 0.934823,
     "by_scenario": {
       "boundary": 1.0,
       "browsing": 1.0,
       "buying": 1.0,
-      "intent_override": 0.966667
+      "intent_override": 1.0
     }
   },
-  "gate<1c show3 to t10": {
+  "one (default)": {
     "overrides": {
       "use_confidence_gate": true,
-      "gate_min_constraints": 1,
-      "gate_list_size": 3,
-      "gate_max_turn": 10
-    },
-    "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.796087,
-    "mttc": 1.99,
-    "efficiency": 0.901,
-    "technical_score": 0.916526,
-    "by_scenario": {
-      "boundary": 1.0,
-      "browsing": 1.0,
-      "buying": 1.0,
-      "intent_override": 0.966667
-    }
-  },
-  "gate<2c show0 to t2": {
-    "overrides": {
-      "use_confidence_gate": true,
-      "gate_min_constraints": 2,
-      "gate_list_size": 0,
-      "gate_max_turn": 2
-    },
-    "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.872692,
-    "mttc": 2.36,
-    "efficiency": 0.864,
-    "technical_score": 0.932108,
-    "by_scenario": {
-      "boundary": 1.0,
-      "browsing": 1.0,
-      "buying": 1.0,
-      "intent_override": 0.966667
-    }
-  },
-  "gate<2c show0 to t3": {
-    "overrides": {
-      "use_confidence_gate": true,
-      "gate_min_constraints": 2,
-      "gate_list_size": 0,
+      "gate_list_size": 1,
+      "gate_min_constraints": 4,
       "gate_max_turn": 3
     },
     "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.872692,
-    "mttc": 2.375,
-    "efficiency": 0.8625,
-    "technical_score": 0.931808,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.956742,
+    "mttc": 2.185,
+    "efficiency": 0.8815,
+    "technical_score": 0.963323,
     "by_scenario": {
       "boundary": 1.0,
       "browsing": 1.0,
       "buying": 1.0,
-      "intent_override": 0.966667
+      "intent_override": 1.0
     }
   },
-  "gate<2c show0 to t10": {
+  "none": {
     "overrides": {
       "use_confidence_gate": true,
-      "gate_min_constraints": 2,
       "gate_list_size": 0,
-      "gate_max_turn": 10
-    },
-    "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.872692,
-    "mttc": 2.375,
-    "efficiency": 0.8625,
-    "technical_score": 0.931808,
-    "by_scenario": {
-      "boundary": 1.0,
-      "browsing": 1.0,
-      "buying": 1.0,
-      "intent_override": 0.966667
-    }
-  },
-  "gate<2c show3 to t2": {
-    "overrides": {
-      "use_confidence_gate": true,
-      "gate_min_constraints": 2,
-      "gate_list_size": 3,
-      "gate_max_turn": 2
-    },
-    "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.838526,
-    "mttc": 2.06,
-    "efficiency": 0.894,
-    "technical_score": 0.927858,
-    "by_scenario": {
-      "boundary": 1.0,
-      "browsing": 1.0,
-      "buying": 1.0,
-      "intent_override": 0.966667
-    }
-  },
-  "gate<2c show3 to t3": {
-    "overrides": {
-      "use_confidence_gate": true,
-      "gate_min_constraints": 2,
-      "gate_list_size": 3,
+      "gate_min_constraints": 4,
       "gate_max_turn": 3
     },
     "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.838526,
-    "mttc": 2.06,
-    "efficiency": 0.894,
-    "technical_score": 0.927858,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.954242,
+    "mttc": 3.21,
+    "efficiency": 0.779,
+    "technical_score": 0.942073,
     "by_scenario": {
       "boundary": 1.0,
       "browsing": 1.0,
       "buying": 1.0,
-      "intent_override": 0.966667
-    }
-  },
-  "gate<2c show3 to t10": {
-    "overrides": {
-      "use_confidence_gate": true,
-      "gate_min_constraints": 2,
-      "gate_list_size": 3,
-      "gate_max_turn": 10
-    },
-    "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.838526,
-    "mttc": 2.06,
-    "efficiency": 0.894,
-    "technical_score": 0.927858,
-    "by_scenario": {
-      "boundary": 1.0,
-      "browsing": 1.0,
-      "buying": 1.0,
-      "intent_override": 0.966667
-    }
-  },
-  "gate<3c show0 to t2": {
-    "overrides": {
-      "use_confidence_gate": true,
-      "gate_min_constraints": 3,
-      "gate_list_size": 0,
-      "gate_max_turn": 2
-    },
-    "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.912687,
-    "mttc": 2.76,
-    "efficiency": 0.824,
-    "technical_score": 0.936106,
-    "by_scenario": {
-      "boundary": 1.0,
-      "browsing": 1.0,
-      "buying": 1.0,
-      "intent_override": 0.966667
-    }
-  },
-  "gate<3c show0 to t3": {
-    "overrides": {
-      "use_confidence_gate": true,
-      "gate_min_constraints": 3,
-      "gate_list_size": 0,
-      "gate_max_turn": 3
-    },
-    "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.91352,
-    "mttc": 2.8,
-    "efficiency": 0.82,
-    "technical_score": 0.935556,
-    "by_scenario": {
-      "boundary": 1.0,
-      "browsing": 1.0,
-      "buying": 1.0,
-      "intent_override": 0.966667
-    }
-  },
-  "gate<3c show0 to t10": {
-    "overrides": {
-      "use_confidence_gate": true,
-      "gate_min_constraints": 3,
-      "gate_list_size": 0,
-      "gate_max_turn": 10
-    },
-    "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.91352,
-    "mttc": 2.815,
-    "efficiency": 0.8185,
-    "technical_score": 0.935256,
-    "by_scenario": {
-      "boundary": 1.0,
-      "browsing": 1.0,
-      "buying": 1.0,
-      "intent_override": 0.966667
-    }
-  },
-  "gate<3c show3 to t2": {
-    "overrides": {
-      "use_confidence_gate": true,
-      "gate_min_constraints": 3,
-      "gate_list_size": 3,
-      "gate_max_turn": 2
-    },
-    "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.857687,
-    "mttc": 2.105,
-    "efficiency": 0.8895,
-    "technical_score": 0.932706,
-    "by_scenario": {
-      "boundary": 1.0,
-      "browsing": 1.0,
-      "buying": 1.0,
-      "intent_override": 0.966667
-    }
-  },
-  "gate<3c show3 to t3": {
-    "overrides": {
-      "use_confidence_gate": true,
-      "gate_min_constraints": 3,
-      "gate_list_size": 3,
-      "gate_max_turn": 3
-    },
-    "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.857687,
-    "mttc": 2.105,
-    "efficiency": 0.8895,
-    "technical_score": 0.932706,
-    "by_scenario": {
-      "boundary": 1.0,
-      "browsing": 1.0,
-      "buying": 1.0,
-      "intent_override": 0.966667
-    }
-  },
-  "gate<3c show3 to t10": {
-    "overrides": {
-      "use_confidence_gate": true,
-      "gate_min_constraints": 3,
-      "gate_list_size": 3,
-      "gate_max_turn": 10
-    },
-    "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.857687,
-    "mttc": 2.105,
-    "efficiency": 0.8895,
-    "technical_score": 0.932706,
-    "by_scenario": {
-      "boundary": 1.0,
-      "browsing": 1.0,
-      "buying": 1.0,
-      "intent_override": 0.966667
+      "intent_override": 1.0
     }
   }
 }

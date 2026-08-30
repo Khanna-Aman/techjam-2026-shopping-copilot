@@ -1,0 +1,182 @@
+{
+  "min_c=4 max_turn=2": {
+    "overrides": {
+      "use_confidence_gate": true,
+      "gate_list_size": 1,
+      "gate_min_constraints": 4,
+      "gate_max_turn": 2
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.951742,
+    "mttc": 2.17,
+    "efficiency": 0.883,
+    "technical_score": 0.962123,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 1.0
+    }
+  },
+  "min_c=4 max_turn=3": {
+    "overrides": {
+      "use_confidence_gate": true,
+      "gate_list_size": 1,
+      "gate_min_constraints": 4,
+      "gate_max_turn": 3
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.956742,
+    "mttc": 2.185,
+    "efficiency": 0.8815,
+    "technical_score": 0.963323,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 1.0
+    }
+  },
+  "min_c=4 max_turn=6": {
+    "overrides": {
+      "use_confidence_gate": true,
+      "gate_list_size": 1,
+      "gate_min_constraints": 4,
+      "gate_max_turn": 6
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.961187,
+    "mttc": 2.215,
+    "efficiency": 0.8785,
+    "technical_score": 0.964056,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 1.0
+    }
+  },
+  "min_c=5 max_turn=2": {
+    "overrides": {
+      "use_confidence_gate": true,
+      "gate_list_size": 1,
+      "gate_min_constraints": 5,
+      "gate_max_turn": 2
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.951742,
+    "mttc": 2.17,
+    "efficiency": 0.883,
+    "technical_score": 0.962123,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 1.0
+    }
+  },
+  "min_c=5 max_turn=3": {
+    "overrides": {
+      "use_confidence_gate": true,
+      "gate_list_size": 1,
+      "gate_min_constraints": 5,
+      "gate_max_turn": 3
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.959242,
+    "mttc": 2.225,
+    "efficiency": 0.8775,
+    "technical_score": 0.963273,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 1.0
+    }
+  },
+  "min_c=5 max_turn=6": {
+    "overrides": {
+      "use_confidence_gate": true,
+      "gate_list_size": 1,
+      "gate_min_constraints": 5,
+      "gate_max_turn": 6
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.964298,
+    "mttc": 2.37,
+    "efficiency": 0.863,
+    "technical_score": 0.961889,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 1.0
+    }
+  },
+  "min_c=6 max_turn=2": {
+    "overrides": {
+      "use_confidence_gate": true,
+      "gate_list_size": 1,
+      "gate_min_constraints": 6,
+      "gate_max_turn": 2
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.951575,
+    "mttc": 2.175,
+    "efficiency": 0.8825,
+    "technical_score": 0.961973,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 1.0
+    }
+  },
+  "min_c=6 max_turn=3": {
+    "overrides": {
+      "use_confidence_gate": true,
+      "gate_list_size": 1,
+      "gate_min_constraints": 6,
+      "gate_max_turn": 3
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.959075,
+    "mttc": 2.23,
+    "efficiency": 0.877,
+    "technical_score": 0.963122,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 1.0
+    }
+  },
+  "min_c=6 max_turn=6": {
+    "overrides": {
+      "use_confidence_gate": true,
+      "gate_list_size": 1,
+      "gate_min_constraints": 6,
+      "gate_max_turn": 6
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 1.0,
+    "mrr": 0.964131,
+    "mttc": 2.375,
+    "efficiency": 0.8625,
+    "technical_score": 0.961739,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 1.0
+    }
+  }
+}

@@ -116,8 +116,9 @@ def _show_why(agent: ShoppingCopilot, state) -> None:
         spent = "  spent" if bare in state.exhausted else ""
         print(f" {attribute:<16}{value:>9.4f}{power or '':>13}{chance}{spent}")
     print(RULE)
-    print(" budget is the illustration: it splits the pool well and is almost never")
-    print(" answered, which is why value is a product and not entropy alone.")
+    print(" size is the illustration: it splits the pool better than colour and is worth")
+    print(" far less, because colour gets answered and size does not. Value is a product,")
+    print(" not entropy alone -- budget, at the bottom, is the same effect at its extreme.")
     print(RULE)
 
 
@@ -139,7 +140,7 @@ def main() -> None:
         allowed = set(AgentConfig.__dataclass_fields__)
         config = replace(config, **{k: v for k, v in overrides.items() if k in allowed})
 
-    print("building the index (about a minute the first time, then cached)...")
+    print("building the index (about 25 s the first time, then cached)...")
     agent = ShoppingCopilot(args.catalog, config=config)
     print(f"{agent.index.count:,} products across {len(agent.index.buckets):,} categories\n")
     print(BANNER)
