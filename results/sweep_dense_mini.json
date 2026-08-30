@@ -1,0 +1,201 @@
+{
+  "offline (default)": {
+    "overrides": {},
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.757502,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.906151,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "dense w=0.15": {
+    "overrides": {
+      "use_dense_rerank": true,
+      "w_dense": 0.15
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.756942,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.905983,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "dense w=0.3": {
+    "overrides": {
+      "use_dense_rerank": true,
+      "w_dense": 0.3
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.737605,
+    "mttc": 1.915,
+    "efficiency": 0.9085,
+    "technical_score": 0.900481,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "dense w=0.6": {
+    "overrides": {
+      "use_dense_rerank": true,
+      "w_dense": 0.6
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.99,
+    "mrr": 0.721335,
+    "mttc": 1.96,
+    "efficiency": 0.904,
+    "technical_score": 0.8922,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 0.9875,
+      "intent_override": 0.966667
+    }
+  },
+  "dense w=1.0": {
+    "overrides": {
+      "use_dense_rerank": true,
+      "w_dense": 1.0
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.99,
+    "mrr": 0.706018,
+    "mttc": 1.99,
+    "efficiency": 0.901,
+    "technical_score": 0.887005,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 0.9875,
+      "intent_override": 0.966667
+    }
+  },
+  "dense w=1.8": {
+    "overrides": {
+      "use_dense_rerank": true,
+      "w_dense": 1.8
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.675188,
+    "mttc": 2.015,
+    "efficiency": 0.8985,
+    "technical_score": 0.879756,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 0.9875,
+      "intent_override": 1.0
+    }
+  },
+  "dense w=3.0": {
+    "overrides": {
+      "use_dense_rerank": true,
+      "w_dense": 3.0
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.99,
+    "mrr": 0.660218,
+    "mttc": 2.085,
+    "efficiency": 0.8915,
+    "technical_score": 0.871365,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 0.975,
+      "intent_override": 1.0
+    }
+  },
+  "cold-start dense w=0.3": {
+    "overrides": {
+      "use_dense_rerank": true,
+      "dense_cold_start_only": true,
+      "w_dense": 0.3
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.755385,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.905515,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "cold-start dense w=0.6": {
+    "overrides": {
+      "use_dense_rerank": true,
+      "dense_cold_start_only": true,
+      "w_dense": 0.6
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.753196,
+    "mttc": 1.935,
+    "efficiency": 0.9065,
+    "technical_score": 0.904759,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "cold-start dense w=1.2": {
+    "overrides": {
+      "use_dense_rerank": true,
+      "dense_cold_start_only": true,
+      "w_dense": 1.2
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.771315,
+    "mttc": 1.955,
+    "efficiency": 0.9045,
+    "technical_score": 0.909795,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "cold-start dense w=2.5": {
+    "overrides": {
+      "use_dense_rerank": true,
+      "dense_cold_start_only": true,
+      "w_dense": 2.5
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.755615,
+    "mttc": 1.945,
+    "efficiency": 0.9055,
+    "technical_score": 0.905285,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  }
+}

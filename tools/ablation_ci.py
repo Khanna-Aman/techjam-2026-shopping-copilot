@@ -54,6 +54,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--catalog", default="data/catalog.jsonl")
     parser.add_argument("--dataset", default="data/public_set.jsonl")
     parser.add_argument(
+        "--base", default=None,
+        help="JSON object of AgentConfig overrides applied to the reference and every row",
+    )
+    parser.add_argument(
         "--mode",
         default="ablation",
         choices=sorted(MODES),
@@ -83,6 +87,12 @@ def main(argv: list[str] | None = None) -> int:
     catalog_ids, categories, products = catalog_index(args.catalog)
     index = CatalogIndex(args.catalog)
     base: AgentConfig = DEFAULT_CONFIG
+    if args.base:
+        # Same filtering as tools/sweep.py: unknown keys are dropped rather than raising,
+        # so a stale flag in a saved command line cannot silently change the reference.
+        overrides = json.loads(args.base)
+        allowed = set(AgentConfig.__dataclass_fields__)
+        base = replace(base, **{k: v for k, v in overrides.items() if k in allowed})
 
     # The default perturbation is `control`, the no-op, so this reproduces the official
     # loop exactly while retaining the per-session records a paired test needs.
@@ -129,6 +139,7 @@ def main(argv: list[str] | None = None) -> int:
             "that an effect transfers to the private set."
         ),
         "mode": args.mode,
+        "base": json.loads(args.base) if args.base else {},
         "perturbation": args.perturbation,
         "rounds": args.rounds,
         "seed": args.seed,

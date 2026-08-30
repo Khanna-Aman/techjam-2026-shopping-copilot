@@ -1,0 +1,130 @@
+{
+  "note": "Paired percentile bootstrap of the ablation delta over the 200 public sessions. Bounds sampling noise on the public set only; it is not evidence that an effect transfers to the private set.",
+  "mode": "dense",
+  "base": {
+    "dense_path": "artifacts/dense-mini"
+  },
+  "perturbation": "control",
+  "rounds": 20000,
+  "seed": 20260901,
+  "reference": {
+    "technical_score": 0.906151,
+    "sample_count": 200
+  },
+  "ablations": {
+    "dense w=0.15": {
+      "overrides": {
+        "use_dense_rerank": true,
+        "w_dense": 0.15
+      },
+      "technical_score": 0.905983,
+      "delta": -0.000168,
+      "ci95_low": -0.003257,
+      "ci95_high": 0.002815,
+      "significant": false
+    },
+    "dense w=0.3": {
+      "overrides": {
+        "use_dense_rerank": true,
+        "w_dense": 0.3
+      },
+      "technical_score": 0.900481,
+      "delta": -0.005669,
+      "ci95_low": -0.01235,
+      "ci95_high": 0.00066,
+      "significant": false
+    },
+    "dense w=0.6": {
+      "overrides": {
+        "use_dense_rerank": true,
+        "w_dense": 0.6
+      },
+      "technical_score": 0.8922,
+      "delta": -0.01395,
+      "ci95_low": -0.025345,
+      "ci95_high": -0.003712,
+      "significant": true
+    },
+    "dense w=1.0": {
+      "overrides": {
+        "use_dense_rerank": true,
+        "w_dense": 1.0
+      },
+      "technical_score": 0.887005,
+      "delta": -0.019145,
+      "ci95_low": -0.032474,
+      "ci95_high": -0.006473,
+      "significant": true
+    },
+    "dense w=1.8": {
+      "overrides": {
+        "use_dense_rerank": true,
+        "w_dense": 1.8
+      },
+      "technical_score": 0.879756,
+      "delta": -0.026394,
+      "ci95_low": -0.042607,
+      "ci95_high": -0.009973,
+      "significant": true
+    },
+    "dense w=3.0": {
+      "overrides": {
+        "use_dense_rerank": true,
+        "w_dense": 3.0
+      },
+      "technical_score": 0.871365,
+      "delta": -0.034785,
+      "ci95_low": -0.054939,
+      "ci95_high": -0.015011,
+      "significant": true
+    },
+    "cold-start dense w=0.3": {
+      "overrides": {
+        "use_dense_rerank": true,
+        "dense_cold_start_only": true,
+        "w_dense": 0.3
+      },
+      "technical_score": 0.905515,
+      "delta": -0.000635,
+      "ci95_low": -0.002408,
+      "ci95_high": 0.000511,
+      "significant": false
+    },
+    "cold-start dense w=0.6": {
+      "overrides": {
+        "use_dense_rerank": true,
+        "dense_cold_start_only": true,
+        "w_dense": 0.6
+      },
+      "technical_score": 0.904759,
+      "delta": -0.001392,
+      "ci95_low": -0.00485,
+      "ci95_high": 0.002202,
+      "significant": false
+    },
+    "cold-start dense w=1.2": {
+      "overrides": {
+        "use_dense_rerank": true,
+        "dense_cold_start_only": true,
+        "w_dense": 1.2
+      },
+      "technical_score": 0.909795,
+      "delta": 0.003644,
+      "ci95_low": -0.003221,
+      "ci95_high": 0.010917,
+      "significant": false
+    },
+    "cold-start dense w=2.5": {
+      "overrides": {
+        "use_dense_rerank": true,
+        "dense_cold_start_only": true,
+        "w_dense": 2.5
+      },
+      "technical_score": 0.905285,
+      "delta": -0.000866,
+      "ci95_low": -0.009431,
+      "ci95_high": 0.007815,
+      "significant": false
+    }
+  }
+}

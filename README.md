@@ -463,7 +463,7 @@ Reporting only what worked would misrepresent how this was built.
 | **Global** profile personalization | −0.039. Helps only at cold start. See finding #4. |
 | Tuning `w_constraint` from 1.8 → 6.0 | **No effect at all** — constraint satisfaction already dominates ordering, so the weight is inert across that range. Left at its default rather than reported as a tuned win. |
 | Raising `w_profile` from 1.0 → 5.0 | Worked on every metric I checked first, then failed the one I checked last. See below. |
-| **Dense retrieval** — offline latent-space cosine | Built it, measured it, **negative at every weight tested**. The reason is structural and worth reading. See below. |
+| **Dense retrieval** — offline cosine, at three encoder tiers up to `bge-base` (768-dim, GPU-built) | Built it, measured it, **no gain at any weight on any encoder**. A better encoder shrinks the harm without changing its sign, which locates the ceiling in the task rather than the model. See below. |
 
 Two mechanisms are kept despite scoring ≈0 on the public set, deliberately. **Top-10
 padding** never triggers here but prevents a short list, and an empty slot can never hit.
@@ -495,8 +495,40 @@ It does not work. Not marginally: at every weight tested.
 | score | **0.9062** | 0.8971 | 0.8917 | 0.8878 | 0.8746 | 0.8606 | 0.8555 |
 
 Applied only at cold start — the trick that rescued the profile prior in finding #4 — it
-reaches 0.9072, **+0.0010**, which is well inside noise on 200 sessions and not a result I
-would ship on.
+reaches 0.9072, **+0.0010**, whose paired interval is [−0.0038, +0.0062]. It spans zero, so
+it is not a result I would ship on.
+
+#### "You only tried a weak encoder"
+
+That is the obvious objection to the table above, and it deserved an answer rather than a
+rebuttal. So the same artifact was rebuilt with two real sentence encoders on a GPU —
+`all-MiniLM-L6-v2` at 384 dimensions and `BAAI/bge-base-en-v1.5` at 768 — using the *same*
+`tools/build_vectors.py`, against a catalog whose digest each artifact records, so the three
+tiers are comparable by construction rather than by assertion.
+
+| encoder | dim | best row | Δ | 95% CI on Δ | Δ at `w_dense`=3.0 | rows resolved |
+|---|---:|---|---:|---|---:|---:|
+| truncated SVD (LSA) | 128 | cold start `w`=0.6 | +0.0010 | [−0.0038, +0.0062] | −0.0507 | 6 of 10, all negative |
+| `all-MiniLM-L6-v2` | 384 | cold start `w`=1.2 | +0.0036 | [−0.0032, +0.0109] | −0.0348 | 4 of 10, all negative |
+| `BAAI/bge-base-en-v1.5` | 768 | cold start `w`=1.2 | +0.0005 | [−0.0047, +0.0060] | −0.0250 | 2 of 10, all negative |
+
+**A better encoder makes dense reranking less harmful, and never helpful.** The damage at
+high weight shrinks monotonically with model quality — −0.051 to −0.035 to −0.025 — and the
+number of rows a paired bootstrap can resolve as harmful falls from six to two. But no tier,
+at any weight, produces a gain whose interval excludes zero. The best row in the whole
+experiment is +0.0036, and it spans zero comfortably.
+
+That is a more useful finding than "it loses", because it locates the ceiling. If the
+encoder were the binding constraint, tripling the dimension and moving from an unsupervised
+SVD to a contrastively-trained retriever would have changed the sign somewhere. It moves the
+magnitude and leaves the sign alone, which says the constraint is the task: when 95.6% of
+the disclosed constraint strings appear verbatim in their target, there is almost no
+vocabulary gap left for a semantic model to close, and what it mostly does is blur an
+already-exact lexical match.
+
+Reproduce with `python -m tools.build_vectors --mode transformer --model BAAI/bge-base-en-v1.5`
+(GPU recipe in [tools/KAGGLE.md](tools/KAGGLE.md)), then
+`python -m tools.ablation_ci --mode dense --base '{"dense_path": "artifacts/dense-bge"}'`.
 
 The reason is a property of the task, not of LSA. Measuring the constraint strings the
 simulator actually discloses:

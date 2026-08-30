@@ -65,7 +65,7 @@ the system is the other 0.38.
 
 | Pillar | What I built | Evidence |
 |---|---|---|
-| **I. Intent routing & hybrid pipeline** | Two-tier message parsing classifies Buying / Browsing / Intent Override / Boundary, then a **category lock** cuts 50,000 products to a ~180-item pool, ranked by weighted BM25 + typed constraint satisfaction + popularity prior. I deliberately did **not** fork into two separate retrieval stacks. | Intent detection drives *dialogue policy*, not two rankers — the unified constraint-driven ranker already reaches **Hit@10 = 1.000 on both** Buying and Browsing, so a second stack had nothing left to win. **Vector similarity is implemented** (`copilot/dense.py`, offline fp16 + `mmap`, stdlib only) and measured: negative at every weight tested, so it ships switched off behind a flag rather than omitted. |
+| **I. Intent routing & hybrid pipeline** | Two-tier message parsing classifies Buying / Browsing / Intent Override / Boundary, then a **category lock** cuts 50,000 products to a ~180-item pool, ranked by weighted BM25 + typed constraint satisfaction + popularity prior. I deliberately did **not** fork into two separate retrieval stacks. | Intent detection drives *dialogue policy*, not two rankers — the unified constraint-driven ranker already reaches **Hit@10 = 1.000 on both** Buying and Browsing, so a second stack had nothing left to win. **Vector similarity is implemented** (`copilot/dense.py`, offline fp16 + `mmap`, stdlib only) and measured at three encoder tiers up to `bge-base` (768-dim, GPU-built): no gain at any weight on any encoder, so it ships switched off behind a flag rather than omitted. |
 | **II. Multi-turn scenario evolution** | A slot state machine accumulates typed constraints (set-membership, phrase-containment, numeric), handles retraction on Intent Override, marks attributes exhausted so a spent question is never re-asked, and proactively clarifies on every turn. | Ablation: removing state tracking costs **−0.340**; removing clarification costs **−0.418**. |
 | **III. Dynamic context programming** | Constraint accumulation with per-constraint confidence and decay; the question policy re-plans every turn from the live pool, escalating from an open-ended prompt to a specific attribute once the open channel is exhausted; the anonymised user profile is distilled in at cold start. | The policy **derives** that the open question is optimal rather than hardcoding it (finding #2 below). Profile prior: **+0.015**, cold start only. |
 | **IV. Evaluation matrix** | Scored on the organiser's own evaluator, unmodified, plus an ablation harness (11 configurations) and a paraphrase-robustness harness (5 perturbations) that imports the evaluator's own simulator functions. | Hit@10 **0.995**, MRR **0.7575**, MTTC **1.930**. |
@@ -366,13 +366,27 @@ The first two items on this list are now built rather than planned, and both los
 
 **Offline dense retrieval** (`copilot/dense.py`) encodes the catalog once and cosine-reranks
 at inference — stdlib only, fp16 via `struct` and `mmap`, ~6.7 ms/turn, still no GPU and no
-network. It is **negative at every weight tested** (−0.009 at w=0.15 down to −0.051 at
-w=3.0); cold-start-only reaches +0.0010, which the interval above says is noise. The reason
-looks structural rather than a property of the encoder: **95.6% of the constraint strings
-the simulator discloses appear verbatim in their own target product, and 25.9% are unique
-to a single product in 50,000.** Dense retrieval exists to close vocabulary mismatch, and
-this benchmark has almost none by construction. It ships switched off, behind a flag, so
-the ablation row reproduces.
+network at inference. It loses, and the interesting part is *how* it loses across three
+encoder tiers built by the same script against the same catalog:
+
+| encoder | dim | best Δ | 95% CI | Δ at w=3.0 | rows resolved |
+|---|---:|---:|---|---:|---:|
+| truncated SVD (LSA) | 128 | +0.0010 | [−0.0038, +0.0062] | −0.0507 | 6 of 10, all negative |
+| `all-MiniLM-L6-v2` | 384 | +0.0036 | [−0.0032, +0.0109] | −0.0348 | 4 of 10, all negative |
+| `BAAI/bge-base-en-v1.5` | 768 | +0.0005 | [−0.0047, +0.0060] | −0.0250 | 2 of 10, all negative |
+
+**A better encoder makes it less harmful and never helpful.** The damage at high weight
+shrinks monotonically with model quality, but no tier at any weight produces a gain whose
+paired interval excludes zero. That locates the ceiling in the task rather than the model:
+if the encoder were the binding constraint, tripling the dimension and moving from an
+unsupervised SVD to a contrastively-trained retriever would have flipped the sign somewhere.
+It moves the magnitude and leaves the sign alone.
+
+The structural reason: **95.6% of the constraint strings the simulator discloses appear
+verbatim in their own target product, and 25.9% are unique to a single product in 50,000.**
+Dense retrieval exists to close vocabulary mismatch, and this benchmark has almost none by
+construction — so what it mostly does is blur an already-exact lexical match. It ships
+switched off, behind a flag, so the ablation row reproduces.
 
 **An environment-gated LLM reranking layer** (`copilot/llm.py`) is double-gated — a config
 flag *and* `COPILOT_LLM=1` — with a lazy import, silent total failure, permutation-

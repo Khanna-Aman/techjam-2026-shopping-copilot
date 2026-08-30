@@ -294,6 +294,51 @@ def test_the_paraphrase_hypothesis_is_still_refuted():
             assert not heavy[name]["significant"], f"{name} became resolved under paraphrase"
 
 
+def test_the_encoder_tier_table_matches_the_three_dense_bootstraps():
+    """The claim is that a better encoder never flips the sign. Check each tier's numbers.
+
+    This table exists to answer "you only tried a weak encoder", so every figure in it is
+    load-bearing: the best row per tier, its interval, the harm at maximum weight, and how
+    many rows each tier resolves. All four come straight from the committed artifacts.
+    """
+    tiers = {
+        "truncated SVD (LSA)": _load("dense_ci_lsa.json")["ablations"],
+        "`all-MiniLM-L6-v2`": _load("dense_ci_mini.json")["ablations"],
+        "`BAAI/bge-base-en-v1.5`": _load("dense_ci_bge.json")["ablations"],
+    }
+    rows = _table_rows('#### "You only tried a weak encoder"')
+    assert len(rows) == 3, f"expected three encoder tiers, found {len(rows)}"
+
+    for encoder, _dim, best_label, delta, interval, worst, resolved in (
+        (r[0], r[1], r[2], r[3], r[4], r[5], r[6]) for r in rows
+    ):
+        ablations = tiers[encoder]
+
+        # The row the README calls best must actually be the highest-scoring one measured.
+        best_measured = max(ablations.values(), key=lambda row: row["delta"])
+        assert _number(delta) == round(best_measured["delta"], 4), f"{encoder}: best delta"
+        low, high = _interval(interval)
+        assert low == round(best_measured["ci95_low"], 4), f"{encoder}: CI low"
+        assert high == round(best_measured["ci95_high"], 4), f"{encoder}: CI high"
+
+        assert _number(worst) == round(ablations["dense w=3.0"]["delta"], 4), f"{encoder}: w=3.0"
+
+        count = sum(1 for row in ablations.values() if row["significant"])
+        assert int(resolved.split()[0]) == count, f"{encoder}: resolved count"
+        assert all(
+            row["delta"] < 0 for row in ablations.values() if row["significant"]
+        ), f"{encoder}: the README says every resolved row is negative"
+
+
+def test_no_dense_configuration_beats_the_offline_default():
+    """The section's headline claim, stated as a property of all three artifacts."""
+    for name in ("dense_ci_lsa.json", "dense_ci_mini.json", "dense_ci_bge.json"):
+        for label, row in _load(name)["ablations"].items():
+            assert not (row["significant"] and row["delta"] > 0), (
+                f"{name}: {label} is a resolved *gain*, which would refute the section"
+            )
+
+
 def test_the_noise_floor_claim_counts_the_unresolved_rows():
     """"Five of the ten" is a count, and counts drift when a mechanism is added."""
     intervals = _load("ablation_ci.json")["ablations"]
