@@ -1,0 +1,113 @@
+{
+  "note": "Paired percentile bootstrap of the ablation delta over the 200 public sessions. Bounds sampling noise on the public set only; it is not evidence that an effect transfers to the private set.",
+  "mode": "ablation",
+  "perturbation": "heavy",
+  "rounds": 20000,
+  "seed": 20260901,
+  "reference": {
+    "technical_score": 0.882351,
+    "sample_count": 200
+  },
+  "ablations": {
+    "no clarification": {
+      "overrides": {
+        "clarify_strategy": "none"
+      },
+      "technical_score": 0.362288,
+      "delta": -0.520062,
+      "ci95_low": -0.580289,
+      "ci95_high": -0.459551,
+      "significant": true
+    },
+    "no category lock": {
+      "overrides": {
+        "use_category_lock": false
+      },
+      "technical_score": 0.857038,
+      "delta": -0.025312,
+      "ci95_low": -0.054297,
+      "ci95_high": 0.001622,
+      "significant": false
+    },
+    "no constraint scoring": {
+      "overrides": {
+        "use_constraint_scoring": false
+      },
+      "technical_score": 0.883345,
+      "delta": 0.000995,
+      "ci95_low": -0.015415,
+      "ci95_high": 0.018558,
+      "significant": false
+    },
+    "no state tracking": {
+      "overrides": {
+        "use_state_tracking": false
+      },
+      "technical_score": 0.568892,
+      "delta": -0.313459,
+      "ci95_low": -0.369894,
+      "ci95_high": -0.257531,
+      "significant": true
+    },
+    "no override erasure": {
+      "overrides": {
+        "use_override_erasure": false
+      },
+      "technical_score": 0.882377,
+      "delta": 2.7e-05,
+      "ci95_low": 0.0,
+      "ci95_high": 8e-05,
+      "significant": false
+    },
+    "no observed fallback": {
+      "overrides": {
+        "use_observed_fallback": false
+      },
+      "technical_score": 0.879496,
+      "delta": -0.002854,
+      "ci95_low": -0.009827,
+      "ci95_high": 0.003929,
+      "significant": false
+    },
+    "no top-10 padding": {
+      "overrides": {
+        "pad_to_top_k": false
+      },
+      "technical_score": 0.882351,
+      "delta": 0.0,
+      "ci95_low": 0.0,
+      "ci95_high": 0.0,
+      "significant": false
+    },
+    "no MMR diversity": {
+      "overrides": {
+        "use_mmr_diversity": false
+      },
+      "technical_score": 0.882351,
+      "delta": 0.0,
+      "ci95_low": 0.0,
+      "ci95_high": 0.0,
+      "significant": false
+    },
+    "no popularity prior": {
+      "overrides": {
+        "use_popularity_prior": false
+      },
+      "technical_score": 0.850016,
+      "delta": -0.032335,
+      "ci95_low": -0.057132,
+      "ci95_high": -0.009694,
+      "significant": true
+    },
+    "no profile prior": {
+      "overrides": {
+        "use_profile_prior": false
+      },
+      "technical_score": 0.86285,
+      "delta": -0.0195,
+      "ci95_low": -0.042498,
+      "ci95_high": 0.002633,
+      "significant": false
+    }
+  }
+}

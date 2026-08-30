@@ -316,12 +316,43 @@ standard error on the score itself would suggest.
 set.** That includes the category lock, which I had assumed was carrying real weight. The
 two zero rows are exactly zero because removing them changes no session's outcome at all.
 
-I am leaving all five in the default configuration, and the reason is not sentiment: an
-interval spanning zero means the effect is *unresolved at n=200*, not that it is absent, and
-four of the five are cheap guards, and the clean public set is the easiest input they will
-ever see. What changes is the claim. I no longer describe the
-category lock as contributing +0.009; the honest statement is that its contribution is
-smaller than this benchmark can measure.
+#### Does paraphrase rescue the unresolved rows? No.
+
+My hypothesis was that those five are cheap guards whose value shows up on harder input than
+the clean public set, and that a heavy-paraphrase run would show them carrying real weight.
+That is a comfortable story, so it is worth testing rather than asserting.
+`python -m tools.ablation_ci --perturbation heavy` runs the identical paired comparison with
+every customer message reworded (default configuration under heavy: 0.8824):
+
+| configuration | Δ clean | Δ heavy | resolved? |
+|---|---:|---:|---|
+| no clarification | −0.4176 | −0.5201 | both |
+| no state tracking | −0.3395 | −0.3135 | both |
+| no popularity prior | −0.0466 | −0.0323 | both |
+| no profile prior (cold start) | −0.0152 | −0.0195 | clean only |
+| no constraint scoring | −0.0151 | **+0.0010** | clean only |
+| no category lock | −0.0090 | −0.0253 | neither |
+| no override erasure | −0.0010 | +0.0000 | neither |
+| no observed fallback | −0.0008 | −0.0029 | neither |
+| no top-10 padding | 0.0000 | +0.0000 | neither |
+| no MMR diversity | 0.0000 | +0.0000 | neither |
+
+**The hypothesis is not supported.** Every row unresolved on the clean set is still
+unresolved under heavy paraphrase. The category lock roughly triples its point estimate
+(−0.009 → −0.025) but its interval widens with it and still spans zero, and constraint
+scoring — which *is* resolved on the clean set — flips sign and becomes unresolved.
+Paraphrase adds variance faster than it adds signal, so **fewer** mechanisms are resolvable
+under it, not more: three of ten rather than five.
+
+I am still leaving all five in the default configuration, but on narrower grounds than I
+started with. An interval spanning zero means *unresolved at n=200*, not absent; the five
+cost nothing measurable in latency; and the private set may be hard along axes this
+perturbation does not model. That is a weaker argument than "they are insurance, and here is
+the proof", and I would rather make the weaker one, because it is the one I can support.
+
+What changes most is the claim, not the configuration. I no longer describe the category
+lock as contributing +0.009 — the honest statement is that its contribution is smaller than
+this benchmark can measure, on either input.
 
 ### Robustness — the same sessions, reworded
 

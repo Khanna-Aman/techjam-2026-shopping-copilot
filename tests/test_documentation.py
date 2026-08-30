@@ -233,6 +233,67 @@ def test_ablation_intervals_match_the_paired_bootstrap():
     assert not missing, f"the harness measures {sorted(missing)}, which the README omits"
 
 
+def test_the_paraphrase_comparison_matches_both_bootstraps():
+    """The clean/heavy table, including which rows each run actually resolves.
+
+    This table is the one that reports a hypothesis failing, so its "resolved?" column is
+    the claim -- get that backwards and the section argues the opposite of its own data.
+    """
+    clean = _load("ablation_ci.json")["ablations"]
+    heavy = _load("ablation_ci_heavy.json")["ablations"]
+    rows = _table_rows("#### Does paraphrase rescue")
+    assert rows, "the clean/heavy comparison table not found"
+
+    seen = set()
+    for label, clean_delta, heavy_delta, resolved in (
+        (r[0], r[1], r[2], r[3]) for r in rows
+    ):
+        name = label if label in clean else re.sub(r"\s*\(.*\)$", "", label)
+        assert name in clean and name in heavy, f"unknown configuration {label!r}"
+        seen.add(name)
+        assert _number(clean_delta) == round(clean[name]["delta"], 4), f"{name}: clean"
+        assert _number(heavy_delta) == round(heavy[name]["delta"], 4), f"{name}: heavy"
+
+        expected = {
+            (True, True): "both",
+            (True, False): "clean only",
+            (False, True): "heavy only",
+            (False, False): "neither",
+        }[(clean[name]["significant"], heavy[name]["significant"])]
+        assert resolved == expected, (
+            f"{name}: README says {resolved!r}, the bootstraps say {expected!r}"
+        )
+
+    assert seen == set(clean) == set(heavy), "the comparison omits a configuration"
+
+
+def test_the_paraphrase_hypothesis_is_still_refuted():
+    """The section's headline is that heavy paraphrase resolves *fewer* rows, not more.
+
+    If a future change made paraphrase resolve more mechanisms, that prose would silently
+    become false while every individual number in the table stayed correct.
+    """
+    clean = _load("ablation_ci.json")["ablations"]
+    heavy = _load("ablation_ci_heavy.json")["ablations"]
+    clean_resolved = sum(1 for row in clean.values() if row["significant"])
+    heavy_resolved = sum(1 for row in heavy.values() if row["significant"])
+    assert heavy_resolved < clean_resolved, "the README claims paraphrase resolves fewer rows"
+
+    stated = re.search(
+        r"(\w+) of ten rather than (\w+)\.", _README
+    )
+    assert stated, "the resolved-row counts are no longer phrased as expected"
+    words = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7}
+    assert words[stated.group(1).lower()] == heavy_resolved
+    assert words[stated.group(2).lower()] == clean_resolved
+
+    # Every row unresolved on the clean set must still be unresolved under paraphrase --
+    # the sentence "every row unresolved on the clean set is still unresolved" says so.
+    for name, row in clean.items():
+        if not row["significant"]:
+            assert not heavy[name]["significant"], f"{name} became resolved under paraphrase"
+
+
 def test_the_noise_floor_claim_counts_the_unresolved_rows():
     """"Five of the ten" is a count, and counts drift when a mechanism is added."""
     intervals = _load("ablation_ci.json")["ablations"]
