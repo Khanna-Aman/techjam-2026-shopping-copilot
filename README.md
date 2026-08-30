@@ -974,7 +974,7 @@ when the ranking tweak is one I already talked myself into.
 | Public labels and docs unmodified | Yes — same CI check covers `data/public_set.jsonl` |
 | Requires network access | **No.** Fully offline; declared explicitly |
 | Offline fallback | Not applicable — offline *is* the primary path |
-| Model choice, cost, token usage, latency disclosed | Yes — see Feasibility. Zero tokens, $0, 10 ms median on the scored path |
+| Model choice, cost, token usage, latency disclosed | Yes — see Feasibility. Zero tokens, $0, 13 ms median on the scored path |
 | Optional external service | `copilot/llm.py`, **disabled by default** and gated behind `COPILOT_LLM=1`. Never used for scoring; absent it, the agent is unchanged |
 | Secrets in repo | None. No API keys, no credentials, no `.env` |
 | Python version | 3.10+ — CI covers 3.10 and 3.12 on Linux, macOS and Windows |
