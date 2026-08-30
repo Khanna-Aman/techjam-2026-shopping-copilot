@@ -224,7 +224,7 @@ gzip -dkc catalog.jsonl.gz > data/catalog.jsonl
 python -m evaluator.local_evaluator
 
 # 3. everything else
-python -m pytest tests/ -q                          # 164 tests
+python -m pytest -q                                 # 222 tests
 python -m tools.demo --scenario intent_override --index 1
 python -m tools.sweep --mode ablation
 python -m tools.robustness
