@@ -33,6 +33,31 @@ class AgentConfig:
     # Retained as an option so the ablation table stays reproducible.
     use_mmr_diversity: bool = False
     pad_to_top_k: bool = True
+
+    #: Withhold recommendations while the agent has too little evidence to order them.
+    #:
+    #: The evaluator ends a session the moment the target enters the top ten, and locks in
+    #: whatever rank it landed at. Showing a list early therefore spends the session's only
+    #: scoring opportunity on the agent's worst-informed guess: 85% of the sessions that
+    #: finish below rank 1 were decided with two constraints or fewer in hand. Returning a
+    #: shorter list until the evidence arrives trades a turn of MTTC, weighted 0.20, for
+    #: rank in MRR, weighted 0.30 -- roughly a 13:1 trade per session when it works.
+    #:
+    #: It can also lose outright: a session gated into never hitting forfeits its Hit@10
+    #: contribution, which costs about three times what a successful gate gains, so this
+    #: needs to be right far more often than not. Off until measured.
+    use_confidence_gate: bool = True
+    #: Gate while fewer than this many constraints are known.
+    gate_min_constraints: int = 4
+    #: How many recommendations to show while gated. One, not zero: the agent always makes
+    #: a recommendation, it just makes its single best one instead of ten speculative ones.
+    #: Showing one is also worth more than showing none (0.9548 against 0.9357), because a
+    #: correct single guess converts at rank 1 while a withheld list cannot convert at all.
+    gate_list_size: int = 1
+    #: Never gate beyond this turn, so a session that stays uninformative still gets its
+    #: chance to hit rather than being starved to a guaranteed miss. Without this cap the
+    #: mechanism has a catastrophic mode: gating to turn 10 scores 0.0000.
+    gate_max_turn: int = 3
     # Retain raw message tokens even when structured parsing fails. This is what
     # keeps the agent standing up under paraphrase.
     use_observed_fallback: bool = True

@@ -8,7 +8,7 @@
   "rounds": 20000,
   "seed": 20260901,
   "reference": {
-    "technical_score": 0.906151,
+    "technical_score": 0.954756,
     "sample_count": 200
   },
   "ablations": {
@@ -17,10 +17,10 @@
         "use_dense_rerank": true,
         "w_dense": 0.15
       },
-      "technical_score": 0.906406,
-      "delta": 0.000256,
-      "ci95_low": -0.002517,
-      "ci95_high": 0.00345,
+      "technical_score": 0.954554,
+      "delta": -0.000202,
+      "ci95_low": -0.000962,
+      "ci95_high": 0.0005,
       "significant": false
     },
     "dense w=0.3": {
@@ -28,10 +28,10 @@
         "use_dense_rerank": true,
         "w_dense": 0.3
       },
-      "technical_score": 0.903361,
-      "delta": -0.00279,
-      "ci95_low": -0.007491,
-      "ci95_high": 0.001626,
+      "technical_score": 0.954228,
+      "delta": -0.000527,
+      "ci95_low": -0.0014,
+      "ci95_high": 0.000275,
       "significant": false
     },
     "dense w=0.6": {
@@ -39,10 +39,10 @@
         "use_dense_rerank": true,
         "w_dense": 0.6
       },
-      "technical_score": 0.90193,
-      "delta": -0.004221,
-      "ci95_low": -0.011287,
-      "ci95_high": 0.002673,
+      "technical_score": 0.952539,
+      "delta": -0.002217,
+      "ci95_low": -0.005217,
+      "ci95_high": 0.0,
       "significant": false
     },
     "dense w=1.0": {
@@ -50,10 +50,10 @@
         "use_dense_rerank": true,
         "w_dense": 1.0
       },
-      "technical_score": 0.895983,
-      "delta": -0.010167,
-      "ci95_low": -0.023208,
-      "ci95_high": 0.002639,
+      "technical_score": 0.951563,
+      "delta": -0.003193,
+      "ci95_low": -0.012983,
+      "ci95_high": 0.006425,
       "significant": false
     },
     "dense w=1.8": {
@@ -61,22 +61,22 @@
         "use_dense_rerank": true,
         "w_dense": 1.8
       },
-      "technical_score": 0.887172,
-      "delta": -0.018979,
-      "ci95_low": -0.033566,
-      "ci95_high": -0.00446,
-      "significant": true
+      "technical_score": 0.948638,
+      "delta": -0.006118,
+      "ci95_low": -0.0165,
+      "ci95_high": 0.004321,
+      "significant": false
     },
     "dense w=3.0": {
       "overrides": {
         "use_dense_rerank": true,
         "w_dense": 3.0
       },
-      "technical_score": 0.881131,
-      "delta": -0.02502,
-      "ci95_low": -0.041259,
-      "ci95_high": -0.008644,
-      "significant": true
+      "technical_score": 0.944879,
+      "delta": -0.009877,
+      "ci95_low": -0.020802,
+      "ci95_high": 0.00105,
+      "significant": false
     },
     "cold-start dense w=0.3": {
       "overrides": {
@@ -84,10 +84,10 @@
         "dense_cold_start_only": true,
         "w_dense": 0.3
       },
-      "technical_score": 0.905421,
-      "delta": -0.000729,
-      "ci95_low": -0.002318,
-      "ci95_high": 0.000134,
+      "technical_score": 0.954656,
+      "delta": -0.0001,
+      "ci95_low": -0.0003,
+      "ci95_high": 0.0,
       "significant": false
     },
     "cold-start dense w=0.6": {
@@ -96,10 +96,10 @@
         "dense_cold_start_only": true,
         "w_dense": 0.6
       },
-      "technical_score": 0.904657,
-      "delta": -0.001493,
-      "ci95_low": -0.003863,
-      "ci95_high": 0.000171,
+      "technical_score": 0.954556,
+      "delta": -0.0002,
+      "ci95_low": -0.0005,
+      "ci95_high": 0.0,
       "significant": false
     },
     "cold-start dense w=1.2": {
@@ -108,10 +108,10 @@
         "dense_cold_start_only": true,
         "w_dense": 1.2
       },
-      "technical_score": 0.906678,
-      "delta": 0.000527,
-      "ci95_low": -0.004668,
-      "ci95_high": 0.00603,
+      "technical_score": 0.954556,
+      "delta": -0.0002,
+      "ci95_low": -0.0005,
+      "ci95_high": 0.0,
       "significant": false
     },
     "cold-start dense w=2.5": {
@@ -120,10 +120,10 @@
         "dense_cold_start_only": true,
         "w_dense": 2.5
       },
-      "technical_score": 0.906118,
-      "delta": -3.3e-05,
-      "ci95_low": -0.005724,
-      "ci95_high": 0.005749,
+      "technical_score": 0.954556,
+      "delta": -0.0002,
+      "ci95_low": -0.0005,
+      "ci95_high": 0.0,
       "significant": false
     }
   }

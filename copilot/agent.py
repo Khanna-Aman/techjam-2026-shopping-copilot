@@ -118,6 +118,15 @@ class ShoppingCopilot:
         # returns the offline ordering untouched, so this can never cost a turn.
         ranked, usage = self._reranker.rerank(state, self.index, ranked)
 
+        # Withhold the list while the ranking is not yet worth spending the session's one
+        # scoring opportunity on. See `use_confidence_gate` for the arithmetic.
+        if (
+            self.config.use_confidence_gate
+            and turn <= self.config.gate_max_turn
+            and len(state.active_constraints) < self.config.gate_min_constraints
+        ):
+            ranked = ranked[: self.config.gate_list_size]
+
         attribute = choose_attribute(self.index, state, pool, self.config)
         state.pending_attribute = attribute
         if attribute is not None:

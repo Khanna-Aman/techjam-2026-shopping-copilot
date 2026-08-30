@@ -20,15 +20,15 @@
       "w_dense": 0.15
     },
     "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.943512,
-    "mttc": 2.3,
-    "efficiency": 0.87,
-    "technical_score": 0.954554,
+    "hit_rate_at_10": 0.99,
+    "mrr": 0.928631,
+    "mttc": 2.38,
+    "efficiency": 0.862,
+    "technical_score": 0.945989,
     "by_scenario": {
       "boundary": 1.0,
       "browsing": 1.0,
-      "buying": 1.0,
+      "buying": 0.9875,
       "intent_override": 0.966667
     }
   },
@@ -38,15 +38,15 @@
       "w_dense": 0.3
     },
     "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.943095,
-    "mttc": 2.31,
-    "efficiency": 0.869,
-    "technical_score": 0.954228,
+    "hit_rate_at_10": 0.99,
+    "mrr": 0.924214,
+    "mttc": 2.405,
+    "efficiency": 0.8595,
+    "technical_score": 0.944164,
     "by_scenario": {
       "boundary": 1.0,
       "browsing": 1.0,
-      "buying": 1.0,
+      "buying": 0.9875,
       "intent_override": 0.966667
     }
   },
@@ -56,15 +56,15 @@
       "w_dense": 0.6
     },
     "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.938464,
-    "mttc": 2.325,
-    "efficiency": 0.8675,
-    "technical_score": 0.952539,
+    "hit_rate_at_10": 0.99,
+    "mrr": 0.917603,
+    "mttc": 2.465,
+    "efficiency": 0.8535,
+    "technical_score": 0.940981,
     "by_scenario": {
       "boundary": 1.0,
       "browsing": 1.0,
-      "buying": 1.0,
+      "buying": 0.9875,
       "intent_override": 0.966667
     }
   },
@@ -74,16 +74,16 @@
       "w_dense": 1.0
     },
     "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.937542,
-    "mttc": 2.36,
-    "efficiency": 0.864,
-    "technical_score": 0.951563,
+    "hit_rate_at_10": 0.985,
+    "mrr": 0.90347,
+    "mttc": 2.59,
+    "efficiency": 0.841,
+    "technical_score": 0.931741,
     "by_scenario": {
       "boundary": 1.0,
       "browsing": 1.0,
-      "buying": 0.9875,
-      "intent_override": 1.0
+      "buying": 0.975,
+      "intent_override": 0.966667
     }
   },
   "dense w=1.8": {
@@ -92,16 +92,16 @@
       "w_dense": 1.8
     },
     "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.932792,
-    "mttc": 2.435,
-    "efficiency": 0.8565,
-    "technical_score": 0.948638,
+    "hit_rate_at_10": 0.98,
+    "mrr": 0.876659,
+    "mttc": 2.705,
+    "efficiency": 0.8295,
+    "technical_score": 0.918898,
     "by_scenario": {
       "boundary": 1.0,
       "browsing": 1.0,
-      "buying": 0.9875,
-      "intent_override": 1.0
+      "buying": 0.975,
+      "intent_override": 0.933333
     }
   },
   "dense w=3.0": {
@@ -110,16 +110,16 @@
       "w_dense": 3.0
     },
     "sample_count": 200,
-    "hit_rate_at_10": 0.995,
-    "mrr": 0.922931,
-    "mttc": 2.475,
-    "efficiency": 0.8525,
-    "technical_score": 0.944879,
+    "hit_rate_at_10": 0.96,
+    "mrr": 0.842956,
+    "mttc": 2.925,
+    "efficiency": 0.8075,
+    "technical_score": 0.894387,
     "by_scenario": {
       "boundary": 1.0,
-      "browsing": 1.0,
-      "buying": 0.9875,
-      "intent_override": 1.0
+      "browsing": 0.9875,
+      "buying": 0.9375,
+      "intent_override": 0.933333
     }
   },
   "cold-start dense w=0.3": {
@@ -150,9 +150,9 @@
     "sample_count": 200,
     "hit_rate_at_10": 0.995,
     "mrr": 0.944187,
-    "mttc": 2.31,
-    "efficiency": 0.869,
-    "technical_score": 0.954556,
+    "mttc": 2.305,
+    "efficiency": 0.8695,
+    "technical_score": 0.954656,
     "by_scenario": {
       "boundary": 1.0,
       "browsing": 1.0,
@@ -169,9 +169,9 @@
     "sample_count": 200,
     "hit_rate_at_10": 0.995,
     "mrr": 0.944187,
-    "mttc": 2.31,
-    "efficiency": 0.869,
-    "technical_score": 0.954556,
+    "mttc": 2.32,
+    "efficiency": 0.868,
+    "technical_score": 0.954356,
     "by_scenario": {
       "boundary": 1.0,
       "browsing": 1.0,
@@ -187,10 +187,10 @@
     },
     "sample_count": 200,
     "hit_rate_at_10": 0.995,
-    "mrr": 0.944187,
-    "mttc": 2.31,
-    "efficiency": 0.869,
-    "technical_score": 0.954556,
+    "mrr": 0.941687,
+    "mttc": 2.34,
+    "efficiency": 0.866,
+    "technical_score": 0.953206,
     "by_scenario": {
       "boundary": 1.0,
       "browsing": 1.0,

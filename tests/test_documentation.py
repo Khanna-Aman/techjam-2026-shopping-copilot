@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import re
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 import pytest
@@ -40,6 +41,18 @@ def _load(name: str) -> dict:
 
 def _cells(row: str) -> list[str]:
     return [cell.strip().replace("*", "") for cell in row.strip().strip("|").split("|")]
+
+
+def _round4(value: float) -> float:
+    """Round half away from zero, deterministically.
+
+    `round()` uses banker's rounding on the binary representation, so two float values that
+    print identically can round to different fourth decimals -- which is exactly what
+    happened to the override-erasure delta at -0.000850, where the ablation file and the
+    bootstrap file disagreed on whether it was -0.0008 or -0.0009. A documented number
+    should not depend on which artifact it was copied from.
+    """
+    return float(Decimal(repr(value)).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP))
 
 
 def _number(text: str) -> float:
@@ -172,6 +185,36 @@ def test_the_bootstrap_was_taken_from_the_current_official_result():
     assert bootstrap["source_technical_score"] == official["recommended_technical_score"]
 
 
+def test_the_baseline_comparison_column_is_measured_not_quoted():
+    """The per-scenario baseline column, against a run of the organiser's own baseline.
+
+    `docs/baseline_results.json` publishes only the overall figure, so the per-scenario
+    column used to be the one part of that table with no artifact behind it.
+    `results/baseline_by_scenario.json` is a full run of `starter.baseline_agent` through
+    the unmodified evaluator; its overall score reproduces the organiser's 0.10671 exactly,
+    which is what makes the per-scenario breakdown trustworthy.
+    """
+    measured = _load("baseline_by_scenario.json")
+    published = json.loads(
+        (_ROOT / "docs" / "baseline_results.json").read_text(encoding="utf-8")
+    )
+    assert measured["technical_score"] == pytest.approx(
+        published["technical_score"], abs=5e-6
+    ), "our baseline run no longer reproduces the organiser's published score"
+
+    rows = _table_rows("### Per scenario")
+    for row in rows:
+        name, baseline_hit = row[0], row[-1]
+        if name == "overall":
+            assert _number(baseline_hit) == pytest.approx(
+                measured["hit_rate_at_10"], abs=5e-5
+            )
+            continue
+        assert _number(baseline_hit) == pytest.approx(
+            measured["scenario_metrics"][name]["hit_rate_at_10"], abs=5e-5
+        ), f"{name}: baseline hit rate"
+
+
 def test_ablation_table_matches_the_committed_ablation():
     ablation = _load("ablation.json")
     rows = _table_rows("### Ablation")
@@ -217,10 +260,10 @@ def test_ablation_intervals_match_the_paired_bootstrap():
         # The README shows four decimals, so the invariant is exact equality *after*
         # rounding -- a tolerance here would sit right on the boundary for a delta like
         # -0.00075 and would have to be loosened until it could hide real drift.
-        assert _number(delta) == round(row["delta"], 4), f"{name}: delta"
+        assert _number(delta) == _round4(row["delta"]), f"{name}: delta"
         low, high = _interval(interval)
-        assert low == round(row["ci95_low"], 4), f"{name}: CI low"
-        assert high == round(row["ci95_high"], 4), f"{name}: CI high"
+        assert low == _round4(row["ci95_low"]), f"{name}: CI low"
+        assert high == _round4(row["ci95_high"]), f"{name}: CI high"
 
         labelled = "spans zero" in interval
         assert labelled != row["significant"], (
@@ -251,8 +294,8 @@ def test_the_paraphrase_comparison_matches_both_bootstraps():
         name = label if label in clean else re.sub(r"\s*\(.*\)$", "", label)
         assert name in clean and name in heavy, f"unknown configuration {label!r}"
         seen.add(name)
-        assert _number(clean_delta) == round(clean[name]["delta"], 4), f"{name}: clean"
-        assert _number(heavy_delta) == round(heavy[name]["delta"], 4), f"{name}: heavy"
+        assert _number(clean_delta) == _round4(clean[name]["delta"]), f"{name}: clean"
+        assert _number(heavy_delta) == _round4(heavy[name]["delta"]), f"{name}: heavy"
 
         expected = {
             (True, True): "both",
@@ -280,7 +323,7 @@ def test_the_paraphrase_hypothesis_is_still_refuted():
     assert heavy_resolved < clean_resolved, "the README claims paraphrase resolves fewer rows"
 
     stated = re.search(
-        r"(\w+) of ten rather than (\w+)\.", _README
+        r"(\w+) of \w+ rather than (\w+)\.", _README
     )
     assert stated, "the resolved-row counts are no longer phrased as expected"
     words = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7}
@@ -316,18 +359,19 @@ def test_the_encoder_tier_table_matches_the_three_dense_bootstraps():
 
         # The row the README calls best must actually be the highest-scoring one measured.
         best_measured = max(ablations.values(), key=lambda row: row["delta"])
-        assert _number(delta) == round(best_measured["delta"], 4), f"{encoder}: best delta"
+        assert _number(delta) == _round4(best_measured["delta"]), f"{encoder}: best delta"
         low, high = _interval(interval)
-        assert low == round(best_measured["ci95_low"], 4), f"{encoder}: CI low"
-        assert high == round(best_measured["ci95_high"], 4), f"{encoder}: CI high"
+        assert low == _round4(best_measured["ci95_low"]), f"{encoder}: CI low"
+        assert high == _round4(best_measured["ci95_high"]), f"{encoder}: CI high"
 
-        assert _number(worst) == round(ablations["dense w=3.0"]["delta"], 4), f"{encoder}: w=3.0"
+        assert _number(worst) == _round4(ablations["dense w=3.0"]["delta"]), f"{encoder}: w=3.0"
 
         count = sum(1 for row in ablations.values() if row["significant"])
-        assert int(resolved.split()[0]) == count, f"{encoder}: resolved count"
+        stated_count = 0 if resolved.split()[0] == "none" else int(resolved.split()[0])
+        assert stated_count == count, f"{encoder}: resolved count"
         assert all(
             row["delta"] < 0 for row in ablations.values() if row["significant"]
-        ), f"{encoder}: the README says every resolved row is negative"
+        ), f"{encoder}: no resolved row may be a gain"
 
 
 def test_no_dense_configuration_beats_the_offline_default():
@@ -345,7 +389,8 @@ def test_the_noise_floor_claim_counts_the_unresolved_rows():
     unresolved = sum(1 for row in intervals.values() if not row["significant"])
     stated = re.search(r"\*\*(\w+) of the (\w+) mechanisms are not distinguishable", _README)
     assert stated, "the noise-floor claim is no longer phrased as expected"
-    words = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "ten": 10}
+    words = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
+             "eight": 8, "nine": 9, "ten": 10, "eleven": 11}
     assert words[stated.group(1).lower()] == unresolved
     assert words[stated.group(2).lower()] == len(intervals)
 
@@ -525,11 +570,63 @@ def test_the_profile_timing_table_matches_the_profile_sweep():
 
 
 def test_the_sign_of_the_personalization_finding_holds():
-    """The finding is that the sign flips with timing. If it stops flipping, it is wrong."""
+    """Global personalization must stay clearly harmful; cold start must stay ~neutral.
+
+    The original finding was that the sign flips with timing -- harmful applied globally,
+    helpful applied at cold start. The confidence gate removed the second half: the
+    cold-start prior is now worth about -0.0008, inside the noise floor. The half that
+    still holds is asserted strictly, and the half that changed is asserted as the weaker
+    claim the README now actually makes.
+    """
     profile = _load("sweep_profile.json")
     off = profile["profile off"]["technical_score"]
-    assert profile["always     w=1.0"]["technical_score"] < off
-    assert profile["cold-start w=1.0"]["technical_score"] > off
+    always = profile["always     w=1.0"]["technical_score"]
+    cold = profile["cold-start w=1.0"]["technical_score"]
+
+    assert always < off - 0.02, "global personalization is no longer clearly harmful"
+    assert abs(cold - off) < 0.005, (
+        "the cold-start prior has moved out of the noise floor; finding 4 needs rewriting"
+    )
+    assert cold > always, "timing must still matter"
+
+
+def test_the_rejected_popularity_weight_really_did_fail_held_out():
+    """The rejection is a claim about two runs, so check both.
+
+    A rejected idea is only credible if the numbers behind it are in the repository. This
+    asserts the shape of the finding rather than its exact values: better on public, worse
+    on uniform held-out targets. If that ever stops being true, the section arguing for the
+    held-out harness is arguing from a result that no longer exists.
+    """
+    rejected = _load("proxy_private_pop12.json")
+    shipped = _load("proxy_private.json")
+    sweep = _load("sweep_popularity.json")
+
+    assert sweep["w_pop=1.2"]["technical_score"] > sweep["w_pop=0.55"]["technical_score"], (
+        "the rejected weight is supposed to look better on the public set"
+    )
+    assert rejected["uniform"]["technical_score"] < shipped["uniform"]["technical_score"], (
+        "the rejected weight no longer loses on uniform held-out targets"
+    )
+    assert rejected["uniform"]["hit_rate_at_10"] < shipped["uniform"]["hit_rate_at_10"]
+
+
+def test_the_shipped_popularity_weight_is_still_the_documented_one():
+    from copilot.config import DEFAULT_CONFIG
+
+    assert DEFAULT_CONFIG.w_popularity == 0.55, (
+        "the README says the weight stayed at 0.55 after the rejection"
+    )
+
+
+def test_the_confidence_gate_defaults_match_what_the_readme_documents():
+    """Finding 5 names specific settings; the shipped config must be those settings."""
+    from copilot.config import DEFAULT_CONFIG
+
+    assert DEFAULT_CONFIG.use_confidence_gate is True
+    assert DEFAULT_CONFIG.gate_list_size == 1, "the README argues one beats none"
+    assert DEFAULT_CONFIG.gate_max_turn > 0, "an uncapped gate scores 0.0000"
+    assert 4 <= DEFAULT_CONFIG.gate_min_constraints <= 6, "outside the documented plateau"
 
 
 def test_the_override_retention_finding_holds():

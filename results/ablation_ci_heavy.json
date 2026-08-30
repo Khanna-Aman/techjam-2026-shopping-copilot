@@ -1,11 +1,12 @@
 {
   "note": "Paired percentile bootstrap of the ablation delta over the 200 public sessions. Bounds sampling noise on the public set only; it is not evidence that an effect transfers to the private set.",
   "mode": "ablation",
+  "base": {},
   "perturbation": "heavy",
   "rounds": 20000,
   "seed": 20260901,
   "reference": {
-    "technical_score": 0.882351,
+    "technical_score": 0.93252,
     "sample_count": 200
   },
   "ablations": {
@@ -13,67 +14,77 @@
       "overrides": {
         "clarify_strategy": "none"
       },
-      "technical_score": 0.362288,
-      "delta": -0.520062,
-      "ci95_low": -0.580289,
-      "ci95_high": -0.459551,
+      "technical_score": 0.340568,
+      "delta": -0.591952,
+      "ci95_low": -0.648832,
+      "ci95_high": -0.534767,
       "significant": true
     },
     "no category lock": {
       "overrides": {
         "use_category_lock": false
       },
-      "technical_score": 0.857038,
-      "delta": -0.025312,
-      "ci95_low": -0.054297,
-      "ci95_high": 0.001622,
-      "significant": false
+      "technical_score": 0.890842,
+      "delta": -0.041679,
+      "ci95_low": -0.068581,
+      "ci95_high": -0.017189,
+      "significant": true
     },
     "no constraint scoring": {
       "overrides": {
         "use_constraint_scoring": false
       },
-      "technical_score": 0.883345,
-      "delta": 0.000995,
-      "ci95_low": -0.015415,
-      "ci95_high": 0.018558,
+      "technical_score": 0.933782,
+      "delta": 0.001262,
+      "ci95_low": -0.013649,
+      "ci95_high": 0.017239,
       "significant": false
     },
     "no state tracking": {
       "overrides": {
         "use_state_tracking": false
       },
-      "technical_score": 0.568892,
-      "delta": -0.313459,
-      "ci95_low": -0.369894,
-      "ci95_high": -0.257531,
+      "technical_score": 0.580145,
+      "delta": -0.352375,
+      "ci95_low": -0.409979,
+      "ci95_high": -0.294624,
       "significant": true
     },
     "no override erasure": {
       "overrides": {
         "use_override_erasure": false
       },
-      "technical_score": 0.882377,
-      "delta": 2.7e-05,
+      "technical_score": 0.93252,
+      "delta": 0.0,
       "ci95_low": 0.0,
-      "ci95_high": 8e-05,
+      "ci95_high": 0.0,
       "significant": false
     },
     "no observed fallback": {
       "overrides": {
         "use_observed_fallback": false
       },
-      "technical_score": 0.879496,
-      "delta": -0.002854,
-      "ci95_low": -0.009827,
-      "ci95_high": 0.003929,
+      "technical_score": 0.932841,
+      "delta": 0.000321,
+      "ci95_low": -0.014716,
+      "ci95_high": 0.014376,
       "significant": false
+    },
+    "no confidence gate": {
+      "overrides": {
+        "use_confidence_gate": false
+      },
+      "technical_score": 0.882351,
+      "delta": -0.05017,
+      "ci95_low": -0.068995,
+      "ci95_high": -0.031922,
+      "significant": true
     },
     "no top-10 padding": {
       "overrides": {
         "pad_to_top_k": false
       },
-      "technical_score": 0.882351,
+      "technical_score": 0.93252,
       "delta": 0.0,
       "ci95_low": 0.0,
       "ci95_high": 0.0,
@@ -83,7 +94,7 @@
       "overrides": {
         "use_mmr_diversity": false
       },
-      "technical_score": 0.882351,
+      "technical_score": 0.93252,
       "delta": 0.0,
       "ci95_low": 0.0,
       "ci95_high": 0.0,
@@ -93,20 +104,20 @@
       "overrides": {
         "use_popularity_prior": false
       },
-      "technical_score": 0.850016,
-      "delta": -0.032335,
-      "ci95_low": -0.057132,
-      "ci95_high": -0.009694,
+      "technical_score": 0.907033,
+      "delta": -0.025487,
+      "ci95_low": -0.043082,
+      "ci95_high": -0.00854,
       "significant": true
     },
     "no profile prior": {
       "overrides": {
         "use_profile_prior": false
       },
-      "technical_score": 0.86285,
-      "delta": -0.0195,
-      "ci95_low": -0.042498,
-      "ci95_high": 0.002633,
+      "technical_score": 0.933799,
+      "delta": 0.001279,
+      "ci95_low": -0.010115,
+      "ci95_high": 0.013639,
       "significant": false
     }
   }

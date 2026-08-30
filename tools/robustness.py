@@ -243,12 +243,31 @@ def main() -> None:
     parser.add_argument("--catalog", default="data/catalog.jsonl")
     parser.add_argument("--dataset", default="data/public_set.jsonl")
     parser.add_argument("--only", default=None, help="run a single perturbation by name")
+    parser.add_argument(
+        "--base", default=None,
+        help="JSON object of AgentConfig overrides, so a candidate mechanism can be "
+             "checked against paraphrase before it ships",
+    )
     parser.add_argument("--output", default="runs/robustness.json")
     args = parser.parse_args()
 
     samples = load_jsonl(args.dataset)
     catalog_ids, categories, products = catalog_index(args.catalog)
-    agent = Agent(args.catalog)
+
+    if args.base:
+        # Same override filtering as tools/sweep.py: unknown keys are dropped rather than
+        # raising, so a stale flag cannot silently reconfigure the run.
+        from dataclasses import replace
+
+        from copilot.agent import ShoppingCopilot
+        from copilot.config import DEFAULT_CONFIG, AgentConfig
+
+        overrides = json.loads(args.base)
+        allowed = set(AgentConfig.__dataclass_fields__)
+        config = replace(DEFAULT_CONFIG, **{k: v for k, v in overrides.items() if k in allowed})
+        agent = ShoppingCopilot(args.catalog, config=config)
+    else:
+        agent = Agent(args.catalog)
 
     names = [args.only] if args.only else list(PERTURBATIONS)
     results: dict[str, dict] = {}

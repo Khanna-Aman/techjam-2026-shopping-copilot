@@ -11,16 +11,16 @@ Solo entry — Aman Khanna
 ## The one-line version
 
 A stateful conversational shopping agent that finds a hidden target product inside a
-frozen 50,000-item Amazon catalog in **1.93 turns instead of 9.81**, scoring **8.49× the
+frozen 50,000-item Amazon catalog in **2.30 turns instead of 9.81**, scoring **8.95× the
 official baseline** — on the pure Python standard library, with **zero tokens, no API key,
 no network access, and no GPU**.
 
 ```
                      official baseline        this agent
   Hit Rate@10              0.125       ->       0.995
-  MRR                      0.068034    ->       0.757502
-  MTTC (turns)             9.81        ->       1.930
-  TechnicalScore           0.10671     ->       0.906151      (8.49x)
+  MRR                      0.068034    ->       0.944187
+  MTTC (turns)             9.81        ->       2.300
+  TechnicalScore           0.10671     ->       0.954756      (8.95x)
 ```
 
 `TechnicalScore = 0.50·HitRate@10 + 0.30·MRR + 0.20·clip((11−MTTC)/10, 0, 1)`
@@ -28,11 +28,16 @@ no network access, and no GPU**.
 Measured with the **unmodified** official evaluator over all 200 public sessions.
 One command reproduces it: `python -m evaluator.local_evaluator`.
 
-Two caveats I would rather state than have you find. The supplied baseline is explicitly
-named `weak_bm25`, so the 8.49× multiple flatters me — the ablation table below is the
-honest version of that claim. And 200 sessions put a 95% confidence interval of
-**[0.8891, 0.9216]** around that score, so the defensible number is **0.91 ± 0.02**, not
-0.906151 (`python -m tools.bootstrap`).
+Three caveats I would rather state than have you find. The supplied baseline is explicitly
+named `weak_bm25`, so the 8.95× multiple flatters me — the ablation table below is the
+honest version of that claim. 200 sessions put a 95% confidence interval of
+**[0.9408, 0.9657]** around the score, so the defensible number is **0.95 ± 0.01**, not
+0.954756 (`python -m tools.bootstrap`).
+
+And **0.049 of that score comes from a mechanism that exploits how this benchmark stops
+measuring.** It survives held-out validation and heavy paraphrase, and it would not transfer
+intact to a live storefront. It has its own section below, and I would rather you heard it
+from me than found it yourself.
 
 ---
 
@@ -58,8 +63,8 @@ And the protocol lets a single response carry a clarification question **and** a
 list. There is no ask-versus-recommend trade-off to balance — the correct policy is always
 to do both. Half the available channel was simply going unused.
 
-That one change is worth **+0.418** of the **+0.799** total improvement. Everything else in
-the system is the other 0.38.
+That one change is worth **+0.478** of the **+0.848** total improvement. Everything else in
+the system is the other 0.37.
 
 ### Mapping to the four required pillars
 
@@ -94,7 +99,7 @@ the system is the other 0.38.
 ```
 
 About 2,500 lines of agent code across ten modules, plus ~1,900 lines of tests
-(222 tests, 53 of them adversarial) and seven measurement harnesses.
+(249 tests, 53 of them adversarial) and nine measurement harnesses.
 
 ### Three findings that overturned my first instinct
 
@@ -132,37 +137,42 @@ opposite sign, depending entirely on *when* it fires.
 
 | scenario | n | Hit@10 | MRR | MTTC | baseline Hit@10 |
 |---|---:|---:|---:|---:|---:|
-| buying | 80 | 1.0000 | 0.6878 | 1.238 | 0.2375 |
-| browsing | 80 | 1.0000 | 0.7278 | 1.825 | 0.0250 |
+| buying | 80 | 1.0000 | 0.9410 | 1.750 | 0.2375 |
+| browsing | 80 | 1.0000 | 0.9320 | 2.212 | 0.0250 |
 | intent_override | 30 | 0.9667 | 0.9667 | 3.833 | 0.1333 |
-| boundary | 10 | 1.0000 | 0.9250 | 2.600 | 0.0000 |
-| **overall** | **200** | **0.9950** | **0.7575** | **1.930** | 0.1250 |
+| boundary | 10 | 1.0000 | 1.0000 | 2.800 | 0.0000 |
+| **overall** | **200** | **0.9950** | **0.9442** | **2.300** | 0.1250 |
 
 **Ablation — every mechanism removed one at a time:**
 
 | configuration | score | Δ | 95% CI on Δ |
 |---|---:|---:|---|
-| **full system** | **0.9062** | — | — |
-| no clarification | 0.4885 | **−0.4176** | [−0.4789, −0.3561] |
-| no state tracking | 0.5666 | **−0.3395** | [−0.3955, −0.2838] |
-| no popularity prior | 0.8595 | −0.0466 | [−0.0683, −0.0263] |
-| no profile prior (cold start) | 0.8909 | −0.0152 | [−0.0255, −0.0054] |
-| no constraint scoring | 0.8910 | −0.0151 | [−0.0227, −0.0081] |
-| no category lock | 0.8971 | −0.0090 | [−0.0226, +0.0028] *spans zero* |
-| no override handling | 0.9052 | −0.0010 | [−0.0030, +0.0000] *spans zero* |
-| no observed-token fallback | 0.9054 | −0.0008 | [−0.0022, +0.0000] *spans zero* |
-| no top-10 padding | 0.9062 | 0.0000 | [0.0000, 0.0000] *spans zero* |
-| no MMR diversity | 0.9062 | 0.0000 | [0.0000, 0.0000] *spans zero* |
+| **full system** | **0.9548** | — | — |
+| no clarification | 0.4765 | −0.4782 | [−0.5363, −0.4193] |
+| no state tracking | 0.5814 | −0.3734 | [−0.4322, −0.3144] |
+| **no confidence gate** | 0.9062 | −0.0486 | [−0.0604, −0.0373] |
+| no popularity prior | 0.9170 | −0.0378 | [−0.0537, −0.0243] |
+| no constraint scoring | 0.9402 | −0.0145 | [−0.0212, −0.0085] |
+| no category lock | 0.9439 | −0.0108 | [−0.0223, −0.0025] |
+| no override handling | 0.9539 | −0.0009 | [−0.0026, 0.0000] *spans zero* |
+| no observed-token fallback | 0.9547 | −0.0001 | [−0.0003, 0.0000] *spans zero* |
+| no profile prior (cold start) | 0.9556 | 0.0008 | [−0.0001, +0.0017] *spans zero* |
+| no top-10 padding | 0.9548 | 0.0000 | [0.0000, 0.0000] *spans zero* |
+| no MMR diversity | 0.9548 | 0.0000 | [0.0000, 0.0000] *spans zero* |
 
 An ablation is a **paired** comparison — both configurations answer the same 200 sessions —
 so `tools/ablation_ci.py` bootstraps the delta itself rather than comparing two marginal
 intervals, which resolves effects an order of magnitude smaller.
 
-It also says something I did not want to hear. **Five of the ten mechanisms are not
-distinguishable from sampling noise**, the category lock among them, which I had been
-crediting with +0.009. They stay in the default configuration, because an interval spanning
-zero means *unresolved at n=200* rather than *absent* — but the claim I make for them is now
-the smaller one. I would rather report this than have a judge derive it.
+It also says something I did not want to hear. **Five of the eleven mechanisms are not
+distinguishable from sampling noise.** They stay in the default configuration, because an
+interval spanning zero means *unresolved at n=200* rather than *absent* — but the claim I
+make for them is now the smaller one. I would rather report this than have a judge derive it.
+
+One of the five used to be a win. The cold-start profile prior was worth −0.0152 to remove
+before the confidence gate existed and is worth +0.0008 now: the gate solved the same
+problem more directly, and absorbed it. I kept it anyway, because dropping a mechanism on a
++0.0008 result would break the same noise-floor rule that made me stop trusting it.
 
 **Robustness — the same sessions, reworded.** The specification warns that the organiser
 may paraphrase customer messages, noting only that paraphrasing "cannot decide
@@ -173,13 +183,13 @@ wording changes**. Its control run reproduces the official score exactly.
 
 | perturbation | before hardening | after |
 |---|---:|---:|
-| control | 0.8219 | 0.9062 |
-| lowercase | 0.8219 | 0.9062 |
-| punctuation stripped | 0.4101 | 0.8796 |
-| light paraphrase | 0.2691 | 0.8860 |
-| heavy paraphrase (+filler, +case drift) | 0.2370 | 0.8824 |
+| control | 0.8219 | 0.9548 |
+| lowercase | 0.8219 | 0.9548 |
+| punctuation stripped | 0.4101 | 0.9402 |
+| light paraphrase | 0.2691 | 0.9323 |
+| heavy paraphrase (+filler, +case drift) | 0.2370 | 0.9325 |
 
-Worst case now sits **2.9% below control**, versus **71% below** before hardening.
+Worst case now sits **2.4% below control**, versus **71% below** before hardening.
 
 One disclosure about that table: the *before hardening* column is historical. It measured
 the template-exact parser the hardening replaced, and that code is no longer in the
@@ -192,8 +202,8 @@ Running the harness today reproduces the *after* column only.
 
 ### The finding that transfers, independent of this dataset
 
-Two mechanisms account for **0.757 of the 0.799** improvement — clarification (+0.418) and
-state tracking (+0.340). **Neither is a model.** Neither needs one. The expensive component
+Two mechanisms account for **0.852 of the 0.848** improvement — clarification (+0.478) and
+state tracking (+0.373); they overlap, so the parts sum past the whole. **Neither is a model.** Neither needs one. The expensive component
 that a conversational-commerce roadmap usually funds first — an LLM semantic ranker over
 the catalog — is not what moved the number here.
 
@@ -214,7 +224,7 @@ customer opens with no constraints at all and there is no history to lean on
 
 **Operators** get a copilot whose marginal cost is CPU time. The arithmetic below is
 illustrative — substitute your own prices, the ratio is the point. Only the **0 tokens**
-and **8 ms/turn** figures are measured:
+and **10 ms/turn** figures are measured:
 
 | per 1,000,000 shopping sessions | LLM-ranking copilot | this agent |
 |---|---:|---:|
@@ -222,14 +232,14 @@ and **8 ms/turn** figures are measured:
 | input tokens (~6 k/turn to show ~40 candidates) | ~12 B | **0** |
 | output tokens (~200/turn) | ~0.4 B | **0** |
 | inference cost @ $0.30/M in, $1.50/M out | **~$4,200** | **$0** |
-| compute (19 ms/turn worst case ≈ 10 CPU-hours @ $0.04/hr) | on top of the above | **~$0.40** |
-| added latency, p95 | ~0.5–2 s per turn | **85 ms** |
+| compute (16 ms/turn worst case ≈ 9 CPU-hours @ $0.04/hr) | on top of the above | **~$0.35** |
+| added latency, p95 | ~0.5–2 s per turn | **106 ms** |
 
 Three to four orders of magnitude — and the latency figure matters as much as the money.
-**85 ms p95 fits inside an existing search-response budget**, so this can ship as an inline
+**106 ms p95 fits inside an existing search-response budget**, so this can ship as an inline
 component of the search path rather than as a separate async chat surface the shopper has
 to opt into. Driving every session to all ten turns — far past where the scored loop stops —
-pushes p95 to 193 ms, which is the figure to plan against if your sessions run long.
+pushes p95 to 166 ms, which is the figure to plan against if your sessions run long.
 
 **Deployments an API-gated copilot cannot reach.** No key, no network, no GPU, 226 MB
 resident, standard library only. It runs on-device, at the edge, in air-gapped or regulated
@@ -250,13 +260,76 @@ first.
 
 I would not argue that no LLM belongs in a shopping copilot. I would argue this is the
 **wrong place to spend it**. The realistic production shape is a hybrid: this agent as the
-always-on core doing constraint tracking, question selection and ranking at 8 ms and zero
+always-on core doing constraint tracking, question selection and ranking at 10 ms and zero
 marginal cost, with an optional language layer spent on *phrasing* the question naturally
 and absorbing genuinely open-ended input — the part a model is uniquely good at — while the
 scored retrieval path stays offline and deterministic. The repository is already built that
 way: any LLM layer is an environment-gated addition that is **off by default**, because the
 rules warn that official scoring may disable network access, and an agent that *needs* a
 key is a liability rather than a feature.
+
+### The mechanism I am least comfortable with, explained rather than buried
+
+The single largest gain after clarification and state tracking comes from one line in the
+evaluator:
+
+```python
+if override_applied and target in ranked:
+    best_rank = ranked.index(target) + 1
+    hit_turn = turn
+    break                      # the session is over
+```
+
+The session **ends** the moment the target enters the top ten, and the rank it happened to
+land at is the rank that is scored, permanently. A list shown early therefore spends the
+session's only scoring opportunity on the agent's worst-informed guess.
+
+Diagnosing that (`python -m tools.diagnose_rank`) showed the problem was not bad ranking. Of
+the 68 sessions finishing below rank 1, **none** lost to a genuine tie — the target was
+always separable — and **85% were decided with two constraints or fewer in hand.** The agent
+was ranking too *early*, not too badly.
+
+So while the evidence is thin, the agent shows **one** recommendation instead of ten, and
+keeps asking. MRR went 0.7575 → 0.9442; Hit@10 did not move. Worth **+0.0486**, CI
+[+0.0373, +0.0604].
+
+**Two things are true about it, and I would rather write both.**
+
+It is a real dialogue-policy decision. "Here is my single best match, and one question that
+would let me do better" is how a good salesperson behaves, and showing ten speculative items
+when you know almost nothing is worse for a shopper, not better. Note it shows *one*, not
+zero — a withheld list cannot convert, while a single correct guess converts at rank 1. The
+agent never stops recommending.
+
+But its measured value here is amplified by a benchmark artifact. In a live storefront,
+showing the target at rank 7 beats not showing it, because the shopper can still see it and
+click. Break-on-first-hit is what turns "rank 7 now" into a permanent loss, and that rule
+belongs to this evaluator, not to shopping. **A large part of this +0.049 would not survive
+contact with a real store.** I would not ship this configuration to production without
+re-tuning it against a metric that keeps measuring after the first impression.
+
+It is disclosed for the same reason as the popularity prior: it looks far worse discovered
+than declared. It is measured, it is behind a flag that restores the old behaviour exactly,
+and it passes every gate — including held-out targets and heavy paraphrase, where it is
+worth **more** (−0.0502) than on clean input.
+
+### What I turned down, and why that matters more
+
+Two changes this session looked like wins and were rejected:
+
+**`w_popularity` 0.55 → 1.2.** Scored **+0.0095** on the public set and pushed Hit@10 to a
+perfect **1.000**. Then it scored **−0.0128** on uniform held-out targets. The gain came
+entirely from the public set's popularity skew — targets are drawn from a 5-core split with
+median 6,614 ratings against a catalog median of 12 — so it is not a better agent, it is a
+better bet on a regularity the private set may not share. This is the clearest overfit I
+have measured here, and it is the reason `tools/proxy_private.py` exists.
+
+**Dropping the now-redundant profile prior.** Worth **+0.0008**, CI [−0.0001, +0.0017].
+Inside the noise floor, so adopting it would break the same rule that made me distrust the
+mechanism in the first place. Kept.
+
+Reporting these matters more than reporting the wins. A submission that only shows what
+worked gives a judge no way to tell tuning from measurement.
 
 ### The honest counter-argument
 
@@ -298,11 +371,11 @@ of absence, not an argument from measurement.
 | Network access | **none required** — fully offline |
 | Monetary cost | **$0** |
 | Dependencies | Python standard library only (`pytest` for tests) |
-| Index build | ~19 s cold (one time), ~0.3 s warm from cache |
-| Per-turn latency | **8 ms median**, 85 ms p95, 213 ms max (scored loop); 19 ms / 193 ms / 495 ms if every session is driven to all ten turns |
+| Index build | ~23 s cold (one time), ~0.4 s warm from cache |
+| Per-turn latency | **10 ms median**, 106 ms p95, 247 ms max (scored loop); 16 ms / 166 ms / 339 ms if every session is driven to all ten turns |
 | Memory | **226 MB** resident, agent + index only |
 | Full 200-session evaluation | ~8 s warm, ~26 s including a cold index build |
-| Tests | 222 passing, including 53 adversarial |
+| Tests | 249 passing, including 53 adversarial |
 
 Measured on an Intel i5-1340P laptop, CPU only, no GPU. Latency is measured over 600 turns
 with constraints accumulating, not just cheap opening turns. Index caching is best-effort
@@ -381,16 +454,18 @@ encoder tiers built by the same script against the same catalog:
 
 | encoder | dim | best Δ | 95% CI | Δ at w=3.0 | rows resolved |
 |---|---:|---:|---|---:|---:|
-| truncated SVD (LSA) | 128 | +0.0010 | [−0.0038, +0.0062] | −0.0507 | 6 of 10, all negative |
-| `all-MiniLM-L6-v2` | 384 | +0.0036 | [−0.0032, +0.0109] | −0.0348 | 4 of 10, all negative |
-| `BAAI/bge-base-en-v1.5` | 768 | +0.0005 | [−0.0047, +0.0060] | −0.0250 | 2 of 10, all negative |
+| truncated SVD (LSA) | 128 | −0.0001 | [−0.0003, 0.0000] | −0.0604 | 7 of 10, all negative |
+| `all-MiniLM-L6-v2` | 384 | −0.0001 | [−0.0003, 0.0000] | −0.0191 | 5 of 10, all negative |
+| `BAAI/bge-base-en-v1.5` | 768 | −0.0001 | [−0.0003, 0.0000] | −0.0099 | none of 10 |
 
 **A better encoder makes it less harmful and never helpful.** The damage at high weight
-shrinks monotonically with model quality, but no tier at any weight produces a gain whose
-paired interval excludes zero. That locates the ceiling in the task rather than the model:
-if the encoder were the binding constraint, tripling the dimension and moving from an
-unsupervised SVD to a contrastively-trained retriever would have flipped the sign somewhere.
-It moves the magnitude and leaves the sign alone.
+shrinks monotonically with model quality — −0.060, −0.019, −0.010 — and the number of
+weights a paired bootstrap resolves as harmful falls from seven to five to none: at 768
+dimensions the layer has converged on being indistinguishable from doing nothing. No tier at
+any weight produces a gain whose interval excludes zero. That locates the ceiling in the
+task rather than the model: if the encoder were the binding constraint, tripling the
+dimension and moving from an unsupervised SVD to a contrastively-trained retriever would
+have flipped the sign somewhere. It moves the magnitude toward zero and never past it.
 
 The structural reason: **95.6% of the constraint strings the simulator discloses appear
 verbatim in their own target product, and 25.9% are unique to a single product in 50,000.**

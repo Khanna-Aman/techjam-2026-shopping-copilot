@@ -44,6 +44,7 @@ ABLATIONS: list[tuple[str, dict]] = [
     ("no state tracking", {"use_state_tracking": False}),
     ("no override erasure", {"use_override_erasure": False}),
     ("no observed fallback", {"use_observed_fallback": False}),
+    ("no confidence gate", {"use_confidence_gate": False}),
     ("no top-10 padding", {"pad_to_top_k": False}),
     ("no MMR diversity", {"use_mmr_diversity": False}),
     ("no popularity prior", {"use_popularity_prior": False}),
@@ -118,6 +119,24 @@ def _wcon_grid() -> list[tuple[str, dict]]:
     ]
 
 
+def _gate_grid() -> list[tuple[str, dict]]:
+    """Withholding the list while under-informed: does the MRR gain beat the Hit@10 risk?"""
+    rows = [("gate off (default)", {})]
+    for min_c in (4,):
+        for size in (1,):
+            for max_turn in (3,):
+                rows.append((
+                    f"gate<{min_c}c show{size} to t{max_turn}",
+                    {
+                        "use_confidence_gate": True,
+                        "gate_min_constraints": min_c,
+                        "gate_list_size": size,
+                        "gate_max_turn": max_turn,
+                    },
+                ))
+    return rows
+
+
 def _override_grid() -> list[tuple[str, dict]]:
     return [
         (f"override_decay={value}", {"override_decay": value})
@@ -159,6 +178,7 @@ def _llm_grid() -> list[tuple[str, dict]]:
 
 MODES = {
     "ablation": lambda: ABLATIONS,
+    "gate": _gate_grid,
     "override": _override_grid,
     "pop": _pop_grid,
     "profile": _profile_grid,

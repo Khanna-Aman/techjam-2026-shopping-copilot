@@ -158,6 +158,36 @@ def rank(
     pool = candidate_pool(index, state, config)
     if not pool:
         return []
+    combined = _score_pool(index, state, config, dense=dense, pool=pool)
+
+    ordered = sorted(combined.items(), key=lambda kv: (-kv[1], index.ids[kv[0]]))
+
+    if not config.use_mmr_diversity or state.has_hard_signal():
+        return [doc_id for doc_id, _ in ordered[:limit]]
+
+    # With no constraints yet (early Browsing turns) the ranking is near-arbitrary, so
+    # spend the ten slots covering the space instead of stacking near-duplicates.
+    return _mmr(index, ordered[: limit * 6], limit, config.mmr_lambda)
+
+
+def _score_pool(
+    index: CatalogIndex,
+    state: ConversationState,
+    config: AgentConfig,
+    *,
+    dense=None,
+    pool: list[int] | None = None,
+) -> dict[int, float]:
+    """Score every candidate. Extracted from `rank` so diagnostics read the real numbers.
+
+    `tools/diagnose_rank.py` needs the score landscape around the target, and a copy of
+    this arithmetic living in a diagnostic would drift from the ranker it claims to
+    describe. There is one definition, and both callers use it.
+    """
+    if pool is None:
+        pool = candidate_pool(index, state, config)
+    if not pool:
+        return {}
 
     tokens, weights = state.query_terms(
         constraint_boost=config.constraint_term_boost,
@@ -199,14 +229,7 @@ def rank(
             score += config.w_dense * dense.similarity(query_vector, doc_id)
         combined[doc_id] = score
 
-    ordered = sorted(combined.items(), key=lambda kv: (-kv[1], index.ids[kv[0]]))
-
-    if not config.use_mmr_diversity or state.has_hard_signal():
-        return [doc_id for doc_id, _ in ordered[:limit]]
-
-    # With no constraints yet (early Browsing turns) the ranking is near-arbitrary, so
-    # spend the ten slots covering the space instead of stacking near-duplicates.
-    return _mmr(index, ordered[: limit * 6], limit, config.mmr_lambda)
+    return combined
 
 
 def _title_tokens(index: CatalogIndex, doc_id: int) -> frozenset[str]:

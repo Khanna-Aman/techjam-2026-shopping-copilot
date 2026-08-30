@@ -1,11 +1,12 @@
 {
   "note": "Paired percentile bootstrap of the ablation delta over the 200 public sessions. Bounds sampling noise on the public set only; it is not evidence that an effect transfers to the private set.",
   "mode": "strategy",
+  "base": {},
   "perturbation": "control",
   "rounds": 20000,
   "seed": 20260901,
   "reference": {
-    "technical_score": 0.906151,
+    "technical_score": 0.954756,
     "sample_count": 200
   },
   "ablations": {
@@ -13,17 +14,17 @@
       "overrides": {
         "clarify_strategy": "none"
       },
-      "technical_score": 0.488507,
-      "delta": -0.417643,
-      "ci95_low": -0.478863,
-      "ci95_high": -0.356118,
+      "technical_score": 0.476507,
+      "delta": -0.478249,
+      "ci95_low": -0.536318,
+      "ci95_high": -0.419303,
       "significant": true
     },
     "strategy: open": {
       "overrides": {
         "clarify_strategy": "open"
       },
-      "technical_score": 0.906151,
+      "technical_score": 0.954756,
       "delta": 0.0,
       "ci95_low": 0.0,
       "ci95_high": 0.0,
@@ -33,17 +34,17 @@
       "overrides": {
         "clarify_strategy": "infogain"
       },
-      "technical_score": 0.891065,
-      "delta": -0.015086,
-      "ci95_low": -0.025499,
-      "ci95_high": -0.005242,
+      "technical_score": 0.933883,
+      "delta": -0.020873,
+      "ci95_low": -0.030363,
+      "ci95_high": -0.012248,
       "significant": true
     },
     "strategy: hybrid": {
       "overrides": {
         "clarify_strategy": "hybrid"
       },
-      "technical_score": 0.906151,
+      "technical_score": 0.954756,
       "delta": 0.0,
       "ci95_low": 0.0,
       "ci95_high": 0.0,

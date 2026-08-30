@@ -381,9 +381,15 @@ class TestRetrieval:
         An empty slot can never hit, so a short list forfeits free chances. Padding has
         to be able to reach past the candidate pool into the catalog at large.
         """
+        from dataclasses import replace
+
         from copilot.agent import ShoppingCopilot
 
-        agent = ShoppingCopilot(synthetic_catalog, index=synthetic_index)
+        # The confidence gate deliberately truncates an under-informed turn, so it is
+        # switched off here: this test is about padding reaching past the candidate pool,
+        # and leaving the gate on would test the gate instead. The gate has its own tests.
+        config = replace(DEFAULT_CONFIG, use_confidence_gate=False)
+        agent = ShoppingCopilot(synthetic_catalog, config=config, index=synthetic_index)
         agent.reset("tiny", {})
         response = agent.respond(
             "tiny", "I'm looking for Accessories Scarves, but I'm still exploring.", 1, 10

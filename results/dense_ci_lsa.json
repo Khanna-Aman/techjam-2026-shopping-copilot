@@ -8,7 +8,7 @@
   "rounds": 20000,
   "seed": 20260901,
   "reference": {
-    "technical_score": 0.906151,
+    "technical_score": 0.954756,
     "sample_count": 200
   },
   "ablations": {
@@ -17,10 +17,10 @@
         "use_dense_rerank": true,
         "w_dense": 0.15
       },
-      "technical_score": 0.897125,
-      "delta": -0.009026,
-      "ci95_low": -0.019042,
-      "ci95_high": -0.000657,
+      "technical_score": 0.945989,
+      "delta": -0.008767,
+      "ci95_low": -0.017625,
+      "ci95_high": -0.002425,
       "significant": true
     },
     "dense w=0.3": {
@@ -28,10 +28,10 @@
         "use_dense_rerank": true,
         "w_dense": 0.3
       },
-      "technical_score": 0.89171,
-      "delta": -0.01444,
-      "ci95_low": -0.025831,
-      "ci95_high": -0.004206,
+      "technical_score": 0.944164,
+      "delta": -0.010592,
+      "ci95_low": -0.019975,
+      "ci95_high": -0.00335,
       "significant": true
     },
     "dense w=0.6": {
@@ -39,10 +39,10 @@
         "use_dense_rerank": true,
         "w_dense": 0.6
       },
-      "technical_score": 0.887754,
-      "delta": -0.018397,
-      "ci95_low": -0.032795,
-      "ci95_high": -0.004474,
+      "technical_score": 0.940981,
+      "delta": -0.013775,
+      "ci95_low": -0.0236,
+      "ci95_high": -0.005925,
       "significant": true
     },
     "dense w=1.0": {
@@ -50,10 +50,10 @@
         "use_dense_rerank": true,
         "w_dense": 1.0
       },
-      "technical_score": 0.874621,
-      "delta": -0.03153,
-      "ci95_low": -0.049522,
-      "ci95_high": -0.014676,
+      "technical_score": 0.931741,
+      "delta": -0.023015,
+      "ci95_low": -0.036101,
+      "ci95_high": -0.012561,
       "significant": true
     },
     "dense w=1.8": {
@@ -61,10 +61,10 @@
         "use_dense_rerank": true,
         "w_dense": 1.8
       },
-      "technical_score": 0.860631,
-      "delta": -0.045519,
-      "ci95_low": -0.067314,
-      "ci95_high": -0.024868,
+      "technical_score": 0.918898,
+      "delta": -0.035858,
+      "ci95_low": -0.052867,
+      "ci95_high": -0.021654,
       "significant": true
     },
     "dense w=3.0": {
@@ -72,10 +72,10 @@
         "use_dense_rerank": true,
         "w_dense": 3.0
       },
-      "technical_score": 0.855468,
-      "delta": -0.050683,
-      "ci95_low": -0.076691,
-      "ci95_high": -0.026782,
+      "technical_score": 0.894387,
+      "delta": -0.060369,
+      "ci95_low": -0.085376,
+      "ci95_high": -0.038789,
       "significant": true
     },
     "cold-start dense w=0.3": {
@@ -84,10 +84,10 @@
         "dense_cold_start_only": true,
         "w_dense": 0.3
       },
-      "technical_score": 0.906761,
-      "delta": 0.00061,
-      "ci95_low": -0.003725,
-      "ci95_high": 0.005118,
+      "technical_score": 0.954656,
+      "delta": -0.0001,
+      "ci95_low": -0.0003,
+      "ci95_high": 0.0,
       "significant": false
     },
     "cold-start dense w=0.6": {
@@ -96,10 +96,10 @@
         "dense_cold_start_only": true,
         "w_dense": 0.6
       },
-      "technical_score": 0.907173,
-      "delta": 0.001023,
-      "ci95_low": -0.003825,
-      "ci95_high": 0.006216,
+      "technical_score": 0.954656,
+      "delta": -0.0001,
+      "ci95_low": -0.0005,
+      "ci95_high": 0.0002,
       "significant": false
     },
     "cold-start dense w=1.2": {
@@ -108,10 +108,10 @@
         "dense_cold_start_only": true,
         "w_dense": 1.2
       },
-      "technical_score": 0.903759,
-      "delta": -0.002391,
-      "ci95_low": -0.008565,
-      "ci95_high": 0.003785,
+      "technical_score": 0.954356,
+      "delta": -0.0004,
+      "ci95_low": -0.0009,
+      "ci95_high": 0.0,
       "significant": false
     },
     "cold-start dense w=2.5": {
@@ -120,11 +120,11 @@
         "dense_cold_start_only": true,
         "w_dense": 2.5
       },
-      "technical_score": 0.904149,
-      "delta": -0.002002,
-      "ci95_low": -0.010067,
-      "ci95_high": 0.005938,
-      "significant": false
+      "technical_score": 0.953206,
+      "delta": -0.00155,
+      "ci95_low": -0.00395,
+      "ci95_high": -0.0001,
+      "significant": true
     }
   }
 }
