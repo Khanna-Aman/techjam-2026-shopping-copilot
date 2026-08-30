@@ -430,6 +430,43 @@ def test_feasibility_table_matches_the_latency_harness():
 
 
 # ------------------------------------------------------- claims made in the prose
+def test_the_shipped_yield_prior_is_the_one_derived_from_the_catalog():
+    """The seven constants in `copilot/question.py` must be the catalog's numbers.
+
+    This is the answer to "you fitted your priors to the public set". The constants are
+    hardcoded for speed -- deriving them costs a full catalog pass at import time -- but
+    they are not free parameters, and this asserts it: each must equal the value
+    `tools/yield_prior.py` measures, to the three decimals the source rounds to.
+    """
+    from copilot.question import YIELD_PROBABILITY
+
+    report = _load("yield_prior.json")
+    assert report["products"] == 50000, "the prior must come from the whole catalog"
+
+    for attribute, measured in report["measured"].items():
+        shipped = YIELD_PROBABILITY[attribute]
+        assert abs(measured - shipped) <= 5e-4, (
+            f"{attribute}: ships {shipped}, catalog gives {measured}"
+        )
+    assert set(report["measured"]) == set(YIELD_PROBABILITY)
+
+
+def test_the_yield_table_in_the_readme_matches_the_derivation():
+    report = _load("yield_prior.json")
+    rows = _table_rows("### 3. A question that splits the pool")
+    assert rows, "the P(yield) table was not found"
+
+    header = _README[_README.index("### 3. A question that splits the pool"):]
+    header_row = next(l for l in header.splitlines() if l.strip().startswith("| attribute"))
+    attributes = _cells(header_row)[1:]
+    values = [_number(cell) for cell in rows[0][1:]]
+    assert len(attributes) == len(values), "the P(yield) table is malformed"
+
+    for attribute, stated in zip(attributes, values):
+        key = "color" if attribute == "colour" else attribute
+        assert stated == pytest.approx(report["measured"][key], abs=5e-4), attribute
+
+
 def test_the_question_policy_claim_matches_the_strategy_sweep():
     """The +0.015 in finding 3 is hybrid minus infogain, and must stay that."""
     strategies = _load("clarification_strategies.json")

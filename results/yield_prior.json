@@ -1,0 +1,23 @@
+{
+  "products": 50000,
+  "note": "P(the intent card carries at least one constraint of this type), over the whole catalog, using the evaluator's own intent_card and classify_constraint. No session labels are involved.",
+  "measured": {
+    "budget": 0.0053,
+    "color": 0.42718,
+    "feature": 0.95804,
+    "material": 0.57302,
+    "size": 0.07572,
+    "style": 0.16178,
+    "use_case": 0.01626
+  },
+  "shipped": {
+    "feature": 0.958,
+    "material": 0.573,
+    "color": 0.427,
+    "style": 0.162,
+    "size": 0.076,
+    "use_case": 0.016,
+    "budget": 0.005
+  },
+  "max_abs_difference": 0.0003
+}

@@ -22,6 +22,30 @@ and scores 8.5× the official baseline.**
 Measured with the **unmodified** official evaluator over the 200 public sessions.
 Reproduce with one command: `python -m evaluator.local_evaluator`.
 
+Two caveats stated up front rather than buried: the supplied baseline is explicitly named
+`weak_bm25`, so the 8.49× multiple flatters this result — the [ablation](#ablation--one-mechanism-removed-at-a-time)
+is the honest version of the claim. And 200 sessions put a 95% interval of
+**[0.8891, 0.9216]** around that score, so the defensible number is **0.91 ± 0.02**.
+
+---
+
+## Start here
+
+This document is long because the evidence is the point. If you have five minutes, read
+these five things in order — they are the argument, and each one is a link to its section.
+
+| # | Read this | Why it is the interesting part |
+|---|---|---|
+| 1 | [The insight](#the-insight-the-whole-system-is-built-on) | The baseline never sets `ask_attribute`. In this protocol the customer only discloses when asked, so it re-runs one query ten times. Fixing that is worth **+0.418** of the **+0.799** total. |
+| 2 | [The ablation, with paired intervals](#ablation--one-mechanism-removed-at-a-time) | Every mechanism removed one at a time — and **five of the ten cannot be distinguished from noise**, including one this README used to credit with a real gain. |
+| 3 | [Dense retrieval, killed three times](#you-only-tried-a-weak-encoder) | The brief asks for vector similarity. It is built, and it loses at 128, 384 and 768 dimensions. A better encoder shrinks the harm without changing its sign, which locates the ceiling in the task rather than the model. |
+| 4 | [Talk to it yourself](#reproduce) | `python -m tools.chat`, then type `/why`. The question policy prints its own reasoning: budget splits the candidate pool beautifully and is answered 0.5% of the time. |
+| 5 | [What was tried and rejected](#what-was-tried-and-rejected) | MMR at exactly 0.0000. A profile weight adopted and then reverted. A hypothesis about paraphrase, tested and refuted. The failures are reported because reporting only the wins would misrepresent how this was built. |
+
+If you have one minute instead: the score is **0.906 ± 0.02**, it uses **zero tokens and no
+network**, and `python -m pytest -q` runs 224 tests that include a suite asserting this
+README's own tables against the committed measurements in `results/`.
+
 ---
 
 ## The insight the whole system is built on
@@ -145,7 +169,9 @@ partition the candidate pool. It kept choosing **budget** — which partitions b
 and goes unanswered 99.5% of the time.
 
 Measuring P(the customer can answer) across all 50,000 products, using the catalog only
-and no session labels:
+and no session labels — `python -m tools.yield_prior` re-derives this table by running the
+evaluator's own `intent_card` and `classify_constraint` over every product, and a test
+asserts the constants shipped in `copilot/question.py` against it:
 
 | attribute | feature | material | colour | style | size | use_case | budget |
 |---|---|---|---|---|---|---|---|
@@ -164,6 +190,14 @@ ablation table, this one survives the paired test: 95% CI [+0.0052, +0.0255], re
 `python -m tools.ablation_ci --mode strategy`. Two attributes —
 `category` and `brand` — are excluded outright, because the simulator's classifier provably
 never emits them, so asking can never pay.
+
+These seven numbers are hardcoded in `copilot/question.py` for speed — deriving them costs a
+full catalog pass at import — but **they are not free parameters, and that is checkable
+rather than merely asserted.** `tools/yield_prior.py` reproduces all seven from the catalog
+alone, and the largest disagreement with the shipped values is 0.0003, which is the rounding
+in the source. This matters because a hardcoded prior in a submission scored on a hidden set
+invites a fair suspicion that it was fitted to the 200 public sessions. It was not, and the
+harness is the evidence.
 
 Reproduce with `python -m tools.sweep --mode strategy`, and note what it also shows: the
 hybrid policy scores **exactly** what always-asking-open scores, to six decimal places. On
@@ -360,7 +394,7 @@ this benchmark can measure, on either input.
 policy, scoring and scenario mix are identical and **only surface wording changes**. Its
 control run reproduces the official score exactly.
 
-| perturbation | before hardening | after |
+| perturbation | before hardening † | after |
 |---|---:|---:|
 | control | 0.8219 | 0.9062 |
 | lowercase | 0.8219 | 0.9062 |
@@ -370,6 +404,15 @@ control run reproduces the official score exactly.
 
 Worst case sits **2.9% below control** (0.8796 vs 0.9062), versus 71% below before
 hardening.
+
+† **The "before hardening" column is historical and cannot be regenerated from this
+repository.** It measured the template-exact parser that the hardening replaced, and that
+code no longer exists here. Every other number in this document is checked against a
+committed artifact in `results/` by `tests/test_documentation.py`; these four are the
+exception, and the "71% below" claim rests on them. Running `python -m tools.robustness`
+today reproduces the **after** column only. I am keeping the column because the comparison
+is the reason the work was done, and flagging it because an unverifiable number sitting in a
+table of verifiable ones is exactly the kind of thing I would want pointed out to me.
 
 ### Generalisation — held-out targets the agent was never tuned on
 
