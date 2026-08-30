@@ -1,0 +1,155 @@
+{
+  "w_con=0.0": {
+    "overrides": {
+      "w_constraint": 0.0
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.709012,
+    "mttc": 1.96,
+    "efficiency": 0.904,
+    "technical_score": 0.891004,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "w_con=0.25": {
+    "overrides": {
+      "w_constraint": 0.25
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.731621,
+    "mttc": 1.945,
+    "efficiency": 0.9055,
+    "technical_score": 0.898086,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "w_con=0.5": {
+    "overrides": {
+      "w_constraint": 0.5
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.742196,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.901559,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "w_con=0.9": {
+    "overrides": {
+      "w_constraint": 0.9
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.75655,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.905865,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "w_con=1.4": {
+    "overrides": {
+      "w_constraint": 1.4
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.757502,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.906151,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "w_con=1.8": {
+    "overrides": {
+      "w_constraint": 1.8
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.757502,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.906151,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "w_con=2.6": {
+    "overrides": {
+      "w_constraint": 2.6
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.757502,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.906151,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "w_con=4.0": {
+    "overrides": {
+      "w_constraint": 4.0
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.757502,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.906151,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  },
+  "w_con=6.0": {
+    "overrides": {
+      "w_constraint": 6.0
+    },
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.757502,
+    "mttc": 1.93,
+    "efficiency": 0.907,
+    "technical_score": 0.906151,
+    "by_scenario": {
+      "boundary": 1.0,
+      "browsing": 1.0,
+      "buying": 1.0,
+      "intent_override": 0.966667
+    }
+  }
+}

@@ -349,6 +349,41 @@ def test_generalisation_table_matches_the_proxy_private_run():
         assert _number(high) == pytest.approx(proxy[key]["ci95_high"], abs=5e-5)
 
 
+def test_feasibility_table_matches_the_latency_harness():
+    """Latency and memory, against `results/latency.json` rather than a fresh measurement.
+
+    Comparing against the committed artifact rather than re-timing is deliberate: these
+    figures are machine-dependent, so a test that measured would fail on CI for reasons
+    that have nothing to do with the documentation being wrong. What must hold is that the
+    README quotes the run it committed.
+    """
+    latency = _load("latency.json")
+    rows = {row[0]: row[1] for row in _table_rows("### Feasibility")}
+
+    scored = latency["per_turn_ms"]["scored_loop"]
+    exhaustive = latency["per_turn_ms"]["all_ten_turns"]
+    stated = rows["Per-turn latency"]
+    numbers = [float(n) for n in re.findall(r"([\d.]+) ms", stated)]
+    assert len(numbers) >= 6, f"expected six latency figures, parsed {numbers}"
+    expected = [
+        round(scored["median"]), round(scored["p95"]), round(scored["max"]),
+        round(exhaustive["median"]), round(exhaustive["p95"]), round(exhaustive["max"]),
+    ]
+    assert [round(n) for n in numbers[:6]] == expected, (
+        f"README quotes {numbers[:6]}, the harness measured {expected}"
+    )
+
+    memory = rows["Memory"]
+    stated_mb = float(re.search(r"([\d.]+) MB", memory).group(1))
+    assert round(stated_mb) == round(latency["memory_mb"]["agent_only_resident"])
+
+    build = latency["index_build_seconds"]
+    stated_build = [float(n) for n in re.findall(r"([\d.]+) s", rows["Index build"])]
+    assert len(stated_build) == 2, f"expected cold and warm build times, got {stated_build}"
+    assert round(stated_build[0]) == round(build["cold"])
+    assert abs(stated_build[1] - build["warm_from_cache"]) < 0.5
+
+
 # ------------------------------------------------------- claims made in the prose
 def test_the_question_policy_claim_matches_the_strategy_sweep():
     """The +0.015 in finding 3 is hybrid minus infogain, and must stay that."""

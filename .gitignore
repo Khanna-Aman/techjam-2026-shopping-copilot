@@ -22,9 +22,6 @@ tests/test_organizer_pipeline.py
 content.txt
 # Internal strategy and self-audit working document - planning material, not a deliverable.
 AUDIT.md
-# Devpost writeup. Quotes the Track 4 problem statement, which is under Early Bird
-# embargo until the public release on 28 Aug 2026. Re-add to the repository then.
-DEVPOST.md
 # Local scoring artifacts and ablation runs.
 runs/
 *.results.json

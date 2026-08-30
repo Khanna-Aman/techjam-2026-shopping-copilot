@@ -1,0 +1,87 @@
+{
+  "sessions": 200,
+  "repeats": 3,
+  "per_turn_ms": {
+    "scored_loop": {
+      "turns": 385,
+      "median": 8.133,
+      "mean": 19.349,
+      "p95": 85.146,
+      "p99": 155.391,
+      "max": 213.31
+    },
+    "all_ten_turns": {
+      "turns": 2000,
+      "median": 18.912,
+      "mean": 49.07,
+      "p95": 192.91,
+      "p99": 349.731,
+      "max": 495.303
+    }
+  },
+  "per_turn_ms_runs": {
+    "scored_loop": [
+      {
+        "turns": 385,
+        "median": 9.947,
+        "mean": 25.961,
+        "p95": 115.653,
+        "p99": 270.058,
+        "max": 343.274
+      },
+      {
+        "turns": 385,
+        "median": 8.133,
+        "mean": 19.349,
+        "p95": 85.146,
+        "p99": 155.391,
+        "max": 213.31
+      },
+      {
+        "turns": 385,
+        "median": 6.196,
+        "mean": 14.599,
+        "p95": 64.165,
+        "p99": 141.818,
+        "max": 179.258
+      }
+    ],
+    "all_ten_turns": [
+      {
+        "turns": 2000,
+        "median": 20.207,
+        "mean": 49.972,
+        "p95": 206.614,
+        "p99": 349.731,
+        "max": 495.303
+      },
+      {
+        "turns": 2000,
+        "median": 16.098,
+        "mean": 37.79,
+        "p95": 162.764,
+        "p99": 226.138,
+        "max": 293.661
+      },
+      {
+        "turns": 2000,
+        "median": 18.912,
+        "mean": 49.07,
+        "p95": 192.91,
+        "p99": 417.798,
+        "max": 681.251
+      }
+    ]
+  },
+  "index_build_seconds": {
+    "cold": 19.087,
+    "warm_from_cache": 0.267
+  },
+  "memory_mb": {
+    "agent_only_resident": 226.2,
+    "harness_after_index_load": 630.9,
+    "harness_after_run": 639.8
+  },
+  "platform": "win32",
+  "python": "3.12.6"
+}

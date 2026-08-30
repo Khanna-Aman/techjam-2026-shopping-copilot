@@ -112,7 +112,9 @@ def _pop_grid() -> list[tuple[str, dict]]:
 def _wcon_grid() -> list[tuple[str, dict]]:
     return [
         (f"w_con={value}", {"w_constraint": value})
-        for value in (0.0, 0.25, 0.5, 0.9, 1.4, 2.6)
+        # Extends past the default (1.8) to 6.0 because the README claims the weight is
+        # inert across that range, and a grid that stopped at 2.6 could not support it.
+        for value in (0.0, 0.25, 0.5, 0.9, 1.4, 1.8, 2.6, 4.0, 6.0)
     ]
 
 

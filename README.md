@@ -220,7 +220,7 @@ gh release download participant-kit \
 sha256sum -c SHA256SUMS --ignore-missing     # verify before trusting it
 gzip -dkc catalog.jsonl.gz > data/catalog.jsonl
 
-# 2. official score  (~85 s first run incl. index build, ~15 s afterwards)
+# 2. official score  (~26 s first run incl. index build, ~8 s afterwards)
 python -m evaluator.local_evaluator
 
 # 3. everything else
@@ -235,7 +235,7 @@ python -m tools.sweep --mode dense                  # the dense-retrieval reject
 pip install numpy scipy scikit-learn && python -m tools.build_vectors
 ```
 
-The first run builds an index and caches it under `artifacts/` (~52 s, one time). Caching
+The first run builds an index and caches it under `artifacts/` (~19 s, one time). Caching
 is best-effort and wrapped in `try/except`: a read-only judging environment simply rebuilds
 each run, which is slower but never a failure.
 
@@ -424,10 +424,10 @@ it rather than reporting only the axis that matched well.
 | Monetary cost | **$0** |
 | Dependencies | Python standard library only |
 | Optional LLM reranking | Implemented, **off by default** — see below |
-| Index build | ~52 s cold (one time), ~0.9 s warm from cache |
-| Per-turn latency | **37 ms median**, 67 ms p95, 93 ms max |
-| Memory | ~225 MB resident with the 50k index loaded |
-| Full 200-session evaluation | ~15 s warm, ~85 s including a cold index build |
+| Index build | ~19 s cold (one time), ~0.3 s warm from cache |
+| Per-turn latency | **8 ms median**, 85 ms p95, 213 ms max (scored loop); 19 ms / 193 ms / 495 ms if every session is driven to all ten turns |
+| Memory | **226 MB** resident, agent + index only |
+| Full 200-session evaluation | ~8 s warm, ~26 s including a cold index build |
 
 Measured on an Intel i5-1340P laptop, CPU only, no GPU. Latency is over 600 turns with
 constraints accumulating, not just cheap opening turns: cost rises with the number of
@@ -467,8 +467,16 @@ Reporting only what worked would misrepresent how this was built.
 
 Two mechanisms are kept despite scoring ≈0 on the public set, deliberately. **Top-10
 padding** never triggers here but prevents a short list, and an empty slot can never hit.
-The **observed-token fallback** costs −0.0008 on clean input while being worth +0.65 under
-heavy paraphrase. Both are insurance against the private set, not public-set optimisations.
+The **observed-token fallback** costs −0.0008 on clean input and −0.0029 under heavy
+paraphrase; neither interval excludes zero, so on the evidence available it is worth nothing
+measurable on either input. Both are kept as insurance against the private set rather than
+as public-set optimisations, and that is an argument from cost, not from measurement: they
+are cheap, and an interval spanning zero is not a demonstration of absence.
+
+*An earlier version of this paragraph credited the observed-token fallback with "+0.65 under
+heavy paraphrase". That number is the improvement of the **whole** paraphrase-hardening
+effort (0.2370 → 0.8824), not of this one mechanism, and attributing it here was wrong. The
+paired ablation above is the correct measurement.*
 
 ### Dense retrieval makes this task worse, and the reason is the task
 
@@ -593,7 +601,7 @@ when the ranking tweak is one I already talked myself into.
 | Public labels and docs unmodified | Yes — same CI check covers `data/public_set.jsonl` |
 | Requires network access | **No.** Fully offline; declared explicitly |
 | Offline fallback | Not applicable — offline *is* the primary path |
-| Model choice, cost, token usage, latency disclosed | Yes — see Feasibility. Zero tokens, $0, 37 ms median on the scored path |
+| Model choice, cost, token usage, latency disclosed | Yes — see Feasibility. Zero tokens, $0, 8 ms median on the scored path |
 | Optional external service | `copilot/llm.py`, **disabled by default** and gated behind `COPILOT_LLM=1`. Never used for scoring; absent it, the agent is unchanged |
 | Secrets in repo | None. No API keys, no credentials, no `.env` |
 | Python version | 3.10+ — CI covers 3.10 and 3.12 on Linux, macOS and Windows |
