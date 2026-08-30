@@ -159,7 +159,9 @@ value(A) = P(customer can answer A) × E[constraints returned] × how well they 
 
 The policy now **derives** that the open-ended question is optimal rather than having it
 hardcoded, and yields to a specific question once the open channel is exhausted. Worth
-**+0.015** over the entropy-only policy (0.9062 against 0.8911). Two attributes —
+**+0.015** over the entropy-only policy (0.9062 against 0.8911) — and unlike half the
+ablation table, this one survives the paired test: 95% CI [+0.0052, +0.0255], reproduced by
+`python -m tools.ablation_ci --mode strategy`. Two attributes —
 `category` and `brand` — are excluded outright, because the simulator's classifier provably
 never emits them, so asking can never pay.
 

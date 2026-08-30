@@ -193,6 +193,57 @@ def test_ablation_table_matches_the_committed_ablation():
     assert not missing, f"the harness measures {sorted(missing)}, which the README omits"
 
 
+def test_ablation_intervals_match_the_paired_bootstrap():
+    """The CI column, and the "spans zero" labels, against the harness that produced them.
+
+    The annotation is the load-bearing part: it is what tells a reader that half the table
+    is unresolved at n=200. A row whose label disagrees with its own interval would be worse
+    than no label, so the flag is asserted rather than assumed.
+    """
+    intervals = _load("ablation_ci.json")["ablations"]
+    rows = _table_rows("### Ablation")
+    assert rows, "ablation table not found"
+
+    documented = set()
+    for label, delta, interval in ((r[0], r[2], r[3]) for r in rows):
+        if delta == "—":  # the reference row carries no delta and no interval
+            assert interval == "—", "the reference row should not claim an interval"
+            continue
+        name = label if label in intervals else re.sub(r"\s*\(.*\)$", "", label)
+        assert name in intervals, f"README documents {label!r}, which the harness does not run"
+        documented.add(name)
+        row = intervals[name]
+
+        # The README shows four decimals, so the invariant is exact equality *after*
+        # rounding -- a tolerance here would sit right on the boundary for a delta like
+        # -0.00075 and would have to be loosened until it could hide real drift.
+        assert _number(delta) == round(row["delta"], 4), f"{name}: delta"
+        low, high = _interval(interval)
+        assert low == round(row["ci95_low"], 4), f"{name}: CI low"
+        assert high == round(row["ci95_high"], 4), f"{name}: CI high"
+
+        labelled = "spans zero" in interval
+        assert labelled != row["significant"], (
+            f"{name}: the README {'labels' if labelled else 'does not label'} this row "
+            f"'spans zero', but the bootstrap calls it "
+            f"{'significant' if row['significant'] else 'unresolved'}"
+        )
+
+    missing = set(intervals) - documented
+    assert not missing, f"the harness measures {sorted(missing)}, which the README omits"
+
+
+def test_the_noise_floor_claim_counts_the_unresolved_rows():
+    """"Five of the ten" is a count, and counts drift when a mechanism is added."""
+    intervals = _load("ablation_ci.json")["ablations"]
+    unresolved = sum(1 for row in intervals.values() if not row["significant"])
+    stated = re.search(r"\*\*(\w+) of the (\w+) mechanisms are not distinguishable", _README)
+    assert stated, "the noise-floor claim is no longer phrased as expected"
+    words = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "ten": 10}
+    assert words[stated.group(1).lower()] == unresolved
+    assert words[stated.group(2).lower()] == len(intervals)
+
+
 def test_robustness_table_matches_the_committed_robustness():
     robustness = _load("robustness.json")
     rows = _table_rows("### Robustness")
@@ -246,6 +297,29 @@ def test_the_question_policy_claim_matches_the_strategy_sweep():
     stated = re.search(r"Worth\s+\*\*\+([\d.]+)\*\*\s+over the entropy-only policy", _README)
     assert stated, "the question-policy claim is no longer phrased as expected"
     assert float(stated.group(1)) == pytest.approx(hybrid - infogain, abs=5e-4)
+
+
+def test_the_question_policy_interval_matches_the_paired_bootstrap():
+    """The README quotes this interval with the sign flipped, deliberately.
+
+    `tools/ablation_ci.py` always measures `variant - default`, so the infogain row is
+    negative: the entropy-only policy is *worse* than the shipped one. Finding 3 states the
+    same fact the other way up -- what the expected-value policy is worth *over* infogain --
+    so the documented bounds are the negated, swapped tool output. That flip is easy to get
+    backwards in an edit, which is why it is pinned here rather than left to review.
+    """
+    row = _load("strategy_ci.json")["ablations"]["strategy: infogain"]
+    assert row["delta"] < 0, "infogain is expected to score below the shipped default"
+
+    stated = re.search(
+        r"95% CI \[\+([\d.]+), \+([\d.]+)\], reproduced by", _README
+    )
+    assert stated, "the question-policy interval is no longer phrased as expected"
+    low, high = float(stated.group(1)), float(stated.group(2))
+    assert low < high, "the README interval is inverted"
+    assert low == pytest.approx(-row["ci95_high"], abs=5e-5)
+    assert high == pytest.approx(-row["ci95_low"], abs=5e-5)
+    assert row["significant"], "the README calls this interval decisive; the data must agree"
 
 
 def test_the_hybrid_ties_open_claim_is_still_true():

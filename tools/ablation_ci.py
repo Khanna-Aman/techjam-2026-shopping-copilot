@@ -46,13 +46,19 @@ from copilot.catalog import CatalogIndex  # noqa: E402
 from copilot.config import DEFAULT_CONFIG, AgentConfig  # noqa: E402
 from tools.robustness import PERTURBATIONS, run  # noqa: E402
 from tools.stats import paired_delta_interval  # noqa: E402
-from tools.sweep import ABLATIONS  # noqa: E402
+from tools.sweep import MODES  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--catalog", default="data/catalog.jsonl")
     parser.add_argument("--dataset", default="data/public_set.jsonl")
+    parser.add_argument(
+        "--mode",
+        default="ablation",
+        choices=sorted(MODES),
+        help="which sweep's rows to compare against the default configuration",
+    )
     parser.add_argument("--rounds", type=int, default=20000)
     parser.add_argument("--seed", type=int, default=20260901)
     parser.add_argument(
@@ -69,10 +75,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     perturb = PERTURBATIONS[args.perturbation]
-    out_path = Path(args.out) if args.out else _ROOT / "results" / (
-        "ablation_ci.json" if args.perturbation == "control"
-        else f"ablation_ci_{args.perturbation}.json"
-    )
+    stem = "ablation_ci" if args.mode == "ablation" else f"{args.mode}_ci"
+    suffix = "" if args.perturbation == "control" else f"_{args.perturbation}"
+    out_path = Path(args.out) if args.out else _ROOT / "results" / f"{stem}{suffix}.json"
 
     samples = load_jsonl(args.dataset)
     catalog_ids, categories, products = catalog_index(args.catalog)
@@ -87,15 +92,21 @@ def main(argv: list[str] | None = None) -> int:
             agent, samples, catalog_ids, categories, products, perturb, keep_sessions=True
         )
 
-    label_full, overrides_full = ABLATIONS[0]
-    assert overrides_full == {}, "the first ablation row must be the unmodified system"
-    full = evaluate_config(overrides_full)
-    print(f"{label_full}: {full['technical_score']:.6f}  (n={full['sample_count']})\n")
+    # The reference is always the shipped default. Every row is a paired comparison
+    # against it, so a mode whose own first row is the default contributes nothing and
+    # is skipped rather than compared with itself.
+    full = evaluate_config({})
+    print(
+        f"default configuration under '{args.perturbation}': "
+        f"{full['technical_score']:.6f}  (n={full['sample_count']})\n"
+    )
     print(f"{'configuration':<26}{'score':>9}{'delta':>10}   {'95% CI on the delta':<24}")
     print("-" * 76)
 
     rows: dict[str, dict] = {}
-    for label, overrides in ABLATIONS[1:]:
+    for label, overrides in MODES[args.mode]():
+        if not overrides:
+            continue
         variant = evaluate_config(overrides)
         interval = paired_delta_interval(
             full["sessions"], variant["sessions"], random.Random(args.seed), args.rounds
@@ -117,17 +128,18 @@ def main(argv: list[str] | None = None) -> int:
             "sessions. Bounds sampling noise on the public set only; it is not evidence "
             "that an effect transfers to the private set."
         ),
+        "mode": args.mode,
         "perturbation": args.perturbation,
         "rounds": args.rounds,
         "seed": args.seed,
-        "full_system": {
+        "reference": {
             "technical_score": full["technical_score"],
             "sample_count": full["sample_count"],
         },
         "ablations": rows,
     }
-    Path(args.out).write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    print(f"\nwritten to {args.out}")
+    out_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    print(f"\nwritten to {out_path}")
 
     resolved = sum(1 for row in rows.values() if row["significant"])
     print(f"{resolved} of {len(rows)} mechanisms are distinguishable from noise.")

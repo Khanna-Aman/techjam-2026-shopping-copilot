@@ -1,8 +1,10 @@
 {
   "note": "Paired percentile bootstrap of the ablation delta over the 200 public sessions. Bounds sampling noise on the public set only; it is not evidence that an effect transfers to the private set.",
+  "mode": "ablation",
+  "perturbation": "control",
   "rounds": 20000,
   "seed": 20260901,
-  "full_system": {
+  "reference": {
     "technical_score": 0.906151,
     "sample_count": 200
   },
