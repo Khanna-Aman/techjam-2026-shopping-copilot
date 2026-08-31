@@ -229,3 +229,35 @@ def test_the_demo_crib_sheet_matches_the_diagnostic_it_names():
         "the crib sheet claims none were lost to ties, but the diagnostic now finds "
         f"{summary['lost_to_ties']}"
     )
+
+
+#: Multiplier expressions that are not baseline multiples. `100×` is the recommended
+#: terminal size (100x40) in the demo setup notes.
+_NON_MULTIPLE_TIMES = {"100"}
+
+
+def test_every_baseline_multiple_claim_matches_the_arithmetic():
+    """One document said "the 8×" long after the multiple became 9.03×.
+
+    The headline multiple is asserted elsewhere, but it is also referred to in passing --
+    in a "what I learned" bullet, in a framing note, in the README's opening line -- and
+    those mentions drifted. Every `N×` in a judge-facing document is checked here against
+    the arithmetic, so a passing reference cannot rot on its own.
+    """
+    official = _official()["recommended_technical_score"]
+    baseline_path = _RESULTS / "baseline_by_scenario.json"
+    if not baseline_path.exists():
+        pytest.skip("results/baseline_by_scenario.json not present")
+    baseline = json.loads(baseline_path.read_text(encoding="utf-8"))["technical_score"]
+    true = official / baseline
+    allowed = {f"{true:.2f}", f"{true:.1f}", str(int(round(true)))}
+
+    for name in ("README.md", "DEVPOST.md", "DEMO_WALKTHROUGH.md"):
+        for match in re.finditer(r"([0-9]+(?:\.[0-9]+)?)\s*×", _doc(name)):
+            value = match.group(1)
+            if value in _NON_MULTIPLE_TIMES:
+                continue
+            assert value in allowed, (
+                f"{name} claims {value}× over the baseline; {official}/{baseline} is "
+                f"{true:.4f}×, so the acceptable renderings are {sorted(allowed)}"
+            )

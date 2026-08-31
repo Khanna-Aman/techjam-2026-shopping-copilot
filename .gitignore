@@ -22,6 +22,8 @@ tests/test_organizer_pipeline.py
 content.txt
 # Internal strategy and self-audit working document - planning material, not a deliverable.
 AUDIT.md
+# Personal submission-day runbook - operational checklist, not a deliverable.
+SUBMISSION_RUNBOOK.md
 # Local scoring artifacts and ablation runs.
 runs/
 *.results.json

@@ -410,11 +410,11 @@ gh release download participant-kit \
 sha256sum -c SHA256SUMS --ignore-missing     # verify before trusting it
 gzip -dkc catalog.jsonl.gz > data/catalog.jsonl
 
-# 2. official score  (~43 s first run incl. index build, ~16 s afterwards)
+# 2. official score  (~18 s first run incl. index build, ~6 s afterwards)
 python -m evaluator.local_evaluator
 
 # 3. everything else
-python -m pytest -q                                 # 274 tests
+python -m pytest -q                                 # 275 tests
 python -m tools.demo --scenario intent_override --index 1
 python -m tools.sweep --mode ablation
 python -m tools.robustness
@@ -430,7 +430,7 @@ python -m tools.proxy_private --against '{"w_popularity": 0.55}'
 pip install numpy scipy scikit-learn && python -m tools.build_vectors
 ```
 
-The first run builds an index and caches it under `artifacts/` (~25 s, one time). Caching
+The first run builds an index and caches it under `artifacts/` (~12 s, one time). Caching
 is best-effort and wrapped in `try/except`: a read-only judging environment simply rebuilds
 each run, which is slower but never a failure.
 
@@ -660,10 +660,10 @@ decisions actually turn on.
 | Monetary cost | **$0** |
 | Dependencies | Python standard library only |
 | Optional LLM reranking | Implemented, **off by default** — see below |
-| Index build | ~25 s cold (one time), ~0.4 s warm from cache |
-| Per-turn latency | **13 ms median**, 145 ms p95, 390 ms max (scored loop); 31 ms / 318 ms / 973 ms if every session is driven to all ten turns |
+| Index build | ~12 s cold (one time), ~0.3 s warm from cache |
+| Per-turn latency | **6 ms median**, 40 ms p95, 111 ms max (scored loop); 12 ms / 75 ms / 172 ms if every session is driven to all ten turns |
 | Memory | **226 MB** resident, agent + index only |
-| Full 200-session evaluation | ~16 s warm, ~43 s including a cold index build |
+| Full 200-session evaluation | ~6 s warm, ~18 s including a cold index build |
 
 Measured on an Intel i5-1340P laptop, CPU only, no GPU. Latency is over the 437 turns the
 scored loop actually runs, and over all 2,000 when every session is driven to ten — not just
@@ -723,7 +723,7 @@ takes a truncated SVD of the BM25-weighted document-term matrix and ships two fp
 (21 MB, `k=128`); [`copilot/dense.py`](copilot/dense.py) reads them back with `struct` and
 `mmap` and scores cosine similarity over the candidate pool. Inference stays **standard
 library only** — numpy and scipy are needed to *build* the artifact, never to use it — and
-it costs about 6.7 ms per turn, because the category lock means scoring ~180 rows rather
+it costs about 3.7 ms per turn, because the category lock means scoring ~180 rows rather
 than 50,000.
 
 It does not work. Not marginally: at every weight tested.
@@ -983,7 +983,7 @@ when the ranking tweak is one I already talked myself into.
 | Public labels and docs unmodified | Yes — same CI check covers `data/public_set.jsonl` |
 | Requires network access | **No.** Fully offline; declared explicitly |
 | Offline fallback | Not applicable — offline *is* the primary path |
-| Model choice, cost, token usage, latency disclosed | Yes — see Feasibility. Zero tokens, $0, 13 ms median on the scored path |
+| Model choice, cost, token usage, latency disclosed | Yes — see Feasibility. Zero tokens, $0, 6 ms median on the scored path |
 | Optional external service | `copilot/llm.py`, **disabled by default** and gated behind `COPILOT_LLM=1`. Never used for scoring; absent it, the agent is unchanged |
 | Secrets in repo | None. No API keys, no credentials, no `.env` |
 | Python version | 3.10+ — CI covers 3.10 and 3.12 on Linux, macOS and Windows |

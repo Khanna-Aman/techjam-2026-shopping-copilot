@@ -99,7 +99,7 @@ the system is the other 0.46.
 ```
 
 About 2,500 lines of agent code across ten modules, plus ~1,900 lines of tests
-(274 tests, 53 of them adversarial) and ten measurement harnesses.
+(275 tests, 53 of them adversarial) and ten measurement harnesses.
 
 ### Three findings that overturned my first instinct
 
@@ -235,7 +235,7 @@ customer opens with no constraints at all and there is no history to lean on
 
 **Operators** get a copilot whose marginal cost is CPU time. The arithmetic below is
 illustrative — substitute your own prices, the ratio is the point. Only the **0 tokens**
-and **13 ms/turn** figures are measured:
+and **6 ms/turn** figures are measured:
 
 | per 1,000,000 shopping sessions | LLM-ranking copilot | this agent |
 |---|---:|---:|
@@ -243,14 +243,14 @@ and **13 ms/turn** figures are measured:
 | input tokens (~6 k/turn to show ~40 candidates) | ~13 B | **0** |
 | output tokens (~200/turn) | ~0.44 B | **0** |
 | inference cost @ $0.30/M in, $1.50/M out | **~$4,600** | **$0** |
-| compute (31 ms/turn worst case ≈ 19 CPU-hours @ $0.04/hr) | on top of the above | **~$0.76** |
-| added latency, p95 | ~0.5–2 s per turn | **145 ms** |
+| compute (12 ms/turn worst case ≈ 7.3 CPU-hours @ $0.04/hr) | on top of the above | **~$0.29** |
+| added latency, p95 | ~0.5–2 s per turn | **40 ms** |
 
 Three to four orders of magnitude — and the latency figure matters as much as the money.
-**145 ms p95 fits inside an existing search-response budget**, so this can ship as an inline
+**40 ms p95 fits inside an existing search-response budget**, so this can ship as an inline
 component of the search path rather than as a separate async chat surface the shopper has
 to opt into. Driving every session to all ten turns — far past where the scored loop stops —
-pushes p95 to 318 ms, which is the figure to plan against if your sessions run long.
+pushes p95 to 75 ms, which is the figure to plan against if your sessions run long.
 
 **Deployments an API-gated copilot cannot reach.** No key, no network, no GPU, 226 MB
 resident, standard library only. It runs on-device, at the edge, in air-gapped or regulated
@@ -271,7 +271,7 @@ first.
 
 I would not argue that no LLM belongs in a shopping copilot. I would argue this is the
 **wrong place to spend it**. The realistic production shape is a hybrid: this agent as the
-always-on core doing constraint tracking, question selection and ranking at 13 ms and zero
+always-on core doing constraint tracking, question selection and ranking at 6 ms and zero
 marginal cost, with an optional language layer spent on *phrasing* the question naturally
 and absorbing genuinely open-ended input — the part a model is uniquely good at — while the
 scored retrieval path stays offline and deterministic. The repository is already built that
@@ -409,11 +409,11 @@ of absence, not an argument from measurement.
 | Network access | **none required** — fully offline |
 | Monetary cost | **$0** |
 | Dependencies | Python standard library only (`pytest` for tests) |
-| Index build | ~25 s cold (one time), ~0.4 s warm from cache |
-| Per-turn latency | **13 ms median**, 145 ms p95, 390 ms max (scored loop); 31 ms / 318 ms / 973 ms if every session is driven to all ten turns |
+| Index build | ~12 s cold (one time), ~0.3 s warm from cache |
+| Per-turn latency | **6 ms median**, 40 ms p95, 111 ms max (scored loop); 12 ms / 75 ms / 172 ms if every session is driven to all ten turns |
 | Memory | **226 MB** resident, agent + index only |
-| Full 200-session evaluation | ~16 s warm, ~43 s including a cold index build |
-| Tests | 274 passing, including 53 adversarial |
+| Full 200-session evaluation | ~6 s warm, ~18 s including a cold index build |
+| Tests | 275 passing, including 53 adversarial |
 
 Measured on an Intel i5-1340P laptop, CPU only, no GPU. Latency is measured over the 437
 turns the scored loop actually runs, and over all 2,000 when every session is driven to ten
@@ -460,7 +460,7 @@ labelled, and no organiser-only or private evaluation data is used anywhere.
 ## What I learned
 
 - **The baseline's failure was in its output schema, not its ranker.** I spent the first
-  pass improving retrieval and moved the score barely at all. The 8× came from reading the
+  pass improving retrieval and moved the score barely at all. The 9× came from reading the
   protocol closely enough to notice that one field was permanently `None`.
 - **Measure the counter-intuitive option before discarding it.** Erasing a retracted
   preference is the obvious behaviour, and it was the worst setting I tested.
@@ -488,7 +488,7 @@ labelled, and no organiser-only or private evaluation data is used anywhere.
 The first two items on this list are now built rather than planned, and both lost:
 
 **Offline dense retrieval** (`copilot/dense.py`) encodes the catalog once and cosine-reranks
-at inference — stdlib only, fp16 via `struct` and `mmap`, ~6.7 ms/turn, still no GPU and no
+at inference — stdlib only, fp16 via `struct` and `mmap`, ~3.7 ms/turn, still no GPU and no
 network at inference. It loses, and the interesting part is *how* it loses across three
 encoder tiers built by the same script against the same catalog:
 
