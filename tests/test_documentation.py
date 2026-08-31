@@ -971,3 +971,71 @@ def test_the_prose_index_build_time_agrees_with_the_feasibility_table():
         f"the reproduce section says ~{stated.group(1)} s to build the index; the harness "
         f"measured {cold:.1f} s and the feasibility table quotes ~{round(cold)} s"
     )
+
+
+def test_the_intent_override_floor_is_derived_from_the_data_not_assumed():
+    """A hit cannot register in an override session until the customer revises their intent.
+
+    `evaluate()` opens an override session with `override_applied = False` and gates the hit
+    check on it, so a correct answer at turn 1 or 2 is discarded outright. That puts a hard
+    floor under this scenario's MTTC, equal to the mean override turn in the data. The
+    README used to call it "~3.5", which is the floor of a 50/50 turn-3/turn-4 split; the
+    actual split here is 12/18, so the floor is 3.600 and the claim was loose in the
+    direction that flattered us less.
+
+    Derived from `data/public_set.jsonl` through the organiser's own `materialize_hidden_fields`,
+    so it tracks the data rather than a number typed into a document.
+    """
+    catalog = _ROOT / "data" / "catalog.jsonl"
+    if not catalog.exists():
+        pytest.skip("data/catalog.jsonl not present")
+
+    from evaluator.local_evaluator import (
+        catalog_index,
+        load_jsonl,
+        materialize_hidden_fields,
+    )
+
+    _ids, _cats, products = catalog_index(str(catalog))
+    turns = [
+        int(materialize_hidden_fields(row, products)[1]["override"]["turn"])
+        for row in load_jsonl(str(_ROOT / "data" / "public_set.jsonl"))
+        if row["scenario_type"] == "intent_override"
+    ]
+    assert turns, "no intent_override sessions found in the public set"
+    floor = sum(turns) / len(turns)
+
+    assert f"{floor:.3f}" in _README, (
+        f"the README no longer states the intent-override MTTC floor as {floor:.3f}; it is "
+        "the mean override turn across the public set and bounds what any agent can score"
+    )
+
+    official = _load("official_evaluation.json")
+    measured = official["scenario_metrics"]["intent_override"]["mttc"]
+    assert measured >= floor, (
+        f"intent_override MTTC {measured} is below the structural floor {floor:.3f}, which "
+        "is impossible — either the evaluator changed or the floor is being derived wrongly"
+    )
+    assert f"{measured:.3f}" in _README, (
+        f"the README no longer states the measured intent-override MTTC {measured:.3f} "
+        "alongside the floor it is being compared against"
+    )
+
+
+def test_no_override_session_scores_before_the_customer_revises():
+    """The floor above is only real if the evaluator actually enforces it. Check the records.
+
+    If a committed session shows an override hit at turn 1 or 2, then `override_applied` is
+    not gating what the README says it gates, and the whole paragraph is wrong.
+    """
+    official = _load("official_evaluation.json")
+    early = [
+        s for s in official["sessions"]
+        if s["scenario_type"] == "intent_override"
+        and s["first_hit_turn"] is not None
+        and s["first_hit_turn"] < 3
+    ]
+    assert not early, (
+        f"{len(early)} intent_override sessions recorded a hit before turn 3, which the "
+        "evaluator's override gate is supposed to make impossible"
+    )

@@ -414,7 +414,7 @@ gzip -dkc catalog.jsonl.gz > data/catalog.jsonl
 python -m evaluator.local_evaluator
 
 # 3. everything else
-python -m pytest -q                                 # 275 tests
+python -m pytest -q                                 # 277 tests
 python -m tools.demo --scenario intent_override --index 1
 python -m tools.sweep --mode ablation
 python -m tools.robustness
@@ -458,8 +458,14 @@ See [`DEMO_WALKTHROUGH.md`](DEMO_WALKTHROUGH.md) for a scripted three-minute tou
 | boundary | 10 | 1.0000 | 0.9111 | 2.500 | 0.0000 |
 | **overall** | **200** | **1.0000** | **0.9567** | **2.185** | 0.1250 |
 
-Intent Override carries the highest MTTC by construction: a hit only counts *after* the
-customer revises their intent on turn 3 or 4, so ~3.5 is close to the structural floor.
+Intent Override carries the highest MTTC by construction, and the constraint is worth
+stating exactly because it bounds what any agent can score here. The evaluator starts an
+override session with `override_applied = False` and gates the hit check on it, so a correct
+answer before the customer revises their intent is **discarded** — no hit, no rank, the
+session simply continues. On this set 12 of the 30 override sessions revise at turn 3 and 18
+at turn 4, which puts the **structural floor at MTTC 3.600**: no configuration, however good
+its ranking, can finish an override session sooner. We are at **3.700**, a tenth of a turn
+above a floor that cannot be crossed.
 
 ### How precise is 0.963323?
 

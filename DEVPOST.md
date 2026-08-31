@@ -99,7 +99,7 @@ the system is the other 0.46.
 ```
 
 About 2,500 lines of agent code across ten modules, plus ~1,900 lines of tests
-(275 tests, 53 of them adversarial) and ten measurement harnesses.
+(277 tests, 53 of them adversarial) and ten measurement harnesses.
 
 ### Three findings that overturned my first instinct
 
@@ -413,7 +413,7 @@ of absence, not an argument from measurement.
 | Per-turn latency | **6 ms median**, 40 ms p95, 111 ms max (scored loop); 12 ms / 75 ms / 172 ms if every session is driven to all ten turns |
 | Memory | **226 MB** resident, agent + index only |
 | Full 200-session evaluation | ~6 s warm, ~18 s including a cold index build |
-| Tests | 275 passing, including 53 adversarial |
+| Tests | 277 passing, including 53 adversarial |
 
 Measured on an Intel i5-1340P laptop, CPU only, no GPU. Latency is measured over the 437
 turns the scored loop actually runs, and over all 2,000 when every session is driven to ten
