@@ -78,7 +78,7 @@ Crucially, the protocol lets one response carry a clarification question **and**
 list at the same time. There is no ask-versus-recommend trade-off to balance — the correct
 policy is always to do both. Half the available channel was simply going unused.
 
-That single change is worth **+0.418** of the +0.799 total improvement.
+That single change is worth **+0.395** of the +0.857 total improvement.
 
 ---
 
@@ -345,7 +345,7 @@ The specification warns that the organiser may add natural-language paraphrasing
 only that it "cannot decide correctness". Template-exact parsing was betting the entire
 score on wording explicitly declared unstable. A perturbation harness confirmed the
 exposure, and the fix — content-driven parsing plus a token-level safety net — moved the
-worst case from **0.237 to 0.882**.
+worst case from **0.237 to 0.934**.
 
 ---
 
@@ -414,7 +414,7 @@ gzip -dkc catalog.jsonl.gz > data/catalog.jsonl
 python -m evaluator.local_evaluator
 
 # 3. everything else
-python -m pytest -q                                 # 259 tests
+python -m pytest -q                                 # 274 tests
 python -m tools.demo --scenario intent_override --index 1
 python -m tools.sweep --mode ablation
 python -m tools.robustness
@@ -430,7 +430,7 @@ python -m tools.proxy_private --against '{"w_popularity": 0.55}'
 pip install numpy scipy scikit-learn && python -m tools.build_vectors
 ```
 
-The first run builds an index and caches it under `artifacts/` (~19 s, one time). Caching
+The first run builds an index and caches it under `artifacts/` (~25 s, one time). Caching
 is best-effort and wrapped in `try/except`: a read-only judging environment simply rebuilds
 each run, which is slower but never a failure.
 
@@ -629,7 +629,7 @@ not.
 Two things make up that 0.022, and only one of them is overfitting.
 The matched regime cannot fully reproduce the public popularity profile — the catalog holds
 too few very popular products, so an 800-target sample drifts down to a median of
-3,155 ratings against the public set's 6,846.
+3,159 ratings against the public set's 6,846.
 It is therefore a *harder* task than the private set should be, and some of the gap is that
 difficulty rather than a failure to generalise. How much of each, this harness cannot say.
 It is reported as an upper bound on the shortfall rather than an estimate of it.
@@ -665,9 +665,10 @@ decisions actually turn on.
 | Memory | **226 MB** resident, agent + index only |
 | Full 200-session evaluation | ~16 s warm, ~43 s including a cold index build |
 
-Measured on an Intel i5-1340P laptop, CPU only, no GPU. Latency is over 600 turns with
-constraints accumulating, not just cheap opening turns: cost rises with the number of
-confirmed constraints, because each is tested against every candidate in the pool.
+Measured on an Intel i5-1340P laptop, CPU only, no GPU. Latency is over the 437 turns the
+scored loop actually runs, and over all 2,000 when every session is driven to ten — not just
+cheap opening turns: cost rises with the number of confirmed constraints, because each is
+tested against every candidate in the pool.
 
 **On the optional LLM layer.** [`copilot/llm.py`](copilot/llm.py) implements a semantic
 reranking stage over the top candidates. It is disabled by default and gated a second time
@@ -819,7 +820,7 @@ Sweeping the weight after the confidence gate landed showed a straightforward wi
 
 | `w_popularity` | 0.18 | 0.40 | 0.55 | 0.90 | **1.20 (default)** | 1.60 |
 |---|---:|---:|---:|---:|---:|---:|
-| score | 0.9257 | 0.9492 | 0.9556 | 0.9597 | **0.9643** | 0.9644 |
+| score | 0.9270 | 0.9485 | 0.9548 | 0.9577 | **0.9633** | 0.9636 |
 | Hit@10 | 0.980 | 0.995 | 0.995 | 0.995 | **1.000** | 1.000 |
 
 Monotone, flat from 1.2 to 1.6 so not a fragile argmax, and it takes Hit@10 to a perfect
@@ -865,7 +866,7 @@ test harder than reality. Re-run at n=800 with targets disjoint from the public 
 
 | regime | `w`=0.55 | `w`=1.2 | change |
 |---|---:|---:|---:|
-| public | 0.9556 | 0.9643 | **+0.0088** |
+| public | 0.9548 | 0.9633 | **+0.0086** |
 | held-out, popularity-matched (n=800) | 0.9354 | 0.9416 | **+0.0062** |
 | held-out, uniform stress (n=1000) | 0.9135 | 0.9009 | −0.0126 |
 
@@ -880,6 +881,14 @@ read the regime that answers your question. I built the right tool, wrote the ca
 its docstring, and then quoted the wrong row out of it for several days.
 
 ### The other rejection worth reading: `w_profile` 1.0 → 5.0
+
+> **Every number in this section is from the v1.0 configuration**, before the confidence
+> gate of finding 5 and before the popularity recalibration below. Its control is 0.9062,
+> not today's 0.9633, and re-running the comparison now would produce a different table.
+> It is kept as the record of a decision taken on the evidence available at the time — the
+> same reason the "before hardening" column above is kept, and flagged for the same reason.
+> What the decision turns on is which axis to trade, not the third decimal place, and that
+> has not changed.
 
 The profile sweep says raise it. The score climbs from 0.9062 to 0.9083 and then sits on a
 flat plateau out to at least w=15, so it is not a fragile argmax. Held-out targets agree:

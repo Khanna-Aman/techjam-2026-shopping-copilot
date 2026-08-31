@@ -800,3 +800,174 @@ def test_the_override_retention_finding_holds():
     assert "0.5 is not" in _README, (
         "the README no longer discloses that 0.5 is not the argmax"
     )
+
+
+# ------------------------------------ guards added after the second audit (30 Aug, pm)
+#
+# Each of these binds a claim that the first audit's tests did not reach. Every one of them
+# fails against the repository as it stood before that audit, which is the only evidence
+# that a regression test is worth committing.
+
+
+def test_every_sweep_row_at_the_shipped_default_reproduces_the_official_score():
+    """A sweep row labelled "(default)" has to actually be the default.
+
+    `_pop_grid` used to pin `w_profile` to 0.0 on every row, so the row the README quoted as
+    the default's score read 0.9643 while the shipped agent scores 0.9633. The existing
+    popularity test only asserted an ordering (1.2 beats 0.55), which the mis-configured
+    sweep satisfied, so nothing caught it for two sessions.
+
+    The check is structural rather than a hard-coded list of numbers: find every sweep row
+    whose overrides are *all* equal to the shipped configuration, and demand it reproduce
+    the official evaluation exactly. A row that sets only defaults and scores something else
+    is measuring a configuration it does not name.
+    """
+    from copilot.config import DEFAULT_CONFIG
+
+    official = _load("official_evaluation.json")["recommended_technical_score"]
+    missing = object()
+    checked: list[str] = []
+
+    for path in sorted((_ROOT / "results").glob("sweep_*.json")) + [
+        _ROOT / "results" / "clarification_strategies.json"
+    ]:
+        sweep = json.loads(path.read_text(encoding="utf-8"))
+        for label, row in sweep.items():
+            overrides = row.get("overrides") if isinstance(row, dict) else None
+            if not isinstance(overrides, dict) or not overrides:
+                continue
+            if any(getattr(DEFAULT_CONFIG, key, missing) != value
+                   for key, value in overrides.items()):
+                continue
+            checked.append(f"{path.name}:{label}")
+            assert row["technical_score"] == pytest.approx(official, abs=5e-7), (
+                f"{path.name} row {label!r} overrides only shipped defaults ({overrides}) "
+                f"but scores {row['technical_score']} rather than the official {official}. "
+                "The sweep is not being run at the configuration it claims to describe, so "
+                "every row in it is measuring something the README does not say it is."
+            )
+
+    assert len(checked) >= 5, (
+        f"expected the sweeps to contain several default-equivalent rows, found {checked}"
+    )
+
+
+def test_no_sweep_silently_pins_a_parameter_it_does_not_claim_to_vary():
+    """The other half of the same bug, and the half the check above cannot see.
+
+    `_pop_grid` set ``w_profile=0.0`` on all eight rows. That did not make any row score
+    wrongly *for its own overrides* -- it made every row describe a configuration nobody
+    ships, including the one the README labels "(default)". A row carrying a non-default
+    pin is simply skipped by the default-equivalence test above, so that test passes
+    against the bug; this one is what fails.
+
+    The rule: within one sweep, a parameter held at the same non-default value on *every*
+    row is a hidden constant. A sweep varies what it names and inherits everything else.
+    """
+    from copilot.config import DEFAULT_CONFIG
+
+    missing = object()
+    absent = "<absent>"
+    offenders: list[str] = []
+
+    for path in sorted((_ROOT / "results").glob("sweep_*.json")) + [
+        _ROOT / "results" / "clarification_strategies.json",
+        _ROOT / "results" / "ablation.json",
+    ]:
+        if not path.exists():  # pragma: no cover - results are committed
+            continue
+        sweep = json.loads(path.read_text(encoding="utf-8"))
+        rows = [
+            row["overrides"] for row in sweep.values()
+            if isinstance(row, dict) and isinstance(row.get("overrides"), dict)
+        ]
+        if len(rows) < 2:
+            continue
+        for key in sorted(set().union(*(set(row) for row in rows))):
+            values = {json.dumps(row.get(key, absent), sort_keys=True) for row in rows}
+            if len(values) != 1:
+                continue  # the sweep varies it, which is the point
+            value = json.loads(values.pop())
+            if value == absent or getattr(DEFAULT_CONFIG, key, missing) == value:
+                continue
+            offenders.append(f"{path.name}: {key}={value!r} on all {len(rows)} rows")
+
+    assert not offenders, (
+        "a sweep holds a parameter at a non-default value on every row, so the whole "
+        "grid describes a configuration that is never shipped: "
+        + "; ".join(offenders)
+        + ". This is how the popularity sweep came to report the default as 0.9643 "
+          "when the agent scores 0.9633."
+    )
+
+
+def test_the_quoted_public_target_median_matches_the_artifact_that_produces_it():
+    """6,846 is quoted in the README, in `config.py` and in the harness's own docstring.
+
+    `popularity_summary` returned the lower of the two middle values on an even-sized
+    sample, so `results/proxy_private.json` said 6,614 while every document said 6,846.
+    Session 4 corrected the prose and not the tool, which left the artifact refuting the
+    documents it exists to support. Whatever the number is, the file and the prose have to
+    agree on it.
+    """
+    proxy = _load("proxy_private.json")
+    median = proxy["public_reference"]["target_popularity"]["median_rating_number"]
+    rendered = f"{median:,}"
+
+    sources = {
+        "README.md": _README,
+        "copilot/config.py": (_ROOT / "copilot" / "config.py").read_text(encoding="utf-8"),
+        "tools/proxy_private.py": (
+            _ROOT / "tools" / "proxy_private.py"
+        ).read_text(encoding="utf-8"),
+    }
+    for name, text in sources.items():
+        assert rendered in text, (
+            f"{name} does not quote the public-target median {rendered} that "
+            f"results/proxy_private.json reports; the artifact and the prose have drifted "
+            "apart again"
+        )
+
+
+def test_the_paraphrase_worst_case_in_finding_6_matches_the_robustness_run():
+    """Finding 6's headline sentence carried 0.882 while its own table said 0.9342.
+
+    The sentence is the first statement of the result a reader meets, 200 lines above the
+    table that contradicts it, and no test reached it because it is prose rather than a
+    row.
+    """
+    robustness = _load("robustness.json")
+    before, after = re.search(
+        r"worst case from \*\*([\d.]+) to ([\d.]+)\*\*", _README
+    ).groups()
+
+    heavy = robustness["heavy"]["technical_score"]
+    assert float(after) == pytest.approx(heavy, abs=5e-4), (
+        f"finding 6 says the worst case is now {after}; `results/robustness.json` measures "
+        f"heavy paraphrase at {heavy:.4f}"
+    )
+
+    # The "before" number is the historical column, which cannot be regenerated -- but it
+    # is tabulated in this document, so the sentence must at least match the table.
+    row = {r[0]: r for r in _table_rows("### Robustness")}
+    tabulated = _number(row["heavy paraphrase (+filler, +case drift)"][1])
+    assert float(before) == pytest.approx(tabulated, abs=5e-4), (
+        f"finding 6 says the worst case was {before}; the robustness table says {tabulated}"
+    )
+
+
+def test_the_prose_index_build_time_agrees_with_the_feasibility_table():
+    """The reproduce section said ~19 s where the compliance table says ~25 s.
+
+    Both describe one number that `results/latency.json` measures, and session 4 corrected
+    the table without noticing the prose.
+    """
+    cold = _load("latency.json")["index_build_seconds"]["cold"]
+    stated = re.search(
+        r"builds an index and caches it under `artifacts/` \(~(\d+) s, one time\)", _README
+    )
+    assert stated is not None, "the reproduce section no longer states an index build time"
+    assert int(stated.group(1)) == round(cold), (
+        f"the reproduce section says ~{stated.group(1)} s to build the index; the harness "
+        f"measured {cold:.1f} s and the feasibility table quotes ~{round(cold)} s"
+    )

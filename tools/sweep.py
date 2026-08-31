@@ -104,8 +104,12 @@ def _profile_grid() -> list[tuple[str, dict]]:
 
 
 def _pop_grid() -> list[tuple[str, dict]]:
+    # Every row varies `w_popularity` alone, against the shipped defaults. This grid used
+    # to pin `w_profile` to 0.0, which meant the row labelled "1.20 (default)" reported
+    # 0.9643 while the actual default scores 0.9633 -- the difference is the profile prior,
+    # not the popularity weight. The README quoted that row as the default's score.
     return [
-        (f"w_pop={value}", {"w_popularity": value, "w_profile": 0.0})
+        (f"w_pop={value}", {"w_popularity": value})
         for value in (0.18, 0.30, 0.40, 0.55, 0.70, 0.90, 1.20, 1.60)
     ]
 

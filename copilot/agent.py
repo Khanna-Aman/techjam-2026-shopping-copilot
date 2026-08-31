@@ -108,8 +108,11 @@ class ShoppingCopilot:
         if self.config.use_observed_fallback:
             state.observe_text(message, _CHROME_TOKENS)
 
+        # One pool per turn, shared by the ranker, the padder and the question policy.
         pool = candidate_pool(self.index, state, self.config)
-        ranked = rank(self.index, state, self.config, limit=limit, dense=self.dense)
+        ranked = rank(
+            self.index, state, self.config, limit=limit, dense=self.dense, pool=pool
+        )
         if self.config.pad_to_top_k:
             ranked = pad(self.index, ranked, pool, limit)
 

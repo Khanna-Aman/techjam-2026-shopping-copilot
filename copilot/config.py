@@ -38,20 +38,22 @@ class AgentConfig:
     #:
     #: The evaluator ends a session the moment the target enters the top ten, and locks in
     #: whatever rank it landed at. Showing a list early therefore spends the session's only
-    #: scoring opportunity on the agent's worst-informed guess: 85% of the sessions that
-    #: finish below rank 1 were decided with two constraints or fewer in hand. Returning a
+    #: scoring opportunity on the agent's worst-informed guess: of the 77 sessions that
+    #: finish below rank 1 with the gate off, 91% were decided with two constraints or fewer
+    #: in hand (`results/rank_diagnosis_pregate.json`). Returning a
     #: shorter list until the evidence arrives trades a turn of MTTC, weighted 0.20, for
     #: rank in MRR, weighted 0.30 -- roughly a 13:1 trade per session when it works.
     #:
     #: It can also lose outright: a session gated into never hitting forfeits its Hit@10
     #: contribution, which costs about three times what a successful gate gains, so this
-    #: needs to be right far more often than not. Off until measured.
+    #: needs to be right far more often than not. It was measured before being switched on:
+    #: +0.0579 paired against the full system, CI [+0.0457, +0.0703] (`results/ablation_ci.json`).
     use_confidence_gate: bool = True
     #: Gate while fewer than this many constraints are known.
     gate_min_constraints: int = 4
     #: How many recommendations to show while gated. One, not zero: the agent always makes
     #: a recommendation, it just makes its single best one instead of ten speculative ones.
-    #: Showing one is also worth more than showing none (0.9548 against 0.9357), because a
+    #: Showing one is also worth more than showing none (0.9633 against 0.9421), because a
     #: correct single guess converts at rank 1 while a withheld list cannot convert at all.
     gate_list_size: int = 1
     #: Never gate beyond this turn, so a session that stays uninformative still gets its

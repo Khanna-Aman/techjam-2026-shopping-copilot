@@ -63,15 +63,15 @@ And the protocol lets a single response carry a clarification question **and** a
 list. There is no ask-versus-recommend trade-off to balance — the correct policy is always
 to do both. Half the available channel was simply going unused.
 
-That one change is worth **+0.478** of the **+0.848** total improvement. Everything else in
-the system is the other 0.37.
+That one change is worth **+0.395** of the **+0.857** total improvement. Everything else in
+the system is the other 0.46.
 
 ### Mapping to the four required pillars
 
 | Pillar | What I built | Evidence |
 |---|---|---|
 | **I. Intent routing & hybrid pipeline** | Two-tier message parsing classifies Buying / Browsing / Intent Override / Boundary, then a **category lock** cuts 50,000 products to a ~180-item pool, ranked by weighted BM25 + typed constraint satisfaction + popularity prior. I deliberately did **not** fork into two separate retrieval stacks. | Intent detection drives *dialogue policy*, not two rankers — the unified constraint-driven ranker already reaches **Hit@10 = 1.000 on both** Buying and Browsing, so a second stack had nothing left to win. **Vector similarity is implemented** (`copilot/dense.py`, offline fp16 + `mmap`, stdlib only) and measured at three encoder tiers up to `bge-base` (768-dim, GPU-built): no gain at any weight on any encoder, so it ships switched off behind a flag rather than omitted. |
-| **II. Multi-turn scenario evolution** | A slot state machine accumulates typed constraints (set-membership, phrase-containment, numeric), handles retraction on Intent Override, marks attributes exhausted so a spent question is never re-asked, and proactively clarifies on every turn. | Ablation: removing state tracking costs **−0.340**; removing clarification costs **−0.418**. |
+| **II. Multi-turn scenario evolution** | A slot state machine accumulates typed constraints (set-membership, phrase-containment, numeric), handles retraction on Intent Override, marks attributes exhausted so a spent question is never re-asked, and proactively clarifies on every turn. | Ablation: removing state tracking costs **−0.319**; removing clarification costs **−0.395**. |
 | **III. Dynamic context programming** | Constraint accumulation with per-constraint confidence and decay; the question policy re-plans every turn from the live pool, escalating from an open-ended prompt to a specific attribute once the open channel is exhausted; the anonymised user profile is distilled in at cold start. | The policy **derives** that the open question is optimal rather than hardcoding it (finding #2 below). Profile prior: **+0.015**, cold start only. |
 | **IV. Evaluation matrix** | Scored on the organiser's own evaluator, unmodified, plus an ablation harness (11 configurations) and a paraphrase-robustness harness (5 perturbations) that imports the evaluator's own simulator functions. | Hit@10 **1.000**, MRR **0.9567**, MTTC **2.185**. |
 
@@ -99,7 +99,7 @@ the system is the other 0.37.
 ```
 
 About 2,500 lines of agent code across ten modules, plus ~1,900 lines of tests
-(259 tests, 53 of them adversarial) and ten measurement harnesses.
+(274 tests, 53 of them adversarial) and ten measurement harnesses.
 
 ### Three findings that overturned my first instinct
 
@@ -135,9 +135,11 @@ channel more often.
 
 **3. Personalization is a cold-start signal, not a ranking signal.** The anonymised profile
 tags ("fit", "comfort", "durability") match most of the catalog. As a global ranking term
-they are **actively harmful (−0.039)**. Applied only before any constraint is known — when
-they are the only personal signal that exists — they help (**+0.015**). Same feature,
-opposite sign, depending entirely on *when* it fires.
+they are **actively harmful (−0.044)**. Applied only before any constraint is known they
+used to be worth **+0.015** — but the confidence gate absorbed that, and today removing the
+cold-start prior scores **+0.0010**, on an interval that spans zero. The timing effect and
+its sign still hold; the benefit does not. I kept the prior rather than move a default on a
+noise-level result — see the ablation note below.
 
 ### Results
 
@@ -176,9 +178,9 @@ interval spanning zero means *unresolved at n=200* rather than *absent* — but 
 make for them is now the smaller one. I would rather report this than have a judge derive it.
 
 One of the five used to be a win. The cold-start profile prior was worth −0.0152 to remove
-before the confidence gate existed and is worth +0.0008 now: the gate solved the same
+before the confidence gate existed and is worth +0.0010 now: the gate solved the same
 problem more directly, and absorbed it. I kept it anyway, because dropping a mechanism on a
-+0.0008 result would break the same noise-floor rule that made me stop trusting it.
++0.0010 result would break the same noise-floor rule that made me stop trusting it.
 
 **Robustness — the same sessions, reworded.** The specification warns that the organiser
 may paraphrase customer messages, noting only that paraphrasing "cannot decide
@@ -208,10 +210,12 @@ Running the harness today reproduces the *after* column only.
 
 ### The finding that transfers, independent of this dataset
 
-Two mechanisms account for **0.852 of the 0.848** improvement — clarification (+0.478) and
-state tracking (+0.373); they overlap, so the parts sum past the whole. **Neither is a model.** Neither needs one. The expensive component
-that a conversational-commerce roadmap usually funds first — an LLM semantic ranker over
-the catalog — is not what moved the number here.
+Two mechanisms account for **0.713 of the 0.857** improvement — clarification (+0.395) and
+state tracking (+0.319). The two are not independent: each is measured by removing it from
+the full system, and removing either disables much of what the other buys.
+**Neither is a model.** Neither needs one. The expensive component that a
+conversational-commerce roadmap usually funds first — an LLM semantic ranker over the
+catalog — is not what moved the number here.
 
 That is the transferable claim: **in conversational commerce, dialogue policy is worth more
 than model quality, and it is orders of magnitude cheaper.** If you are building a shopping
@@ -222,9 +226,10 @@ ablation table is what told me so.
 ### Who benefits, concretely
 
 **Shoppers** answer roughly **one question instead of nine**. The problem statement itself
-frames MTTC as penalising "unnecessary conversational cognitive load" — 1.93 turns is the
-difference between a copilot people finish and one they abandon. The gain is largest
-exactly where recommender systems are weakest: the **Browsing** cold-start case, where the
+frames MTTC as penalising "unnecessary conversational cognitive load" — the drop from 9.81
+turns to **2.19** is the difference between a copilot people finish and one they abandon.
+The gain is largest exactly where recommender systems are weakest: the **Browsing**
+cold-start case, where the
 customer opens with no constraints at all and there is no history to lean on
 (**0.025 → 1.000**).
 
@@ -319,7 +324,7 @@ re-tuning it against a metric that keeps measuring after the first impression.
 It is disclosed for the same reason as the popularity prior: it looks far worse discovered
 than declared. It is measured, it is behind a flag that restores the old behaviour exactly,
 and it passes every gate — including held-out targets and heavy paraphrase, where it is
-worth **more** (−0.0502) than on clean input.
+worth **more** (−0.0497) than on clean input.
 
 ### What I turned down, and the one I had to un-turn-down
 
@@ -327,8 +332,8 @@ Two changes looked like wins. I rejected both. One of those rejections was itsel
 and finding that out was the most useful thing I did:
 
 **`w_popularity` 0.55 → 1.2 — rejected, then adopted, and the rejection is the interesting
-part.** It scored **+0.0088**
-on the public set with a perfect Hit@10, then **−0.0128** on uniform held-out targets, and I
+part.** It scored **+0.0086**
+on the public set with a perfect Hit@10, then **−0.0126** on uniform held-out targets, and I
 called it the clearest overfit I had measured. That was wrong, for two reasons I had the
 evidence to see at the time.
 
@@ -346,7 +351,7 @@ n=800 with targets disjoint from the public set:
 
 | regime | `w`=0.55 | `w`=1.2 | change |
 |---|---:|---:|---:|
-| public | 0.9556 | 0.9643 | **+0.0088** |
+| public | 0.9548 | 0.9633 | **+0.0086** |
 | held-out, popularity-matched | 0.9354 | 0.9416 | **+0.0062** |
 | held-out, uniform stress | 0.9135 | 0.9009 | −0.0126 |
 
@@ -408,10 +413,11 @@ of absence, not an argument from measurement.
 | Per-turn latency | **13 ms median**, 145 ms p95, 390 ms max (scored loop); 31 ms / 318 ms / 973 ms if every session is driven to all ten turns |
 | Memory | **226 MB** resident, agent + index only |
 | Full 200-session evaluation | ~16 s warm, ~43 s including a cold index build |
-| Tests | 249 passing, including 53 adversarial |
+| Tests | 274 passing, including 53 adversarial |
 
-Measured on an Intel i5-1340P laptop, CPU only, no GPU. Latency is measured over 600 turns
-with constraints accumulating, not just cheap opening turns. Index caching is best-effort
+Measured on an Intel i5-1340P laptop, CPU only, no GPU. Latency is measured over the 437
+turns the scored loop actually runs, and over all 2,000 when every session is driven to ten
+— not just cheap opening turns. Index caching is best-effort
 and wrapped in `try/except`, so a read-only judging sandbox simply rebuilds — slower, never
 a failure. The system runs unchanged under the CPU, memory, timeout and network
 restrictions the submission rules explicitly reserve the right to impose.

@@ -120,11 +120,22 @@ jobs:
           print(f"token usage {tokens}")
           PY
 
-      - name: Confirm the evaluator was never modified
+      - name: Confirm the organizer's files were never modified
         run: |
           set -euo pipefail
-          if git log --oneline e8ccc21..HEAD -- evaluator/ data/public_set.jsonl | grep .; then
-            echo "::error::A commit touched the evaluator or the public labels."
+          # The rule covers docs/ as well as evaluator/ and the public labels. It is
+          # expressed as "modified or deleted" rather than "touched", because
+          # docs/PARTICIPANT_KIT_README.md was *added* after the kit to preserve the
+          # organizer's own README alongside their other files. Adding a file is allowed;
+          # editing or removing anything the organizer shipped is not.
+          if git log --oneline --diff-filter=MD e8ccc21..HEAD -- evaluator/ data/public_set.jsonl docs/ | grep .; then
+            echo "::error::A commit modified or deleted an organizer-owned file."
             exit 1
           fi
-          echo "evaluator/ and data/public_set.jsonl untouched since the participant kit"
+          # Nothing may be added under evaluator/ or in place of the public labels either,
+          # which would let a new module shadow the scored code.
+          if git log --oneline --diff-filter=A e8ccc21..HEAD -- evaluator/ data/public_set.jsonl | grep .; then
+            echo "::error::A commit added a file under evaluator/ or replaced the public labels."
+            exit 1
+          fi
+          echo "evaluator/, data/public_set.jsonl and docs/ carry only the organizer's originals"

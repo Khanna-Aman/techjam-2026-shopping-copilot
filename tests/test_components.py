@@ -411,3 +411,74 @@ class TestRetrieval:
         first = rank(synthetic_index, state, DEFAULT_CONFIG, limit=5)
         second = rank(synthetic_index, state, DEFAULT_CONFIG, limit=5)
         assert first == second
+
+
+class TestGeneratorContract:
+    """Assumptions this agent makes about the strings the organizer's simulator emits.
+
+    These are not tests of our logic; they are tests of an interface we do not control. If
+    the evaluator's card builder ever changes shape, the typed-constraint machinery would
+    quietly degrade to phrase matching rather than fail, and nothing else would notice.
+    """
+
+    def test_classify_kind_types_the_budget_string_the_evaluator_actually_emits(self) -> None:
+        """The one generated constraint whose type is not inferable from its words.
+
+        `intent_card` renders a price as "budget around $X". `classify_kind` keys the
+        numeric-proximity test off the literal word "budget", so the two have to agree. A
+        second audit flagged this as a possible divergence because
+        `evaluator.classify_constraint` *also* recognises bare "$50" / "under 50" forms --
+        but the generator never produces those, so the divergence is unreachable. This
+        pins the part that is reachable.
+        """
+        from evaluator.local_evaluator import intent_card
+
+        card = intent_card({
+            "title": "Test Jacket",
+            "features": ["water resistant shell"],
+            "details": {},
+            "price": "29.99",
+        })
+        budget = [c for c in card["hard_constraints"] + card["soft_preferences"]
+                  if "budget" in c.lower()]
+        assert budget, (
+            "intent_card no longer emits a budget constraint for a priced product; "
+            "copilot.slots.classify_kind keys the numeric test off the word 'budget'"
+        )
+        kind, value = classify_kind(budget[0])
+        assert kind == BUDGET, (
+            f"the evaluator emits {budget[0]!r} but classify_kind types it {kind!r}; the "
+            "numeric-proximity test would silently degrade to phrase containment"
+        )
+        assert float(value) == pytest.approx(29.99)
+
+    def test_our_attribute_classifier_still_mirrors_the_evaluators(self) -> None:
+        """Exhaustion tracking and the question policy depend on labelling constraints the
+        same way the simulator does. A drift here means asking for an attribute the
+        customer has already spent, or never asking for one they would answer."""
+        from evaluator.local_evaluator import classify_constraint as evaluator_classify
+
+        samples = [
+            "budget around $29.99", "100% cotton", "color: black", "true to size",
+            "crew neck short sleeve", "great for hiking", "water resistant shell",
+        ]
+        for text in samples:
+            assert classify_constraint(text) == evaluator_classify(text), (
+                f"copilot.text.classify_constraint disagrees with the evaluator on {text!r}"
+            )
+
+
+class TestRankPoolReuse:
+    def test_a_prebuilt_pool_gives_the_identical_ranking(self, synthetic_index) -> None:
+        """`rank` accepts the pool the agent already built, to avoid building it twice.
+
+        The whole point is that it changes nothing, so that is what is asserted.
+        """
+        state = ConversationState(session_id="s")
+        state.category = "Shirts T-Shirts"
+        state.add_constraints(["Moisture wicking polyester"], turn=1)
+
+        pool = candidate_pool(synthetic_index, state, DEFAULT_CONFIG)
+        assert rank(synthetic_index, state, DEFAULT_CONFIG, limit=5) == rank(
+            synthetic_index, state, DEFAULT_CONFIG, limit=5, pool=pool
+        )

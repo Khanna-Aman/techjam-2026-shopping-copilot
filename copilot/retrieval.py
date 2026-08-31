@@ -18,7 +18,6 @@ a budget is numeric proximity, and a feature sentence is phrase containment. Tre
 from __future__ import annotations
 
 import math
-from array import array
 
 from copilot.catalog import _COLOR_BIT, _COLOR_CANON, _MATERIAL_BIT, CatalogIndex
 from copilot.config import AgentConfig
@@ -148,14 +147,22 @@ def rank(
     *,
     limit: int = 10,
     dense=None,
+    pool: set[int] | None = None,
 ) -> list[int]:
     """Produce the ranked candidate list for this turn.
 
     ``dense`` is an optional :class:`copilot.dense.DenseVectors`. It is a *ranking* signal
     rather than a recall one: the category lock already brings Hit@10 to 0.995, so the
     headroom is in ordering the pool, not in finding more of it.
+
+    ``pool`` lets a caller that has already built the candidate set hand it over. The agent
+    needs the pool anyway -- `pad` fills short lists from it and the question policy scores
+    attributes against it -- so without this it was built twice per turn, and 15.6% of turns
+    take the whole-catalog BM25 fallback branch. Same ranking either way; it is a shared
+    computation, not a second opinion.
     """
-    pool = candidate_pool(index, state, config)
+    if pool is None:
+        pool = candidate_pool(index, state, config)
     if not pool:
         return []
     combined = _score_pool(index, state, config, dense=dense, pool=pool)
@@ -176,7 +183,7 @@ def _score_pool(
     config: AgentConfig,
     *,
     dense=None,
-    pool: list[int] | None = None,
+    pool: set[int] | None = None,
 ) -> dict[int, float]:
     """Score every candidate. Extracted from `rank` so diagnostics read the real numbers.
 

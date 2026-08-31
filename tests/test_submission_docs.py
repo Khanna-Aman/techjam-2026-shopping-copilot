@@ -94,25 +94,138 @@ def test_the_demo_script_quotes_the_current_score():
     )
 
 
-def test_no_submission_document_still_quotes_a_superseded_score():
-    """Guard against a half-finished update leaving both numbers in the same document.
+#: Full-precision scores this submission has shipped and retired. Add to this list when a
+#: score is superseded; never remove from it.
+_SUPERSEDED_SCORES = ("0.906151", "0.954756")
 
-    Every previous shipped score is listed here as it is retired. A document may of course
-    discuss an old number deliberately -- the confidence-gate and popularity sections both
-    do -- so this only fires when the stale value appears *without* the current one, which
-    is the signature of an edit that stopped halfway.
+#: Retired figures that are not scores, with what replaced them. These are what the second
+#: audit found: ablation deltas, totals and an MTTC that no test reached because they live
+#: in prose rather than in a parsed table, and that contradicted their own documents.
+_RETIRED_FIGURES = {
+    "+0.478": "the clarification delta, now +0.395",
+    "+0.848": "the total improvement, now +0.857",
+    "0.852 of": "the two-mechanism share, now 0.713 of 0.857",
+    "-0.340": "the state-tracking delta, now -0.319",
+    "-0.418": "the clarification delta, now -0.395",
+    "1.93 turns": "a superseded MTTC; it is 2.19",
+    "-0.0502": "the heavy-paraphrase gate delta, now -0.0497",
+    "-0.0128": "the uniform held-out delta, now -0.0126",
+    "+0.0088": "the public popularity gain, now +0.0086",
+}
+
+
+def test_no_submission_document_still_quotes_a_superseded_score():
+    """A retired score must not appear in a judge-facing document at all.
+
+    The previous version of this test could not fail. It fired only when a stale score
+    appeared *without* the current one -- but `test_the_demo_script_quotes_the_current_score`
+    already asserts the current score is present, so the inner assertion was satisfied
+    unconditionally. Appending both retired scores to both documents left all four tests
+    green, which is how it was found.
+
+    The rule is now absence. If a document ever needs to discuss a retired number on
+    purpose, the honest fix is to name it here with its reason, not to loosen the test.
     """
-    official = _official()
-    current = f"{official['recommended_technical_score']:.6f}"
-    superseded = ["0.906151", "0.954756"]
+    current = f"{_official()['recommended_technical_score']:.6f}"
 
     for name in ("DEVPOST.md", "DEMO_WALKTHROUGH.md"):
         text = _doc(name)
-        for stale in superseded:
+        for stale in _SUPERSEDED_SCORES:
             if stale == current:
                 continue
-            if stale in text:
-                assert current in text, (
-                    f"{name} quotes the superseded score {stale} but never the current "
-                    f"{current}; the update looks half-applied"
-                )
+            assert stale not in text, (
+                f"{name} still quotes the superseded score {stale}. The current score is "
+                f"{current}. If the mention is deliberate, allowlist it here with a reason "
+                "rather than weakening the assertion."
+            )
+
+
+def test_no_submission_document_still_quotes_a_retired_figure():
+    """The same rule for the non-score figures the second audit found stale.
+
+    DEVPOST carried +0.478 / +0.848 for the clarification finding, -0.340 / -0.418 in the
+    compliance table, "0.852 of the 0.848" in the transfer section and an MTTC of 1.93 --
+    each contradicted by that document's own headline block, and none of them reachable by
+    a test that parses only the headline block.
+    """
+    for name in ("README.md", "DEVPOST.md", "DEMO_WALKTHROUGH.md"):
+        text = _doc(name).replace("−", "-")
+        for stale, reason in _RETIRED_FIGURES.items():
+            assert stale not in text, f"{name} still quotes {stale} -- {reason}"
+
+
+def test_every_document_agrees_with_the_actual_test_count(request):
+    """Three documents said 259, one said 249, and the demo script said both 259 and 262.
+
+    The count is read off the live pytest session rather than hard-coded, so it cannot go
+    stale by itself. It matters because the demo narration points a judge at
+    `python -m pytest -q`, whose output is about to be on camera.
+    """
+    collected = request.session.testscollected
+    if collected < 200:
+        pytest.skip(f"partial run ({collected} collected); this asserts the full suite size")
+
+    for name in ("README.md", "DEVPOST.md", "DEMO_WALKTHROUGH.md"):
+        text = _doc(name)
+        claimed = {int(n) for n in re.findall(r"(\d{3})\s+(?:tests|passing)", text)}
+        assert claimed, f"{name} no longer states a test count"
+        assert claimed == {collected}, (
+            f"{name} claims {sorted(claimed)} tests; the suite collects {collected}"
+        )
+
+
+def test_devpost_ablation_prose_matches_the_committed_ablation():
+    """DEVPOST states the two largest ablation deltas in prose, twice, in two forms.
+
+    Both were stale in both places and disagreed with the ablation table in the same
+    document. The figures are derived here rather than listed, so regenerating the ablation
+    fails this test until the prose is updated alongside it.
+    """
+    path = _RESULTS / "ablation.json"
+    if not path.exists():
+        pytest.skip("results/ablation.json not present")
+    ablation = json.loads(path.read_text(encoding="utf-8"))
+    full = ablation["full system"]["technical_score"]
+    devpost = _doc("DEVPOST.md").replace("−", "-")
+
+    for label, key in (
+        ("clarification", "no clarification"),
+        ("state tracking", "no state tracking"),
+    ):
+        delta = full - ablation[key]["technical_score"]
+        assert f"-{delta:.3f}" in devpost, (
+            f"DEVPOST does not state the {label} ablation as -{delta:.3f}"
+        )
+        assert f"+{delta:.3f}" in devpost, (
+            f"DEVPOST does not state the {label} contribution as +{delta:.3f}"
+        )
+
+    baseline_path = _RESULTS / "baseline_by_scenario.json"
+    if baseline_path.exists():
+        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))["technical_score"]
+        total = _official()["recommended_technical_score"] - baseline
+        assert f"+{total:.3f}" in devpost, (
+            f"DEVPOST does not state the total improvement as +{total:.3f}"
+        )
+
+
+def test_the_demo_crib_sheet_matches_the_diagnostic_it_names():
+    """The Q&A sheet said "16 sessions left" beside the command that prints 13.
+
+    Anything on that sheet is something a judge may run while the author is on camera, so
+    it is held to the same standard as the spoken narration.
+    """
+    path = _RESULTS / "rank_diagnosis.json"
+    if not path.exists():
+        pytest.skip("results/rank_diagnosis.json not present")
+    summary = json.loads(path.read_text(encoding="utf-8"))["summary"]
+    demo = _doc("DEMO_WALKTHROUGH.md")
+
+    assert f"{summary['not_rank_1']} sessions left" in demo, (
+        f"the crib sheet does not say {summary['not_rank_1']} sessions left; "
+        "`python -m tools.diagnose_rank` reports that number"
+    )
+    assert summary["lost_to_ties"] == 0, (
+        "the crib sheet claims none were lost to ties, but the diagnostic now finds "
+        f"{summary['lost_to_ties']}"
+    )

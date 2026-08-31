@@ -57,6 +57,7 @@ import argparse
 import bisect
 import json
 import random
+import statistics
 import sys
 from dataclasses import replace
 from pathlib import Path
@@ -304,10 +305,22 @@ def bootstrap_interval(
 
 
 def popularity_summary(products: dict[str, dict], targets: list[str]) -> dict:
+    """Describe how popular a set of targets is.
+
+    The median is the *true* median -- ``statistics.median``, which averages the two middle
+    values on an even-sized sample. This used to be ``counts[(len - 1) // 2]``, the lower of
+    the two, which reported the 200 public targets as 6,614 when the median is 6,846. The
+    figure is quoted in the README, in DEVPOST and in the comment justifying `w_popularity`,
+    so the artifact and the prose disagreed and only the prose was ever corrected.
+
+    The quartiles stay nearest-rank -- they are descriptive context, nothing quotes them,
+    and interpolating them would invent rating counts no product actually has.
+    """
     counts = sorted(_rating_number(products[asin]) for asin in targets)
     last = len(counts) - 1
+    median = statistics.median(counts)
     return {
-        "median_rating_number": counts[last // 2],
+        "median_rating_number": int(median) if float(median).is_integer() else median,
         "p25_rating_number": counts[round(0.25 * last)],
         "p75_rating_number": counts[round(0.75 * last)],
         "priced_fraction": round(
