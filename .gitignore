@@ -24,6 +24,8 @@ content.txt
 AUDIT.md
 # Personal submission-day runbook - operational checklist, not a deliverable.
 SUBMISSION_RUNBOOK.md
+# Session handoff notes - internal working material.
+HANDOFF.md
 # Local scoring artifacts and ablation runs.
 runs/
 *.results.json
