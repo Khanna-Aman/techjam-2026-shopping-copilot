@@ -140,7 +140,13 @@ def main() -> None:
         allowed = set(AgentConfig.__dataclass_fields__)
         config = replace(config, **{k: v for k, v in overrides.items() if k in allowed})
 
-    print("building the index (about 25 s the first time, then cached)...")
+    # Printed before the load rather than conditionally on a cache miss, so the wording has
+    # to be true either way: warm this returns in about 0.3 s. It said "about 25 s the first
+    # time", a figure from an earlier build implementation that no document has agreed with
+    # since -- README and DEVPOST both quote ~12 s cold against a committed latency artifact.
+    # It is a small thing that happens to be on screen during the one segment the demo script
+    # says never to cut, announcing a wait the viewer then does not see.
+    print("loading the index (cached; about 12 s the very first time)...")
     agent = ShoppingCopilot(args.catalog, config=config)
     print(f"{agent.index.count:,} products across {len(agent.index.buckets):,} categories\n")
     print(BANNER)
