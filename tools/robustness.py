@@ -238,6 +238,27 @@ def run(agent: Agent, samples: list[dict], catalog_ids, categories, products,
     return result
 
 
+def _report(path: str) -> int:
+    """Render the committed artifact as the before/after the narration talks to."""
+    artifact = Path(path)
+    if not artifact.exists():
+        print(f"{path} not found -- run without --report to generate it (~5 min)")
+        return 1
+    data = json.loads(artifact.read_text(encoding="utf-8"))
+    control = data.get("control", {}).get("technical_score")
+
+    print(f"{'perturbation':<16}{'score':>9}{'vs control':>13}")
+    print("-" * 40)
+    for name, row in data.items():
+        score = row["technical_score"]
+        drop = "" if control in (None, 0) else f"{100.0 * (score - control) / control:+.1f}%"
+        print(f"{name:<16}{score:>9.4f}{drop:>13}")
+    worst = min(data.values(), key=lambda r: r["technical_score"])["technical_score"]
+    print()
+    print(f"worst case {worst:.4f}, {100.0 * (control - worst) / control:.1f}% below control")
+    return 0
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Message-perturbation robustness harness")
     parser.add_argument("--catalog", default="data/catalog.jsonl")
@@ -248,8 +269,23 @@ def main() -> None:
         help="JSON object of AgentConfig overrides, so a candidate mechanism can be "
              "checked against paraphrase before it ships",
     )
-    parser.add_argument("--output", default="runs/robustness.json")
+    parser.add_argument(
+        "--report", action="store_true",
+        help=(
+            "Print the committed artifact's table and exit, without re-running. The full "
+            "run is five perturbations over 200 sessions and about five minutes, which is "
+            "not something to start on camera or in a reviewer's first five minutes."
+        ),
+    )
+    # results/, not runs/. This defaulted to runs/robustness.json, which is gitignored, so
+    # the documented reproduce command wrote somewhere nothing reads and left
+    # results/robustness.json -- the file tests/test_documentation.py checks the README's
+    # paraphrase table against -- untouched. Every other harness here writes to results/.
+    parser.add_argument("--output", default="results/robustness.json")
     args = parser.parse_args()
+
+    if args.report:
+        raise SystemExit(_report(args.output))
 
     samples = load_jsonl(args.dataset)
     catalog_ids, categories, products = catalog_index(args.catalog)
