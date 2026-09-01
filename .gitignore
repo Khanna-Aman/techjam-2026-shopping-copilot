@@ -32,3 +32,8 @@ runs/
 # Derived artifacts: rebuilt from the frozen catalog, never committed.
 artifacts/*
 !artifacts/.gitkeep
+
+# Screen recordings for the demo video - never part of the submission.
+*.mkv
+*.mp4
+*.mov
