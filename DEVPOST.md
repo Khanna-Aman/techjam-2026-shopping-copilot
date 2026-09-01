@@ -4,7 +4,7 @@
 Solo entry — Aman Khanna
 
 - **Repository:** https://github.com/Khanna-Aman/techjam-2026-shopping-copilot
-- **Demo video (3 min):** <YOUTUBE_URL>
+- **Demo video (~4 min):** https://youtu.be/7Rx5649PaTc
 
 ---
 
