@@ -448,7 +448,7 @@ on hit rate, MRR, MTTC or the composite score — or if token usage is anything 
 number below is checked by machine on every push. A separate step walks the history back to
 the participant kit and fails if any commit touched `evaluator/` or `data/public_set.jsonl`.
 
-See [`DEMO_WALKTHROUGH.md`](DEMO_WALKTHROUGH.md) for a scripted three-minute tour.
+See [`REPRODUCE.md`](REPRODUCE.md) for every command with its expected output.
 
 ---
 

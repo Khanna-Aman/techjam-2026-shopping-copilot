@@ -1,7 +1,7 @@
 """The judge-facing documents must carry the same numbers as the committed measurements.
 
 `tests/test_documentation.py` guards the README and has caught three hand-copied errors.
-`DEVPOST.md` and `DEMO_WALKTHROUGH.md` had no guard at all, which is the more dangerous gap:
+`DEVPOST.md` and `REPRODUCE.md` had no guard at all, which is the more dangerous gap:
 the README is read by people who can also run the code, whereas the Devpost text and the
 demo narration are read and *heard* by judges who cannot. A stale number there is a claim
 nobody can check and I cannot retract once the video is uploaded.
@@ -82,15 +82,15 @@ def test_devpost_technical_score_and_multiple_are_arithmetically_true():
 def test_the_demo_script_quotes_the_current_score():
     """The narration is spoken on camera, so a stale figure here cannot be corrected."""
     official = _official()
-    walkthrough = _doc("DEMO_WALKTHROUGH.md")
+    walkthrough = _doc("REPRODUCE.md")
     score = official["recommended_technical_score"]
 
     assert f"{score:.6f}" in walkthrough, (
-        f"DEMO_WALKTHROUGH.md does not mention the current score {score:.6f}; "
+        f"REPRODUCE.md does not mention the current score {score:.6f}; "
         "the narration would state a number the repository no longer produces"
     )
     assert f"{official['mrr']:.6f}" in walkthrough, (
-        f"DEMO_WALKTHROUGH.md does not mention the current MRR {official['mrr']:.6f}"
+        f"REPRODUCE.md does not mention the current MRR {official['mrr']:.6f}"
     )
 
 
@@ -128,7 +128,7 @@ def test_no_submission_document_still_quotes_a_superseded_score():
     """
     current = f"{_official()['recommended_technical_score']:.6f}"
 
-    for name in ("DEVPOST.md", "DEMO_WALKTHROUGH.md"):
+    for name in ("DEVPOST.md", "REPRODUCE.md"):
         text = _doc(name)
         for stale in _SUPERSEDED_SCORES:
             if stale == current:
@@ -148,7 +148,7 @@ def test_no_submission_document_still_quotes_a_retired_figure():
     each contradicted by that document's own headline block, and none of them reachable by
     a test that parses only the headline block.
     """
-    for name in ("README.md", "DEVPOST.md", "DEMO_WALKTHROUGH.md"):
+    for name in ("README.md", "DEVPOST.md", "REPRODUCE.md"):
         text = _doc(name).replace("−", "-")
         for stale, reason in _RETIRED_FIGURES.items():
             assert stale not in text, f"{name} still quotes {stale} -- {reason}"
@@ -165,7 +165,7 @@ def test_every_document_agrees_with_the_actual_test_count(request):
     if collected < 200:
         pytest.skip(f"partial run ({collected} collected); this asserts the full suite size")
 
-    for name in ("README.md", "DEVPOST.md", "DEMO_WALKTHROUGH.md"):
+    for name in ("README.md", "DEVPOST.md", "REPRODUCE.md"):
         text = _doc(name)
         claimed = {int(n) for n in re.findall(r"(\d{3})\s+(?:tests|passing)", text)}
         assert claimed, f"{name} no longer states a test count"
@@ -219,7 +219,7 @@ def test_the_demo_crib_sheet_matches_the_diagnostic_it_names():
     if not path.exists():
         pytest.skip("results/rank_diagnosis.json not present")
     summary = json.loads(path.read_text(encoding="utf-8"))["summary"]
-    demo = _doc("DEMO_WALKTHROUGH.md")
+    demo = _doc("REPRODUCE.md")
 
     assert f"{summary['not_rank_1']} sessions left" in demo, (
         f"the crib sheet does not say {summary['not_rank_1']} sessions left; "
@@ -252,7 +252,7 @@ def test_every_baseline_multiple_claim_matches_the_arithmetic():
     true = official / baseline
     allowed = {f"{true:.2f}", f"{true:.1f}", str(int(round(true)))}
 
-    for name in ("README.md", "DEVPOST.md", "DEMO_WALKTHROUGH.md"):
+    for name in ("README.md", "DEVPOST.md", "REPRODUCE.md"):
         for match in re.finditer(r"([0-9]+(?:\.[0-9]+)?)\s*×", _doc(name)):
             value = match.group(1)
             if value in _NON_MULTIPLE_TIMES:
