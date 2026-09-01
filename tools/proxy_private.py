@@ -329,6 +329,43 @@ def popularity_summary(products: dict[str, dict], targets: list[str]) -> dict:
     }
 
 
+def _report(path: str) -> int:
+    """Render the committed artifact's two regimes as the comparison that matters.
+
+    The point of the harness is a *contrast*: the same weight change gains on the regime
+    that matches how the organiser builds sessions and loses on the one that samples the
+    catalog uniformly, which is the regime whose verdict was acted on and should not have
+    been. The stored JSON holds each regime's own score plus the paired delta against
+    `w_popularity` 0.55, so the earlier value is recovered by subtraction rather than
+    stored twice and left to drift apart.
+    """
+    artifact = Path(path)
+    if not artifact.exists():
+        print(f"{path} not found -- run without --report to generate it (~20 min)")
+        return 1
+    data = json.loads(artifact.read_text(encoding="utf-8"))
+
+    labels = {"matched": "matched", "uniform": "uniform  (stress)"}
+    print(f"{'regime':<20}{'n':>6}{'w=0.55':>10}{'w=1.20':>9}{'change':>10}   95% CI on the change")
+    print("-" * 78)
+    for regime in ("matched", "uniform"):
+        row = data.get(regime)
+        if not row:
+            continue
+        shipped = row["technical_score"]
+        paired = row.get("paired_comparison")
+        if not paired:
+            print(f"{labels[regime]:<20}{row['sample_count']:>6}{'':>10}{shipped:>9.4f}")
+            continue
+        print(
+            f"{labels[regime]:<20}{row['sample_count']:>6}"
+            f"{shipped - paired['delta']:>10.4f}{shipped:>9.4f}{paired['delta']:>+10.4f}"
+            f"   [{paired['ci95_low']:+.4f}, {paired['ci95_high']:+.4f}]"
+        )
+    print(f"\n{data['matched']['note']}")
+    return 0
+
+
 # ------------------------------------------------------------------------------ main
 def main() -> None:
     parser = argparse.ArgumentParser(description="Held-out generalisation harness")
@@ -339,6 +376,15 @@ def main() -> None:
     parser.add_argument("--n-uniform", type=int, default=1000)
     parser.add_argument("--seed", type=int, default=20260825)
     parser.add_argument("--output", default="results/proxy_private.json")
+    parser.add_argument(
+        "--report", action="store_true",
+        help=(
+            "Print the committed artifact's comparison table and exit, without re-running. "
+            "The full run is 1,800 sessions and about twenty minutes, which is not "
+            "something to start on camera; `cat`-ing the JSON instead puts 119 lines of "
+            "nesting on screen where the interesting part is six numbers."
+        ),
+    )
     parser.add_argument(
         "--base", default=None, help="JSON object of AgentConfig overrides"
     )
@@ -352,6 +398,9 @@ def main() -> None:
         ),
     )
     args = parser.parse_args()
+
+    if args.report:
+        raise SystemExit(_report(args.output))
 
     public = load_jsonl(args.dataset)
     public_targets = {str(row["ground_truth"]["parent_asin"]) for row in public}
