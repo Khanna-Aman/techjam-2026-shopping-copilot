@@ -90,9 +90,9 @@
       "ci95_high": 0.0,
       "significant": false
     },
-    "no MMR diversity": {
+    "MMR diversity added": {
       "overrides": {
-        "use_mmr_diversity": false
+        "use_mmr_diversity": true
       },
       "technical_score": 0.963323,
       "delta": 0.0,

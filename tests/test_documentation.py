@@ -587,7 +587,7 @@ def test_the_sign_of_the_personalization_finding_holds():
 
     The original finding was that the sign flips with timing -- harmful applied globally,
     helpful applied at cold start. The confidence gate removed the second half: the
-    cold-start prior is now worth about -0.0008, inside the noise floor. The half that
+    cold-start prior is now worth about -0.0010, inside the noise floor. The half that
     still holds is asserted strictly, and the half that changed is asserted as the weaker
     claim the README now actually makes.
     """
@@ -722,6 +722,76 @@ def test_the_shipped_popularity_weight_is_still_the_documented_one():
 
     assert DEFAULT_CONFIG.w_popularity == 1.20, (
         "the README documents the recalibration to 1.20"
+    )
+
+
+def test_every_tuned_constant_on_the_scored_path_is_pinned():
+    """The suite was blind to the numbers the score actually depends on.
+
+    Every guard in this file checks a *document* against an *artifact*. None of them looks
+    at the constants those artifacts were produced from, so an edit to a tuned weight
+    changed the score without turning anything red: `BM25_K1` 1.4 -> 2.5 costs 0.0056 and
+    `w_popularity` 1.20 -> 0.20 costs 0.0139, and both used to leave 278 tests green. CI's
+    `reproduce` job does catch it, by re-running the organiser's evaluator against the
+    organiser's catalog -- but that is a four-minute network job, and the failure it prints
+    is a score mismatch rather than the name of the constant that moved.
+
+    So this pins them. It asserts nothing about whether a value is *right* -- the sweeps in
+    `results/` do that. It asserts that changing one is a deliberate act with a diff on this
+    line, which is the property the suite was missing.
+    """
+    from copilot.catalog import BM25_B, BM25_K1
+    from copilot.config import DEFAULT_CONFIG as c
+
+    shipped = {
+        # lexical
+        "BM25_K1": BM25_K1, "BM25_B": BM25_B,
+        # ranking weights
+        "w_bm25": c.w_bm25, "w_constraint": c.w_constraint, "w_popularity": c.w_popularity,
+        "w_profile": c.w_profile, "w_dense": c.w_dense,
+        # query construction
+        "constraint_term_boost": c.constraint_term_boost,
+        "category_term_boost": c.category_term_boost,
+        "decoy_term_penalty": c.decoy_term_penalty,
+        "override_decay": c.override_decay,
+        "observed_term_boost": c.observed_term_boost,
+        # retrieval shape
+        "min_candidates": c.min_candidates,
+        "global_fallback_limit": c.global_fallback_limit,
+        "mmr_lambda": c.mmr_lambda,
+        "min_infogain": c.min_infogain,
+        # the confidence gate, the largest single mechanism
+        "gate_list_size": c.gate_list_size,
+        "gate_max_turn": c.gate_max_turn,
+        "gate_min_constraints": c.gate_min_constraints,
+        # flags that decide which path is scored at all
+        "use_dense_rerank": c.use_dense_rerank,
+        "use_llm_rerank": c.use_llm_rerank,
+        "use_mmr_diversity": c.use_mmr_diversity,
+        "use_observed_fallback": c.use_observed_fallback,
+        "profile_cold_start_only": c.profile_cold_start_only,
+        "dense_cold_start_only": c.dense_cold_start_only,
+        "clarify_strategy": c.clarify_strategy,
+    }
+    documented = {
+        "BM25_K1": 1.4, "BM25_B": 0.72,
+        "w_bm25": 1.00, "w_constraint": 2.60, "w_popularity": 1.20,
+        "w_profile": 1.00, "w_dense": 0.60,
+        "constraint_term_boost": 2.2, "category_term_boost": 1.0,
+        "decoy_term_penalty": 0.35, "override_decay": 0.5, "observed_term_boost": 0.55,
+        "min_candidates": 40, "global_fallback_limit": 400,
+        "mmr_lambda": 0.82, "min_infogain": 0.08,
+        "gate_list_size": 1, "gate_max_turn": 3, "gate_min_constraints": 4,
+        "use_dense_rerank": False, "use_llm_rerank": False, "use_mmr_diversity": False,
+        "use_observed_fallback": True, "profile_cold_start_only": True,
+        "dense_cold_start_only": False, "clarify_strategy": "hybrid",
+    }
+    moved = {k: (documented[k], v) for k, v in shipped.items() if documented[k] != v}
+    assert not moved, (
+        "a tuned constant on the scored path moved without this pin being updated: "
+        + ", ".join(f"{k} {was!r} -> {now!r}" for k, (was, now) in sorted(moved.items()))
+        + ". Every published score in results/ and every number in README.md and "
+        "DEVPOST.md was measured at the old values. Re-run the harnesses, or revert."
     )
 
 
@@ -899,6 +969,102 @@ def test_no_sweep_silently_pins_a_parameter_it_does_not_claim_to_vary():
         + ". This is how the popularity sweep came to report the default as 0.9643 "
           "when the agent scores 0.9633."
     )
+
+
+def test_a_sweeps_control_row_is_never_left_at_a_superseded_score():
+    """The third way a sweep goes stale, and the one the two guards above cannot see.
+
+    Both existing guards inspect rows by their *overrides*. A control row carries an empty
+    override dict -- it means "the shipped default" -- and `not overrides` makes both of
+    them `continue` past it. So an artifact whose control row still holds a retired score
+    is invisible to every check in this file.
+
+    That is not hypothetical. `results/sweep_dense_{lsa,mini,bge}.json` sat at 0.954756,
+    the v2.0 score, for two releases after the popularity recalibration moved the default
+    to 0.963323, while the README quoted a table built at 0.906151 -- three vintages, none
+    matching, and a green suite over all of it. A judge running the documented
+    `python -m tools.sweep --mode dense` would have seen numbers in no committed file.
+
+    The rule: an empty override dict *is* a claim about the shipped configuration, so it
+    has to reproduce the official score exactly, like any other default-equivalent row.
+    """
+    official = _load("official_evaluation.json")["recommended_technical_score"]
+    checked: list[str] = []
+
+    for path in sorted((_ROOT / "results").glob("sweep_*.json")) + [
+        _ROOT / "results" / "clarification_strategies.json",
+        _ROOT / "results" / "ablation.json",
+    ]:
+        if not path.exists():  # pragma: no cover - results are committed
+            continue
+        sweep = json.loads(path.read_text(encoding="utf-8"))
+        for label, row in sweep.items():
+            if not isinstance(row, dict) or row.get("overrides") != {}:
+                continue
+            checked.append(f"{path.name}:{label}")
+            assert row["technical_score"] == pytest.approx(official, abs=5e-7), (
+                f"{path.name} row {label!r} carries an empty override dict, so it claims to "
+                f"be the shipped configuration, but scores {row['technical_score']} rather "
+                f"than the official {official}. The artifact was generated before a change "
+                "to the defaults and never regenerated, so every row in it is measured "
+                "against a control the repository no longer ships."
+            )
+
+    assert len(checked) >= 3, (
+        f"expected several sweeps to carry an explicit control row, found {checked}"
+    )
+
+
+def test_the_constraint_exactness_figures_come_from_the_harness_that_measures_them():
+    """The whole dense-retrieval argument rests on these three percentages.
+
+    They were quoted in the README, DEVPOST and `tools/KAGGLE.md` for three revisions with
+    no tool, no artifact and no test behind them -- while the README two hundred lines
+    above asserted that the four "before hardening" figures were the *only* numbers in the
+    document not checked against a committed artifact. That claim was false, and the
+    numbers were also wrong: eight attempted reconstructions bracketed them without ever
+    reproducing them, which is what an unowned statistic looks like once the code that
+    produced it is gone. `tools/constraint_stats.py` now measures them, and this binds
+    every published copy to what it wrote.
+    """
+    stats = _load("constraint_stats.json")
+    rows = {r[0]: r for r in _table_rows("#### The constraints are already exact strings")}
+    assert len(rows) == 3, f"expected three metric rows, found {sorted(rows)}"
+
+    columns = {"all 800": stats["summary"], **stats["by_origin"]}
+    assert columns["mined"]["constraints"] == 602
+    assert columns["synthesised"]["constraints"] == 198
+    assert (
+        columns["mined"]["constraints"] + columns["synthesised"]["constraints"]
+        == columns["all 800"]["constraints"] == 800
+    ), "the origin split must partition the 800 disclosable strings"
+
+    for label, key in (
+        ("appear verbatim in their own target", "pct_verbatim_in_target"),
+        ("unique to one product in 50,000", "pct_unique_in_catalog"),
+        ("narrow the catalog to ten or fewer", "pct_narrows_to_top_k_or_fewer"),
+    ):
+        row = rows[label]
+        for offset, column in enumerate(("all 800", "mined", "synthesised"), start=1):
+            assert _number(row[offset].rstrip("%")) == pytest.approx(
+                columns[column][key], abs=0.05
+            ), f"README row {label!r}, column {column!r} disagrees with the harness"
+
+    # The prose either side of the table, and the two other documents that quote it.
+    summary, mined = stats["summary"], stats["by_origin"]["mined"]
+    assert f"when {summary['pct_verbatim_in_target']}%" in _README, (
+        "the encoder-ceiling paragraph still quotes a superseded verbatim figure"
+    )
+    devpost = (_ROOT / "DEVPOST.md").read_text(encoding="utf-8")
+    kaggle = (_ROOT / "tools" / "KAGGLE.md").read_text(encoding="utf-8")
+    for name, text in (("DEVPOST.md", devpost), ("tools/KAGGLE.md", kaggle)):
+        for value in (
+            mined["pct_verbatim_in_target"],
+            mined["pct_unique_in_catalog"],
+            summary["pct_verbatim_in_target"],
+            summary["pct_unique_in_catalog"],
+        ):
+            assert f"{value}%" in text, f"{name} does not quote the measured {value}%"
 
 
 def test_the_quoted_public_target_median_matches_the_artifact_that_produces_it():

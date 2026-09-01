@@ -78,10 +78,11 @@ python -m tools.sweep --mode dense --base '{"dense_path": "artifacts/dense-bge"}
 ## What to expect
 
 The LSA tier lost at every weight, and the reason looks structural rather than a property of
-the encoder: 95.6% of the constraint strings the simulator discloses appear **verbatim** in
-their own target product, and 25.9% are unique to a single product in 50,000. Dense
-retrieval closes vocabulary mismatch, and this benchmark has very little of it by
-construction.
+the encoder: 94.5% of the constraint strings the simulator discloses appear **verbatim** in
+their own target product, and 22.4% are unique to a single product in 50,000 — rising to
+99.2% and 29.7% on the 602 of 800 the simulator mines out of the target's own fields rather
+than synthesises (`python -m tools.constraint_stats`). Dense retrieval closes vocabulary
+mismatch, and this benchmark has very little of it by construction.
 
 A better encoder is therefore expected to lose too. It is worth running anyway, because
 "a stronger model was tried and the sign did not change" is a materially different claim

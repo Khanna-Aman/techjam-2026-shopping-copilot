@@ -150,9 +150,9 @@
       "intent_override": 1.0
     }
   },
-  "no MMR diversity": {
+  "MMR diversity added": {
     "overrides": {
-      "use_mmr_diversity": false
+      "use_mmr_diversity": true
     },
     "sample_count": 200,
     "hit_rate_at_10": 1.0,

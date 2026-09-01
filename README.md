@@ -206,7 +206,7 @@ value(A) = P(customer can answer A) × E[constraints returned] × how well they 
 The policy now **derives** that the open-ended question is optimal rather than having it
 hardcoded, and yields to a specific question once the open channel is exhausted. Worth
 **+0.0211** over the specific-questions-only policy (0.9633 against
-0.9422), reproduced by
+0.9422), reproduced by `python -m tools.sweep --mode strategy` —
 and unlike five of the eleven ablation rows, this one survives
 the paired test: 95% CI [+0.0115, +0.0321], reproduced by
 `python -m tools.ablation_ci --mode strategy`. Two attributes —
@@ -222,11 +222,16 @@ invites a fair suspicion that it was fitted to the 200 public sessions. It was n
 harness is the evidence.
 
 Reproduce with `python -m tools.sweep --mode strategy`, and note what it also shows: the
-hybrid policy scores **exactly** what always-asking-open scores, to six decimal places. On
-this set the escalation branch never earns anything. It is kept for the same reason as the
-padding and the observed-token fallback — it is insurance for a private set that may
-exhaust the open channel more often — but it is not a public-set win, and reporting it as
-one would be dishonest.
+hybrid policy scores **exactly** what always-asking-open scores, to six decimal places. That
+is not a coincidence of this set, and the sharper statement is the honest one: with the
+shipped priors the open question's value is a constant **1.5**, while the largest value any
+specific attribute can reach is `feature`, whose three terms multiply out to **1.2933**
+(P(yield) 0.958, mean yield 1.5, partition prior 0.90). The comparison
+therefore *cannot* select a specific attribute while the open channel is open, on any input,
+so `hybrid` is extensionally identical to `open` — both fall back to the best specific
+question only once `other` is exhausted. It is kept as the general form, because the
+comparison is what makes the policy derived rather than hardcoded, but it is not a
+public-set win and it buys nothing over `open` that `open` does not already do.
 
 | clarification strategy | score |
 |---|---:|
@@ -414,7 +419,7 @@ gzip -dkc catalog.jsonl.gz > data/catalog.jsonl
 python -m evaluator.local_evaluator
 
 # 3. everything else
-python -m pytest -q                                 # 277 tests
+python -m pytest -q                                 # 280 tests
 python -m tools.demo --scenario intent_override --index 1
 python -m tools.sweep --mode ablation
 python -m tools.robustness
@@ -422,6 +427,7 @@ python -m tools.proxy_private                       # held-out generalisation
 python -m tools.coverage_ceiling                    # why the residual is unreachable
 python -m tools.sweep --mode gate_plateau           # the gate sits on a flat region
 python -m tools.sweep --mode dense                  # the dense-retrieval rejection
+python -m tools.constraint_stats                    # why dense retrieval cannot help
 
 # the weight recalibration, both regimes, paired against the previous value
 python -m tools.proxy_private --against '{"w_popularity": 0.55}'
@@ -511,11 +517,15 @@ standard error on the score itself would suggest.
 | no profile prior (cold start) | 0.9643 | 0.0010 | [0.0000, +0.0020] *spans zero* |
 | no override erasure | 0.9634 | 0.0001 | [0.0000, +0.0003] *spans zero* |
 | no top-10 padding | 0.9633 | 0.0000 | [0.0000, 0.0000] *spans zero* |
-| no MMR diversity | 0.9633 | 0.0000 | [0.0000, 0.0000] *spans zero* |
+| MMR diversity added | 0.9633 | 0.0000 | [0.0000, 0.0000] *spans zero* |
 
 **Five of the eleven mechanisms are not distinguishable from sampling noise on the public
-set.** The two zero rows are exactly zero because removing them changes no session's outcome
-at all. The category lock, which an earlier version of this table could not resolve, now
+set.** The two zero rows are exactly zero because they change no session's outcome at all.
+Note that the MMR row *adds* the mechanism rather than removing it: MMR ships off, so
+"no MMR diversity" would have re-run the shipped configuration under a label saying
+otherwise, and could not have reported anything but zero. Switching it **on** is the
+measurement that can fail, and it still returns 0.0000 — the confidence gate truncates the
+uncertain early turns MMR exists to diversify, so it has nothing left to reorder. The category lock, which an earlier version of this table could not resolve, now
 does resolve at −0.0115 — not because it changed, but because the confidence gate cut the
 variance around it.
 
@@ -545,7 +555,7 @@ every customer message reworded (default configuration under heavy: 0.9342):
 | no profile prior (cold start) | 0.0010 | 0.0090 | neither |
 | no override erasure | 0.0001 | 0.0000 | neither |
 | no top-10 padding | 0.0000 | 0.0000 | neither |
-| no MMR diversity | 0.0000 | 0.0000 | neither |
+| MMR diversity added | 0.0000 | 0.0000 | neither |
 
 **The hypothesis is not supported.** Every row unresolved on the clean set is still
 unresolved under heavy paraphrase — not one of the five is rescued by harder input. The
@@ -676,6 +686,12 @@ scored loop actually runs, and over all 2,000 when every session is driven to te
 cheap opening turns: cost rises with the number of confirmed constraints, because each is
 tested against every candidate in the pool.
 
+Every latency figure is the **median across three timed passes**, so one unlucky pass cannot
+become the documented number; `results/latency.json` keeps all three so the spread stays
+visible. That applies to the maximum too, which is therefore a typical worst turn rather than
+the worst ever seen: the slowest single turn in any of the three scored-loop passes was
+**183 ms**, against the 111 ms median-of-maxima quoted above.
+
 **On the optional LLM layer.** [`copilot/llm.py`](copilot/llm.py) implements a semantic
 reranking stage over the top candidates. It is disabled by default and gated a second time
 behind `COPILOT_LLM=1`, so neither switch alone can start a billed run. This is a
@@ -700,7 +716,7 @@ Reporting only what worked would misrepresent how this was built.
 
 | Idea | Outcome |
 |---|---|
-| **MMR diversification** of an uncertain top-10 | Sounded right; measured **0.0000** and dominated latency. Off by default, kept behind a flag so its ablation row stays reproducible. |
+| **MMR diversification** of an uncertain top-10 | Sounded right; switching it **on** measures **0.0000** and dominates latency. The confidence gate is why: it truncates exactly the uncertain early turns MMR exists to diversify. Off by default, kept behind a flag so the row stays reproducible. |
 | **Erasing** the retracted override value | The intuitive reading; the **worst** setting tested. See finding #2. |
 | **Entropy-only** question selection | Chose `budget`, which is answered 0.5% of the time. See finding #3. |
 | **Global** profile personalization | −0.044. Helps only at cold start — and since the popularity recalibration, not measurably even there. See finding #4. |
@@ -732,15 +748,20 @@ library only** — numpy and scipy are needed to *build* the artifact, never to 
 it costs about 3.7 ms per turn, because the category lock means scoring ~180 rows rather
 than 50,000.
 
-It does not work. Not marginally: at every weight tested.
+It does not work. The damage is monotone in the weight, and the one row that is not damage
+is not a result either — `python -m tools.sweep --mode dense`:
 
 | `w_dense` | 0 (off) | 0.15 | 0.30 | 0.60 | 1.00 | 1.80 | 3.00 |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| score | **0.9062** | 0.8971 | 0.8917 | 0.8878 | 0.8746 | 0.8606 | 0.8555 |
+| score | **0.9633** | 0.9647 | 0.9596 | 0.9528 | 0.9480 | 0.9388 | 0.9274 |
 
-Applied only at cold start — the trick that rescued the profile prior in finding #4 — it
-reaches 0.9072, **+0.0010**, whose paired interval is [−0.0038, +0.0062]. It spans zero, so
-it is not a result I would ship on.
+The `w`=0.15 row is **+0.0014** above the offline default, and it is the reason this section
+says "never resolvably helpful" rather than "never helpful". Its paired interval is
+[−0.0022, +0.0052] and spans zero by a wide margin, so it is not something I would ship on —
+but writing "it loses at every weight" over a positive point estimate would be the same
+overstatement this document criticises elsewhere. Applied only at cold start — the trick
+that rescued the profile prior in finding #4 — every weight lands at −0.0001 or below, so
+that route is closed too.
 
 #### "You only tried a weak encoder"
 
@@ -774,7 +795,7 @@ be the same overstatement this document criticises elsewhere.
 That is a more useful finding than "it loses", because it locates the ceiling. If the
 encoder were the binding constraint, tripling the dimension and moving from an unsupervised
 SVD to a contrastively-trained retriever would have changed the sign somewhere. It moves the
-magnitude toward zero and never past it, which says the constraint is the task: when 95.6%
+magnitude toward zero and never past it, which says the constraint is the task: when 94.5%
 of the disclosed constraint strings appear verbatim in their target, there is almost no
 vocabulary gap left for a semantic model to close, and what it mostly does is blur an
 already-exact lexical match.
@@ -794,19 +815,37 @@ Reproduce with `python -m tools.build_vectors --mode transformer --model BAAI/bg
 (GPU recipe in [tools/KAGGLE.md](tools/KAGGLE.md)), then
 `python -m tools.ablation_ci --mode dense --base '{"dense_path": "artifacts/dense-bge"}'`.
 
-The reason is a property of the task, not of LSA. Measuring the constraint strings the
-simulator actually discloses:
+#### The constraints are already exact strings
 
-- **95.6%** of them appear **verbatim** in their own target product's text.
-- **25.9%** are unique to exactly one product in the entire 50,000-item catalog.
-- **32.6%** narrow the catalog to ten products or fewer.
+The reason is a property of the task, not of LSA. `python -m tools.constraint_stats`
+measures all 800 strings the simulator is able to disclose — four per session — against the
+evaluator's own `searchable_text`:
 
-A quarter of the time, one disclosed constraint *is* the answer, by exact string match. This
-is what dense retrieval exists to fix — vocabulary mismatch, where the shopper's words and
-the product's words differ — and by construction this task has almost none. Semantic
-similarity is a *smoothing* operator: it deliberately blurs exact matches to surface related
-items. Smoothing a signal that is already exact can only add noise to the ordering, and the
-table above is what that looks like.
+| | all 800 | mined (602) | synthesised (198) |
+|---|---:|---:|---:|
+| appear **verbatim** in their own target | **94.5%** | **99.2%** | 80.3% |
+| unique to one product in 50,000 | **22.4%** | **29.7%** | 0.0% |
+| narrow the catalog to ten or fewer | **27.1%** | **35.7%** | 1.0% |
+
+The split matters more than the aggregate. `intent_card` builds most of a customer's
+requirements by *copying substrings out of the target's own `features` and `details`* — those
+are the 602 mined ones, and they land in their target 99.2% of the time, because they were
+taken from it. The other 198 are the three strings the card synthesises rather than lifts (a
+bare material word, `color: <x>`, `budget around $<n>`); they are unique to nothing, by
+construction.
+
+So on nearly a third of the mined constraints, one disclosed string *is* the answer by exact
+substring match. This is precisely what dense retrieval exists to fix — vocabulary mismatch,
+where the shopper's words and the product's words differ — and by construction this task has
+almost none. Semantic similarity is a *smoothing* operator: it deliberately blurs exact
+matches to surface related items. Smoothing a signal that is already exact can only add noise
+to the ordering, and the table above is what that looks like.
+
+One methodological note, because it is worth ten points: both sides are lowercased before
+the containment test. Case-sensitively the verbatim figure is 84.4%, not 94.5% — the card
+lowercases the material word it injects while the listing capitalises it. Lowercasing is the
+right call, since our retrieval is case-insensitive and a case-only difference is not a gap
+anyone has to close, but it is a choice and the harness says so in its docstring.
 
 That generalises past LSA. Any bi-encoder faces the same structural mismatch here, however
 good its embeddings, which is why I did not spend a day on a GPU to reproduce the finding

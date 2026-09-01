@@ -46,7 +46,11 @@ ABLATIONS: list[tuple[str, dict]] = [
     ("no observed fallback", {"use_observed_fallback": False}),
     ("no confidence gate", {"use_confidence_gate": False}),
     ("no top-10 padding", {"pad_to_top_k": False}),
-    ("no MMR diversity", {"use_mmr_diversity": False}),
+    # MMR ships OFF, so "no MMR diversity" would re-run the control under a label saying
+    # otherwise -- a row that cannot report anything but 0.0000 because it changes nothing.
+    # The informative measurement is switching it ON, which is what this row now does. It
+    # still scores 0.0000, but that is now a measurement rather than a tautology.
+    ("MMR diversity added", {"use_mmr_diversity": True}),
     ("no popularity prior", {"use_popularity_prior": False}),
     ("no profile prior", {"use_profile_prior": False}),
 ]
@@ -81,9 +85,23 @@ def _observed_grid() -> list[tuple[str, dict]]:
 
 
 def _prior_grid() -> list[tuple[str, dict]]:
+    """The two priors jointly, to show they do not interact.
+
+    `--mode pop` and `--mode profile` each sweep one axis with the other held at its
+    default, which cannot distinguish "popularity is worth 0.046" from "popularity is worth
+    0.046 *given* this profile weight". This grid answers that, and it is the only mode that
+    does.
+
+    The ranges are the ones that matter now, which they were not: this grid was written for
+    the v1.0 weights and still ran pop over (0.0, 0.08, 0.18, 0.30) and prof over
+    (0.0, 0.12, 0.25) long after the shipped values moved to 1.20 and 1.00. Every point it
+    visited was below both, so it could not contain the control, and anyone running it saw a
+    grid whose best cell was an artifact of where the grid stopped. The corners now bracket
+    the shipped pair rather than sitting under it.
+    """
     out: list[tuple[str, dict]] = []
-    for pop in (0.0, 0.08, 0.18, 0.30):
-        for prof in (0.0, 0.12, 0.25):
+    for pop in (0.0, 0.55, 1.20, 2.00):
+        for prof in (0.0, 1.00, 2.00):
             out.append((f"pop={pop} prof={prof}", {"w_popularity": pop, "w_profile": prof}))
     return out
 
@@ -117,8 +135,9 @@ def _pop_grid() -> list[tuple[str, dict]]:
 def _wcon_grid() -> list[tuple[str, dict]]:
     return [
         (f"w_con={value}", {"w_constraint": value})
-        # Extends past the default (1.8) to 6.0 because the README claims the weight is
-        # inert across that range, and a grid that stopped at 2.6 could not support it.
+        # Spans 1.8 to 6.0 either side of the shipped default (2.60) because the README
+        # claims the weight is inert across that range, and a grid that stopped at 2.6
+        # could not support it.
         for value in (0.0, 0.25, 0.5, 0.9, 1.4, 1.8, 2.6, 4.0, 6.0)
     ]
 

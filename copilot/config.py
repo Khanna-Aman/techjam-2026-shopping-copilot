@@ -13,7 +13,11 @@ from dataclasses import dataclass
 #   "none"      - never ask (reproduces the starter baseline's blind spot)
 #   "open"      - always ask the open-ended question
 #   "infogain"  - pick the attribute maximising expected information gain
-#   "hybrid"    - infogain while a specific attribute discriminates, else open
+#   "hybrid"    - score every option, open included, on one expected-value scale. With the
+#                 shipped priors the open question wins whenever it is available (its 1.5
+#                 exceeds the best attainable specific value, feature's 1.2933), so this is
+#                 extensionally identical to "open" and both fall back to the best specific
+#                 question once the open channel is exhausted. Kept as the general form.
 STRATEGIES = ("none", "open", "infogain", "hybrid")
 
 

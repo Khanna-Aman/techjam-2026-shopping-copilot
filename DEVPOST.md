@@ -72,7 +72,7 @@ the system is the other 0.46.
 |---|---|---|
 | **I. Intent routing & hybrid pipeline** | Two-tier message parsing classifies Buying / Browsing / Intent Override / Boundary, then a **category lock** cuts 50,000 products to a ~180-item pool, ranked by weighted BM25 + typed constraint satisfaction + popularity prior. I deliberately did **not** fork into two separate retrieval stacks. | Intent detection drives *dialogue policy*, not two rankers — the unified constraint-driven ranker already reaches **Hit@10 = 1.000 on both** Buying and Browsing, so a second stack had nothing left to win. **Vector similarity is implemented** (`copilot/dense.py`, offline fp16 + `mmap`, stdlib only) and measured at three encoder tiers up to `bge-base` (768-dim, GPU-built): no gain at any weight on any encoder, so it ships switched off behind a flag rather than omitted. |
 | **II. Multi-turn scenario evolution** | A slot state machine accumulates typed constraints (set-membership, phrase-containment, numeric), handles retraction on Intent Override, marks attributes exhausted so a spent question is never re-asked, and proactively clarifies on every turn. | Ablation: removing state tracking costs **−0.319**; removing clarification costs **−0.395**. |
-| **III. Dynamic context programming** | Constraint accumulation with per-constraint confidence and decay; the question policy re-plans every turn from the live pool, escalating from an open-ended prompt to a specific attribute once the open channel is exhausted; the anonymised user profile is distilled in at cold start. | The policy **derives** that the open question is optimal rather than hardcoding it (finding #2 below). Profile prior: **+0.015**, cold start only. |
+| **III. Dynamic context programming** | Constraint accumulation with per-constraint confidence and decay; the question policy re-plans every turn from the live pool, escalating from an open-ended prompt to a specific attribute once the open channel is exhausted; the anonymised user profile is distilled in at cold start. | The policy **derives** that the open question is optimal rather than hardcoding it (finding #2 below). Profile prior: cold start only, and now worth nothing measurable — removing it scores **+0.0010**, on an interval that spans zero (finding #3 below). |
 | **IV. Evaluation matrix** | Scored on the organiser's own evaluator, unmodified, plus an ablation harness (11 configurations) and a paraphrase-robustness harness (5 perturbations) that imports the evaluator's own simulator functions. | Hit@10 **1.000**, MRR **0.9567**, MTTC **2.185**. |
 
 ### Architecture
@@ -98,8 +98,8 @@ the system is the other 0.46.
                        { message, ask_attribute, recommendations, usage }
 ```
 
-About 2,500 lines of agent code across ten modules, plus ~1,900 lines of tests
-(277 tests, 53 of them adversarial) and ten measurement harnesses.
+About 2,600 lines of agent code across ten modules, plus ~3,500 lines of tests
+(280 tests, 53 of them adversarial) and fourteen measurement harnesses.
 
 ### Three findings that overturned my first instinct
 
@@ -166,7 +166,7 @@ noise-level result — see the ablation note below.
 | no profile prior (cold start) | 0.9643 | 0.0010 | [0.0000, +0.0020] *spans zero* |
 | no override handling | 0.9634 | 0.0001 | [0.0000, +0.0003] *spans zero* |
 | no top-10 padding | 0.9633 | 0.0000 | [0.0000, 0.0000] *spans zero* |
-| no MMR diversity | 0.9633 | 0.0000 | [0.0000, 0.0000] *spans zero* |
+| MMR diversity added | 0.9633 | 0.0000 | [0.0000, 0.0000] *spans zero* |
 
 An ablation is a **paired** comparison — both configurations answer the same 200 sessions —
 so `tools/ablation_ci.py` bootstraps the delta itself rather than comparing two marginal
@@ -413,11 +413,13 @@ of absence, not an argument from measurement.
 | Per-turn latency | **6 ms median**, 40 ms p95, 111 ms max (scored loop); 12 ms / 75 ms / 172 ms if every session is driven to all ten turns |
 | Memory | **226 MB** resident, agent + index only |
 | Full 200-session evaluation | ~6 s warm, ~18 s including a cold index build |
-| Tests | 277 passing, including 53 adversarial |
+| Tests | 280 passing, including 53 adversarial |
 
 Measured on an Intel i5-1340P laptop, CPU only, no GPU. Latency is measured over the 437
 turns the scored loop actually runs, and over all 2,000 when every session is driven to ten
-— not just cheap opening turns. Index caching is best-effort
+— not just cheap opening turns. Every figure is the median across three timed passes, so the
+quoted maximum is a typical worst turn rather than the worst ever seen: the slowest single
+turn in any pass was 183 ms. Index caching is best-effort
 and wrapped in `try/except`, so a read-only judging sandbox simply rebuilds — slower, never
 a failure. The system runs unchanged under the CPU, memory, timeout and network
 restrictions the submission rules explicitly reserve the right to impose.
@@ -427,7 +429,11 @@ restrictions the submission rules explicitly reserve the right to impose.
 ## Development tools, APIs, libraries and data
 
 **Development tools:** VS Code, Git, Windows 11 / PowerShell, Python 3.12.6, `pytest`,
-plus `cProfile` and `tracemalloc` for the latency and memory figures. Claude (Anthropic)
+plus `tools/latency.py`, which times `respond()` with `time.perf_counter` and reads
+resident set size through the platform's own call (`GetProcessMemoryInfo` on Windows,
+`/proc/self/status` on Linux, `getrusage` on macOS). `tracemalloc` is deliberately not
+used: it roughly doubles the measured per-turn time, and a latency harness that perturbs
+the latency it reports is worse than none. Claude (Anthropic)
 was used as a coding assistant in the same sense as an IDE or a linter; every design
 decision and every number reported here was verified by measurement against the official
 evaluator in the repository.
@@ -467,9 +473,12 @@ labelled, and no organiser-only or private evaluation data is used anywhere.
 - **Build the harness that tries to break your own work.** The paraphrase harness cost a
   day and revealed that a light rewording removed 67% of my score. Nothing in the ablation
   table was ever going to surface that.
-- **Report the zeroes.** MMR diversification measured exactly 0.0000 after a real
-  implementation effort. It stays in the ablation table because leaving it out would
-  misrepresent how this was built.
+- **Report the zeroes, and make sure the zero is a measurement.** MMR diversification
+  measured exactly 0.0000 after a real implementation effort. It stays in the ablation
+  table because leaving it out would misrepresent how this was built — and the row
+  switches MMR *on* rather than off, because MMR ships off and "removing" it would have
+  re-run the shipped configuration under a label saying otherwise, which can only ever
+  report zero.
 
 ## Limitations, and what I would do next
 
@@ -508,8 +517,10 @@ task rather than the model: if the encoder were the binding constraint, tripling
 dimension and moving from an unsupervised SVD to a contrastively-trained retriever would
 have flipped the sign somewhere. It moves the magnitude toward zero and never past it.
 
-The structural reason: **95.6% of the constraint strings the simulator discloses appear
-verbatim in their own target product, and 25.9% are unique to a single product in 50,000.**
+The structural reason, measured by `python -m tools.constraint_stats`: **of the 602
+constraint strings the simulator mines out of a target's own fields, 99.2% appear verbatim
+in that target and 29.7% are unique to a single product in 50,000** (94.5% and 22.4% across
+all 800 disclosable strings, including the ones the simulator synthesises rather than lifts).
 Dense retrieval exists to close vocabulary mismatch, and this benchmark has almost none by
 construction — so what it mostly does is blur an already-exact lexical match. It ships
 switched off, behind a flag, so the ablation row reproduces.

@@ -233,10 +233,18 @@ def choose_attribute(
         return OPEN_ATTRIBUTE if open_available else None
 
     # hybrid: compare every option on one expected-value scale, the open question
-    # included, and take the best. In most states the open question wins outright,
+    # included, and take the best. The open question wins whenever it is available,
     # because it is answered whenever anything remains undisclosed and returns two
-    # constraints at once. It yields to a specific question once the open channel is
-    # exhausted or a typed attribute becomes sharply discriminating.
+    # constraints at once.
+    #
+    # Worth stating exactly, because it is checkable: with the shipped priors the open
+    # question's value is the constant 1.5, and the largest value any specific attribute
+    # can reach is feature's 0.958 * 1.5 * 0.90 = 1.2933. So the comparison below can
+    # never select a specific attribute while the open channel is open, which makes this
+    # branch extensionally identical to strategy "open" -- both yield to `best` only once
+    # `other` is exhausted. It is kept as the general form: the comparison is what makes
+    # the policy derived rather than hardcoded, and a private set that exhausts the open
+    # channel more often is exactly where the fallback matters.
     open_value = open_gain(state, pool) if open_available else 0.0
     if best is not None and gain > open_value and gain >= config.min_infogain:
         return best

@@ -455,24 +455,58 @@ class TestGeneratorContract:
     def test_our_attribute_classifier_still_mirrors_the_evaluators(self) -> None:
         """Exhaustion tracking and the question policy depend on labelling constraints the
         same way the simulator does. A drift here means asking for an attribute the
-        customer has already spent, or never asking for one they would answer."""
+        customer has already spent, or never asking for one they would answer.
+
+        This was seven hand-picked strings, and seven strings cannot pin a seven-branch
+        cascade: dropping "narrow" from the size vocabulary left it green, because no
+        sample contained the word. The classifier is a fixed precedence over six keyword
+        sets, so the exhaustive test is the cross-product -- every vocabulary word against
+        every *other* bucket's word, which pins both membership and the order the branches
+        are tried in. Pairs suffice: the cascade is an ordered chain, so if every pair of
+        buckets resolves the same way in both implementations, so does every triple.
+        """
+        from evaluator.local_evaluator import MATERIALS
         from evaluator.local_evaluator import classify_constraint as evaluator_classify
 
-        samples = [
-            "budget around $29.99", "100% cotton", "color: black", "true to size",
-            "crew neck short sleeve", "great for hiking", "water resistant shell",
+        buckets = [
+            ("", "budget", "$29", "under 30", "<=15"),
+            ("", *MATERIALS),
+            ("", "color", "black", "white", "blue", "red", "pink", "green"),
+            ("", "size", "sizing", "width", "wide", "narrow"),
+            ("", "department", "style", "fit", "sleeve", "neck"),
+            ("", "hiking", "running", "gym", "winter", "outdoor", "work"),
+            ("", "shell", "Zip Closure"),
         ]
-        for text in samples:
-            assert classify_constraint(text) == evaluator_classify(text), (
-                f"copilot.text.classify_constraint disagrees with the evaluator on {text!r}"
-            )
+        # Every ordered pair of words drawn from two different buckets, in both orders and
+        # in two carriers -- enough to catch a word deleted from a set, a set reordered, or
+        # a branch that stops shadowing the one below it.
+        checked = 0
+        for left_index, left_bucket in enumerate(buckets):
+            for right_bucket in buckets[left_index + 1:]:
+                for left in left_bucket:
+                    for right in right_bucket:
+                        for text in (f"{left} {right}", f"{right} {left}",
+                                     f"prefers {left}; also {right}".upper()):
+                            checked += 1
+                            assert classify_constraint(text) == evaluator_classify(text), (
+                                "copilot.text.classify_constraint disagrees with the "
+                                f"evaluator on {text!r}"
+                            )
+        assert checked == 2559, (
+            f"the cross-product changed size ({checked}); a vocabulary was edited on "
+            "one side only, or a bucket was dropped from this test"
+        )
 
 
 class TestRankPoolReuse:
     def test_a_prebuilt_pool_gives_the_identical_ranking(self, synthetic_index) -> None:
         """`rank` accepts the pool the agent already built, to avoid building it twice.
 
-        The whole point is that it changes nothing, so that is what is asserted.
+        The whole point is that it changes nothing, so that is what is asserted -- and on
+        its own that assertion is worthless. Making `rank` ignore the `pool` argument
+        entirely left the equality green, because both sides moved together. An identity
+        test over an argument has to be paired with a test that the argument is *read*, so
+        the second half hands `rank` a pool it could not have chosen for itself.
         """
         state = ConversationState(session_id="s")
         state.category = "Shirts T-Shirts"
@@ -481,4 +515,13 @@ class TestRankPoolReuse:
         pool = candidate_pool(synthetic_index, state, DEFAULT_CONFIG)
         assert rank(synthetic_index, state, DEFAULT_CONFIG, limit=5) == rank(
             synthetic_index, state, DEFAULT_CONFIG, limit=5, pool=pool
+        )
+
+        # A pool the default path would never produce: one candidate, not the whole set.
+        assert len(pool) >= 2, "the fixture pool is too small to restrict meaningfully"
+        restricted = {sorted(pool)[-1]}
+        ranked = rank(synthetic_index, state, DEFAULT_CONFIG, limit=5, pool=restricted)
+        assert ranked == sorted(restricted), (
+            f"rank returned {ranked} for a one-document pool of {sorted(restricted)}; the "
+            "pool argument is being ignored, which makes the equality above vacuous"
         )

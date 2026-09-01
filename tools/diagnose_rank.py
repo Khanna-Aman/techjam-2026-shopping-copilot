@@ -1,7 +1,8 @@
 """Why is the target not rank 1 at the moment it first appears?
 
-MRR is the only headroom left -- Hit@10 is saturated at 0.995 and MTTC is near its
-structural floor -- and 68 of 200 sessions land somewhere other than rank 1. Before
+MRR is the only headroom left -- Hit@10 is saturated at 1.000 and MTTC is near its
+structural floor -- and 13 of 200 sessions land somewhere other than rank 1 (77 before the
+confidence gate; pass --base '{"use_confidence_gate": false}' for that figure). Before
 building anything to fix that, it is worth knowing what "that" is, because two very
 different failures produce the same symptom and they need opposite fixes:
 

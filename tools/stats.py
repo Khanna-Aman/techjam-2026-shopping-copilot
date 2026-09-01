@@ -2,7 +2,7 @@
 
 Every headline number in this repository is a mean over a finite set of sessions -- 200 for
 the public set, fewer for some diagnostics -- and a mean over 200 draws is not a constant.
-Reporting `0.906151` to six figures implies a precision the sample size does not support.
+Reporting `0.963323` to six figures implies a precision the sample size does not support.
 These helpers put an interval around it.
 
 The composite is recomputed here exactly as `evaluator.local_evaluator` computes it, from

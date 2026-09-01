@@ -6,7 +6,7 @@ gate that never releases scores 0.0000 rather than merely scoring badly. The tur
 what stands between the two, so it is asserted here rather than trusted.
 
 These are behavioural tests on the agent, not measurements. The measured value of the gate
-(+0.0486, CI [+0.0373, +0.0604]) lives in `results/ablation_ci.json` and is asserted against
+(+0.0579, CI [+0.0457, +0.0703]) lives in `results/ablation_ci.json` and is asserted against
 the README by `tests/test_documentation.py`.
 """
 

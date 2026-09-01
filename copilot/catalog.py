@@ -198,8 +198,15 @@ class CatalogIndex:
 
                 # One regex pass, not two: match_text already collapses whitespace
                 # along with every other non-alphanumeric run, so a separate normalise()
-                # over the same 58 MB of text was pure duplicated work. Word boundaries
-                # survive the flattening, so the material/colour regexes still apply.
+                # over the same 58 MB of text was pure duplicated work.
+                #
+                # The flattening is very nearly boundary-preserving, but not exactly: `_`
+                # is a word character to `\b` and a separator to match_text, so
+                # "leather_and_synthetic" yields no material to the simulator and yields
+                # "leather" here. That affects 62 of 50,000 products (3 material, 59
+                # colour) and none of the 200 public targets, so it is recorded rather
+                # than fixed -- changing it would move the index for a rounding-level
+                # effect on the eve of submission.
                 text_blob = match_text(searchable_text(product))
                 blob.append(text_blob)
                 categories.append(

@@ -1,6 +1,6 @@
 """Confidence intervals for the public-set headline numbers.
 
-`results/official_evaluation.json` reports the composite as `0.906151`. Six significant
+`results/official_evaluation.json` reports the composite as `0.963323`. Six significant
 figures is a fact about floating-point arithmetic, not about the agent: the score is a mean
 over 200 sessions, and a different 200 would give a different answer. This harness says how
 different.
