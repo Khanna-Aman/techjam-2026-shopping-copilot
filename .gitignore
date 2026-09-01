@@ -37,3 +37,9 @@ artifacts/*
 *.mkv
 *.mp4
 *.mov
+
+# Screenshots taken for the Devpost entry - not part of the deliverable.
+*.png
+*.jpg
+*.jpeg
+*.gif
