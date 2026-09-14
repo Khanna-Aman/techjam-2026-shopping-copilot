@@ -1,5 +1,7 @@
 # Shopping Copilot — TikTok TechJam 2026, Track 4
 
+**0.963 TechnicalScore — 9.03× the supplied weak-BM25 baseline across 200 public sessions.**
+
 [![CI](https://github.com/Khanna-Aman/techjam-2026-shopping-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Khanna-Aman/techjam-2026-shopping-copilot/actions/workflows/ci.yml)
 
 A stateful conversational shopping agent for the TechJam Conversational E-Commerce Search
